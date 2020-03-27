@@ -1,0 +1,12 @@
+{
+    "automock": false,
+    "moduleFileExtensions": [
+      "js"
+    ],
+    "testRegex": "lib/js/test/(unit|integration)/.+_test\\.js$",
+    "transformIgnorePatterns": [
+      "<rootDir>/node_modules/(?!(.*bs-))"
+    ],
+    "notify": false,
+    "verbose": true
+  }

@@ -1,0 +1,22 @@
+{
+    "name": "webgpu-rtx",
+    "version": "0.0.1",
+    "description": "",
+    "homepage": "https://github.com/yyc-git/WebGPU-RTX",
+    "license": "MIT",
+    "main": "",
+    "scripts": {
+        "start": "http-server -c-1",
+        "watch": "bsb -clean-world -make-world -w",
+        "test:watch": "jest --watch --config jest.json",
+        "build": "bsb -clean-world -make-world"
+    },
+    "devDependencies": {
+        "http-server": "^0.12.0",
+        "wonder-bs-jest": "0.2.25",
+        "jest": "^25.2.3"
+    },
+    "dependencies": {
+        "bs-platform": "^7.0.1"
+    }
+}
