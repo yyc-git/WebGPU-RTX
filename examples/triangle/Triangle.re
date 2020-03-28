@@ -4,7 +4,7 @@ open WonderBsMost.Most;
 
 let window = Window.make({"width": 640, "height": 480, "title": "WebGPU"});
 
-fromPromise(GPU.requestAdapter({"window": window}))
+fromPromise(GPU.requestAdapter(GPU.adapterDescriptor(~window, ())))
 |> flatMap(adapter => {
      fromPromise(adapter |> Adapter.requestDevice)
      |> flatMap(device => {

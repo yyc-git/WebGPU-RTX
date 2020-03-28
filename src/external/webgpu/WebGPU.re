@@ -24,45 +24,45 @@ module Queue = {
 module ShaderStage = {
   type t;
 
-  [@bs.scope "GPUShaderStage"] [@bs.module "webgpu"]
-  external getRayGeneration: t = "RAY_GENERATION";
-  [@bs.scope "GPUShaderStage"] [@bs.module "webgpu"]
-  external getRayCloestHit: t = "RAY_CLOSEST_HIT";
-  [@bs.scope "GPUShaderStage"] [@bs.module "webgpu"]
-  external getRayAnyHit: t = "RAY_ANY_HIT";
-  [@bs.scope "GPUShaderStage"] [@bs.module "webgpu"]
-  external getRayMiss: t = "RAY_MISS";
-  [@bs.scope "GPUShaderStage"] [@bs.module "webgpu"]
-  external getRayIntersection: t = "RAY_INTERSECTION";
-  [@bs.scope "GPUShaderStage"] [@bs.module "webgpu"]
-  external getCompute: t = "COMPUTE";
-  [@bs.scope "GPUShaderStage"] [@bs.module "webgpu"]
-  external getFragment: t = "FRAGMENT";
-  [@bs.scope "GPUShaderStage"] [@bs.module "webgpu"]
-  external getVertex: t = "VERTEX";
+  [@bs.val] [@bs.scope "GPUShaderStage"] [@bs.module "webgpu"]
+  external ray_generation: t = "RAY_GENERATION";
+  [@bs.val] [@bs.scope "GPUShaderStage"] [@bs.module "webgpu"]
+  external ray_closest_hit: t = "RAY_CLOSEST_HIT";
+  [@bs.val] [@bs.scope "GPUShaderStage"] [@bs.module "webgpu"]
+  external ray_any_hit: t = "RAY_ANY_HIT";
+  [@bs.val] [@bs.scope "GPUShaderStage"] [@bs.module "webgpu"]
+  external ray_miss: t = "RAY_MISS";
+  [@bs.val] [@bs.scope "GPUShaderStage"] [@bs.module "webgpu"]
+  external ray_intersection: t = "RAY_INTERSECTION";
+  [@bs.val] [@bs.scope "GPUShaderStage"] [@bs.module "webgpu"]
+  external compute: t = "COMPUTE";
+  [@bs.val] [@bs.scope "GPUShaderStage"] [@bs.module "webgpu"]
+  external fragment: t = "FRAGMENT";
+  [@bs.val] [@bs.scope "GPUShaderStage"] [@bs.module "webgpu"]
+  external vertex: t = "VERTEX";
 };
 
 module BufferUsage = {
-  type t;
+  type t = int;
 
-  [@bs.scope "GPUBufferUsage"] [@bs.module "webgpu"]
-  external getStorage: t = "STORAGE";
-  [@bs.scope "GPUBufferUsage"] [@bs.module "webgpu"]
-  external getUniform: t = "UNIFORM";
-  [@bs.scope "GPUBufferUsage"] [@bs.module "webgpu"]
-  external getIndirect: t = "INDIRECT";
-  [@bs.scope "GPUBufferUsage"] [@bs.module "webgpu"]
-  external getVertex: t = "VERTEX";
-  [@bs.scope "GPUBufferUsage"] [@bs.module "webgpu"]
-  external getIndex: t = "INDEX";
-  [@bs.scope "GPUBufferUsage"] [@bs.module "webgpu"]
-  external getMapRead: t = "MAP_WRITE";
-  [@bs.scope "GPUBufferUsage"] [@bs.module "webgpu"]
-  external getMapWrite: t = "MAP_WRITE";
-  [@bs.scope "GPUBufferUsage"] [@bs.module "webgpu"]
-  external getCopySrc: t = "COPY_SRC";
-  [@bs.scope "GPUBufferUsage"] [@bs.module "webgpu"]
-  external getCopyDst: t = "COPY_DST";
+  [@bs.val] [@bs.scope "GPUBufferUsage"] [@bs.module "webgpu"]
+  external storage: t = "STORAGE";
+  [@bs.val] [@bs.scope "GPUBufferUsage"] [@bs.module "webgpu"]
+  external uniform: t = "UNIFORM";
+  [@bs.val] [@bs.scope "GPUBufferUsage"] [@bs.module "webgpu"]
+  external indirect: t = "INDIRECT";
+  [@bs.val] [@bs.scope "GPUBufferUsage"] [@bs.module "webgpu"]
+  external vertex: t = "VERTEX";
+  [@bs.val] [@bs.scope "GPUBufferUsage"] [@bs.module "webgpu"]
+  external index: t = "INDEX";
+  [@bs.val] [@bs.scope "GPUBufferUsage"] [@bs.module "webgpu"]
+  external mapread: t = "MAP_WRITE";
+  [@bs.val] [@bs.scope "GPUBufferUsage"] [@bs.module "webgpu"]
+  external map_write: t = "MAP_WRITE";
+  [@bs.val] [@bs.scope "GPUBufferUsage"] [@bs.module "webgpu"]
+  external copy_src: t = "COPY_SRC";
+  [@bs.val] [@bs.scope "GPUBufferUsage"] [@bs.module "webgpu"]
+  external copy_dst: t = "COPY_DST";
 };
 
 module Buffer = {
@@ -80,13 +80,144 @@ module Buffer = {
   [@bs.send.pipe: t]
   external setSubUint8Data: (int, Js.Typed_array.Uint8Array.t) => unit =
     "setSubData";
+  [@bs.send.pipe: t]
+  external setSubUint32Data: (int, Js.Typed_array.Uint32Array.t) => unit =
+    "setSubData";
+};
 
-  module VertexBuffer = {
-    type t;
+module AccelerationContainerFlag = {
+  type t;
+
+  [@bs.val]
+  [@bs.scope "GPURayTracingAccelerationContainerFlag"]
+  [@bs.module "webgpu"]
+  external none: t = "NONE";
+  [@bs.val]
+  [@bs.scope "GPURayTracingAccelerationContainerFlag"]
+  [@bs.module "webgpu"]
+  external allow_update: t = "ALLOW_UPDATE";
+  [@bs.val]
+  [@bs.scope "GPURayTracingAccelerationContainerFlag"]
+  [@bs.module "webgpu"]
+  external prefer_fast_trace: t = "PREFER_FAST_TRACE";
+  [@bs.val]
+  [@bs.scope "GPURayTracingAccelerationContainerFlag"]
+  [@bs.module "webgpu"]
+  external prefer_fast_build: t = "PREFER_FAST_BUILD";
+  [@bs.val]
+  [@bs.scope "GPURayTracingAccelerationContainerFlag"]
+  [@bs.module "webgpu"]
+  external low_memory: t = "LOW_MEMORY";
+};
+
+module AccelerationGeometryFlag = {
+  type t;
+
+  [@bs.val]
+  [@bs.scope "GPURayTracingAccelerationGeometryFlag"]
+  [@bs.module "webgpu"]
+  external none: t = "NONE";
+  [@bs.val]
+  [@bs.scope "GPURayTracingAccelerationGeometryFlag"]
+  [@bs.module "webgpu"]
+  external opaque: t = "OPAQUE";
+  [@bs.val]
+  [@bs.scope "GPURayTracingAccelerationGeometryFlag"]
+  [@bs.module "webgpu"]
+  external allow_any_hit: t = "ALLOW_ANY_HIT";
+};
+
+module AccelerationInstanceFlag = {
+  type t;
+
+  [@bs.val]
+  [@bs.scope "GPURayTracingAccelerationInstanceFlag"]
+  [@bs.module "webgpu"]
+  external none: t = "NONE";
+  [@bs.val]
+  [@bs.scope "GPURayTracingAccelerationInstanceFlag"]
+  [@bs.module "webgpu"]
+  external triangle_cull_disable: t = "TRIANGLE_CULL_DISABLE";
+  [@bs.val]
+  [@bs.scope "GPURayTracingAccelerationInstanceFlag"]
+  [@bs.module "webgpu"]
+  external triangle_front_counterclockwise: t =
+    "TRIANGLE_FRONT_COUNTERCLOCKWISE";
+  [@bs.val]
+  [@bs.scope "GPURayTracingAccelerationInstanceFlag"]
+  [@bs.module "webgpu"]
+  external force_opaque: t = "FORCE_OPAQUE";
+  [@bs.val]
+  [@bs.scope "GPURayTracingAccelerationInstanceFlag"]
+  [@bs.module "webgpu"]
+  external force_no_opaque: t = "FORCE_NO_OPAQUE";
+};
+
+module AccelerationContainer = {
+  type t;
+
+  type geometryVertex = {
+    .
+    "buffer": Buffer.t,
+    "format": string,
+    "stride": int,
+    "count": int,
+  };
+
+  type geometryIndex = {
+    .
+    "buffer": Buffer.t,
+    "format": string,
+    "count": int,
+  };
+
+  type geometry = {
+    .
+    "flags": AccelerationGeometryFlag.t,
+    "type": string,
+    "vertex": geometryVertex,
+    "index": geometryIndex,
+  };
+
+  type transform3D = {
+    .
+    "x": float,
+    "y": float,
+    "z": float,
+  };
+
+  type transform = {
+    .
+    "translation": transform3D,
+    "rotation": transform3D,
+    "scale": transform3D,
+  };
+
+  [@bs.deriving abstract]
+  type instance = {
+    flags: AccelerationInstanceFlag.t,
+    mask: int,
+    instanceId: int,
+    instanceOffset: int,
+    geometryContainer: t,
+    [@bs.optional]
+    transform,
+    [@bs.optional]
+    instanceBuffer: Js.Typed_array.ArrayBuffer.t,
+  };
+
+  [@bs.deriving abstract]
+  type descriptor = {
+    level: string,
+    flags: AccelerationContainerFlag.t,
+    [@bs.optional]
+    geometries: array(geometry),
+    [@bs.optional]
+    instances: array(instance),
   };
 };
 
-module BindGroup = {
+module BindGroupLayout = {
   type t;
 
   type bindingPoint = int;
@@ -97,19 +228,26 @@ module BindGroup = {
     "visibility": ShaderStage.t,
     "type": string,
   };
-  type layout = {. "binds": array(layoutBinding)};
+  type descriptor = {. "bindings": array(layoutBinding)};
+};
 
+module BindGroup = {
+  type t;
+
+  [@bs.deriving abstract]
   type binding = {
-    .
-    "binding": bindingPoint,
-    "buffer": Buffer.t,
-    "offset": int,
-    "size": int,
+    [@bs.optional]
+    accelerationContainer: AccelerationContainer.t,
+    binding: BindGroupLayout.bindingPoint,
+    [@bs.optional]
+    buffer: Buffer.t,
+    offset: int,
+    size: int,
   };
 
   type descriptor = {
     .
-    "layout": layout,
+    "layout": BindGroupLayout.t,
     "bindings": array(binding),
   };
 };
@@ -132,7 +270,7 @@ module ShaderBindingTable = {
   type group = {
     .
     "type": string,
-    "generatIndex": int,
+    "generalIndex": int,
     "anyHitIndex": int,
     "closestHitIndex": int,
     "intersectionIndex": int,
@@ -150,7 +288,7 @@ module Pipeline = {
 
   type layout;
 
-  type layoutConfig = {. "bindGroupLayouts": array(BindGroup.layout)};
+  type layoutConfig = {. "bindGroupLayouts": array(BindGroupLayout.t)};
 
   module Render = {
     type t;
@@ -173,7 +311,7 @@ module Pipeline = {
     type vertexState = {
       indexFormat: string,
       [@bs.optional]
-      vertexBuffers: array(Buffer.VertexBuffer.t),
+      vertexBuffers: array(Buffer.t),
     };
 
     [@bs.deriving abstract]
@@ -278,7 +416,7 @@ module PassEncoder = {
 
     [@bs.send.pipe: t] external setPipeline: Pipeline.Render.t => unit;
     [@bs.send.pipe: t]
-    external setBindGroup: (BindGroup.bindingPoint, BindGroup.t) => unit;
+    external setBindGroup: (BindGroupLayout.bindingPoint, BindGroup.t) => unit;
     [@bs.send.pipe: t]
     external draw:
       (vertexCount, instanceCount, firstVertex, firstInstance) => unit;
@@ -303,7 +441,7 @@ module PassEncoder = {
 
     [@bs.send.pipe: t] external setPipeline: Pipeline.RayTracing.t => unit;
     [@bs.send.pipe: t]
-    external setBindGroup: (BindGroup.bindingPoint, BindGroup.t) => unit;
+    external setBindGroup: (BindGroupLayout.bindingPoint, BindGroup.t) => unit;
     [@bs.send.pipe: t]
     external traceRays:
       (
@@ -334,6 +472,9 @@ module CommandEncoder = {
   [@bs.send.pipe: t]
   external beginRayTracingPass:
     PassEncoder.RayTracing.descriptor => PassEncoder.RayTracing.t;
+  [@bs.send.pipe: t]
+  external buildRayTracingAccelerationContainer:
+    AccelerationContainer.t => unit;
   [@bs.send.pipe: t] external finish: CommandBuffer.t;
 };
 
@@ -347,6 +488,9 @@ module Device = {
   external createPipelineLayout: Pipeline.layoutConfig => Pipeline.layout;
   [@bs.send.pipe: t] external createBuffer: Buffer.descriptor => Buffer.t;
   [@bs.send.pipe: t]
+  external createBindGroupLayout:
+    BindGroupLayout.descriptor => BindGroupLayout.t;
+  [@bs.send.pipe: t]
   external createBindGroup: BindGroup.descriptor => BindGroup.t;
   [@bs.send.pipe: t]
   external createRenderPipeline:
@@ -357,6 +501,9 @@ module Device = {
   [@bs.send.pipe: t]
   external createRayTracingShaderBindingTable:
     ShaderBindingTable.descriptor => ShaderBindingTable.t;
+  [@bs.send.pipe: t]
+  external createRayTracingAccelerationContainer:
+    AccelerationContainer.descriptor => AccelerationContainer.t;
   [@bs.send.pipe: t]
   external createCommandEncoder: CommandEncoder.descriptor => CommandEncoder.t;
 };
@@ -404,8 +551,13 @@ module Adapter = {
 };
 
 module GPU = {
-  type adapterConfig = {. "window": Window.t};
+  [@bs.deriving abstract]
+  type adapterDescriptor = {
+    window: Window.t,
+    [@bs.optional]
+    preferredBackend: string,
+  };
 
   [@bs.scope "GPU"] [@bs.module "webgpu"]
-  external requestAdapter: adapterConfig => Js.Promise.t(Adapter.t);
+  external requestAdapter: adapterDescriptor => Js.Promise.t(Adapter.t);
 };
