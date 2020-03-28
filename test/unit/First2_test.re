@@ -4,20 +4,17 @@ let _ =
   describe("First", () =>
     Expect.(
       Expect.Operators.(
-        describe("getFirst", () =>{
+        describe("getFirst", () => {
           test("should return 1", () =>
             First.getFirst() |> expect == 1
-
-          )          test("should return 1", () =>
+          );
+          test("should return 1", () =>
             First.getFirst() |> expect == 1
-
-          )          test("should return 1", () =>
+          );
+          test("should return 1", () =>
             First.getFirst() |> expect == 1
-          )
-        }
-
-        )
+          );
+        })
       )
     )
   );
-
