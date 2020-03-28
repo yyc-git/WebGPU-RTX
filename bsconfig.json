@@ -2,6 +2,10 @@
     "name": "webgpu-rtx",
     "sources": [
         {
+            "dir": "examples",
+            "subdirs": true
+        },
+        {
             "dir": "src",
             "subdirs": true
         },
@@ -13,7 +17,8 @@
     "bs-dev-dependencies": [],
     "refmt": 3,
     "bs-dependencies": [
-        "wonder-bs-jest"
+        "wonder-bs-jest",
+        "wonder-bs-most"
     ],
     "package-specs": [
         "commonjs"

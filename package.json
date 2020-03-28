@@ -9,14 +9,16 @@
         "start": "http-server -c-1",
         "watch": "bsb -clean-world -make-world -w",
         "test:watch": "jest --watch --config jest.json",
-        "build": "bsb -clean-world -make-world"
+        "build": "bsb -clean-world -make-world",
+        "runTest": "node lib/js/examples/triangle/Triangle.js"
     },
     "devDependencies": {
         "http-server": "^0.12.0",
-        "wonder-bs-jest": "0.2.25",
-        "jest": "^25.2.3"
+        "jest": "^25.2.3",
+        "wonder-bs-jest": "0.2.25"
     },
     "dependencies": {
-        "bs-platform": "^7.0.1"
+        "bs-platform": "^7.0.1",
+        "wonder-bs-most": "^0.0.3"
     }
 }
