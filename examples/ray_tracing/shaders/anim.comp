@@ -1,0 +1,20 @@
+#version 460
+#extension GL_EXT_nonuniform_qualifier : enable
+#extension GL_EXT_scalar_block_layout : enable
+#pragma shader_stage(compute)
+
+layout(scalar, set = 0, binding = 0) uniform Constants {
+  float time;
+}
+pushC;
+
+layout(std140, set = 0, binding = 1) buffer Vertices { vec4 v[]; }
+vertices;
+
+void main() {
+  const float PI = 3.14159265;
+  vec4 position = vertices.v[gl_GlobalInvocationID.x];
+  position.y = sin(pushC.time / 1000.0 * gl_GlobalInvocationID.x);
+
+  vertices.v[gl_GlobalInvocationID.x] = position;
+}

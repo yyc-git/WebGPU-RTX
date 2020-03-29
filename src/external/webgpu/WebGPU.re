@@ -86,7 +86,7 @@ module Buffer = {
 };
 
 module AccelerationContainerFlag = {
-  type t;
+  type t = int;
 
   [@bs.val]
   [@bs.scope "GPURayTracingAccelerationContainerFlag"]
@@ -111,7 +111,7 @@ module AccelerationContainerFlag = {
 };
 
 module AccelerationGeometryFlag = {
-  type t;
+  type t = int;
 
   [@bs.val]
   [@bs.scope "GPURayTracingAccelerationGeometryFlag"]
@@ -128,7 +128,7 @@ module AccelerationGeometryFlag = {
 };
 
 module AccelerationInstanceFlag = {
-  type t;
+  type t = int;
 
   [@bs.val]
   [@bs.scope "GPURayTracingAccelerationInstanceFlag"]
@@ -368,6 +368,23 @@ module Pipeline = {
       rayTracingState,
     };
   };
+
+  module Compute = {
+    type t;
+
+    [@bs.deriving abstract]
+    type computeStage = {
+      [@bs.as "module"]
+      module_: ShaderModule.t,
+      entryPoint: string,
+    };
+
+    [@bs.deriving abstract]
+    type descriptor = {
+      layout,
+      computeStage,
+    };
+  };
 };
 
 module PassEncoder = {
@@ -455,6 +472,26 @@ module PassEncoder = {
       unit;
     [@bs.send.pipe: t] external endPass: unit;
   };
+
+  module Compute = {
+    type t;
+
+    [@bs.deriving abstract]
+    type descriptor = {
+      [@bs.optional]
+      label: string,
+    };
+
+    type x = int;
+    type y = int;
+    type z = int;
+
+    [@bs.send.pipe: t] external setPipeline: Pipeline.Compute.t => unit;
+    [@bs.send.pipe: t]
+    external setBindGroup: (BindGroupLayout.bindingPoint, BindGroup.t) => unit;
+    [@bs.send.pipe: t] external dispatchX: x => unit = "dispatch";
+    [@bs.send.pipe: t] external endPass: unit;
+  };
 };
 
 module CommandEncoder = {
@@ -473,7 +510,13 @@ module CommandEncoder = {
   external beginRayTracingPass:
     PassEncoder.RayTracing.descriptor => PassEncoder.RayTracing.t;
   [@bs.send.pipe: t]
+  external beginComputePass:
+    PassEncoder.Compute.descriptor => PassEncoder.Compute.t;
+  [@bs.send.pipe: t]
   external buildRayTracingAccelerationContainer:
+    AccelerationContainer.t => unit;
+  [@bs.send.pipe: t]
+  external updateRayTracingAccelerationContainer:
     AccelerationContainer.t => unit;
   [@bs.send.pipe: t] external finish: CommandBuffer.t;
 };
@@ -498,6 +541,9 @@ module Device = {
   [@bs.send.pipe: t]
   external createRayTracingPipeline:
     Pipeline.RayTracing.descriptor => Pipeline.RayTracing.t;
+  [@bs.send.pipe: t]
+  external createComputePipeline:
+    Pipeline.Compute.descriptor => Pipeline.Compute.t;
   [@bs.send.pipe: t]
   external createRayTracingShaderBindingTable:
     ShaderBindingTable.descriptor => ShaderBindingTable.t;

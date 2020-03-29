@@ -34,6 +34,12 @@ fromPromise(
 
        let baseShaderPath = "examples/ray_tracing/shaders/";
 
+       let computeShaderModule =
+         device
+         |> Device.createShaderModule({
+              "code":
+                WebGPUUtils.loadShaderFile({j|$(baseShaderPath)/anim.comp|j}),
+            });
        let vertexShaderModule =
          device
          |> Device.createShaderModule({
@@ -80,18 +86,21 @@ fromPromise(
            0.0,
            1.0,
            0.0,
+           0.0,
            (-1.0),
            (-1.0),
            0.0,
+           0.0,
            1.0,
            (-1.0),
+           0.0,
            0.0,
          |]);
        let triangleVertexBuffer =
          device
          |> Device.createBuffer({
               "size": triangleVertices |> Float32Array.byteLength,
-              "usage": BufferUsage.copy_dst,
+              "usage": BufferUsage.copy_dst lor BufferUsage.storage,
             });
        triangleVertexBuffer |> Buffer.setSubFloat32Data(0, triangleVertices);
 
@@ -109,7 +118,10 @@ fromPromise(
          |> Device.createRayTracingAccelerationContainer(
               {
                 AccelerationContainer.descriptor(
-                  ~flags=AccelerationContainerFlag.prefer_fast_trace,
+                  // ~flags=AccelerationContainerFlag.prefer_fast_trace,
+                  ~flags=
+                    AccelerationContainerFlag.prefer_fast_trace
+                    lor AccelerationContainerFlag.allow_update,
                   ~level="bottom",
                   ~geometries=[|
                     {
@@ -118,7 +130,7 @@ fromPromise(
                       "vertex": {
                         "buffer": triangleVertexBuffer,
                         "format": "float3",
-                        "stride": 3 * Float32Array._BYTES_PER_ELEMENT,
+                        "stride": 4 * Float32Array._BYTES_PER_ELEMENT,
                         "count": Float32Array.length(triangleVertices),
                       },
                       "index": {
@@ -258,7 +270,7 @@ fromPromise(
          |> Matrix4.invert(_, Matrix4.createIdentityMatrix4());
        let mView =
          Matrix4.createIdentityMatrix4()
-         |> Matrix4.setLookAt((0., 0., 2.), (0., 0., 0.), (0., 1., 0.))
+         |> Matrix4.setLookAt((0., 0., 10.), (0., 0., 0.), (0., 1., 0.))
          |> Matrix4.invert(_, Matrix4.createIdentityMatrix4());
 
        let cameraData =
@@ -340,6 +352,75 @@ fromPromise(
                   Pipeline.RayTracing.rayTracingState(
                     ~shaderBindingTable,
                     ~maxRecursionDepth=1,
+                  );
+                },
+              ),
+            );
+
+       let computeConstantsBufferSize = 1 * Float32Array._BYTES_PER_ELEMENT;
+       let computeConstantsData =
+         Float32Array.fromLength(
+           computeConstantsBufferSize / Float32Array._BYTES_PER_ELEMENT,
+         );
+       let computeConstantsBuffer =
+         device
+         |> Device.createBuffer({
+              "size": computeConstantsBufferSize,
+              "usage": BufferUsage.copy_dst lor BufferUsage.uniform,
+            });
+
+       let computeBindGroupLayout =
+         device
+         |> Device.createBindGroupLayout({
+              "bindings": [|
+                {
+                  "binding": 0,
+                  "visibility": ShaderStage.compute,
+                  "type": "uniform-buffer",
+                },
+                {
+                  "binding": 1,
+                  "visibility": ShaderStage.compute,
+                  "type": "storage-buffer",
+                },
+              |],
+            });
+
+       let computeBindGroup =
+         device
+         |> Device.createBindGroup({
+              "layout": computeBindGroupLayout,
+              "bindings": [|
+                BindGroup.binding(
+                  ~binding=0,
+                  ~buffer=computeConstantsBuffer,
+                  ~offset=0,
+                  ~size=computeConstantsBufferSize,
+                  (),
+                ),
+                BindGroup.binding(
+                  ~binding=1,
+                  ~buffer=triangleVertexBuffer,
+                  ~offset=0,
+                  ~size=triangleVertices |> Float32Array.byteLength,
+                  (),
+                ),
+              |],
+            });
+
+       let computePipeline =
+         device
+         |> Device.createComputePipeline(
+              Pipeline.Compute.descriptor(
+                ~layout=
+                  device
+                  |> Device.createPipelineLayout({
+                       "bindGroupLayouts": [|computeBindGroupLayout|],
+                     }),
+                ~computeStage={
+                  Pipeline.Compute.computeStage(
+                    ~module_=computeShaderModule,
+                    ~entryPoint="main",
                   );
                 },
               ),
@@ -434,6 +515,31 @@ fromPromise(
               ),
             );
 
+       let _updateUniformBuffers =
+           (time, (computeConstantsData, computeConstantsBuffer)) => {
+         Float32Array.unsafe_set(computeConstantsData, 0, time);
+
+         computeConstantsBuffer
+         |> Buffer.setSubFloat32Data(0, computeConstantsData);
+       };
+
+       let _update = (time, (computeConstantsData, computeConstantsBuffer)) => {
+         _updateUniformBuffers(
+           time,
+           (computeConstantsData, computeConstantsBuffer),
+         );
+
+         let commandEncoder =
+           device |> Device.createCommandEncoder(CommandEncoder.descriptor());
+         commandEncoder
+         |> CommandEncoder.updateRayTracingAccelerationContainer(
+              geometryContainer,
+            );
+         queue |> Queue.submit([|commandEncoder |> CommandEncoder.finish|]);
+       };
+
+       let startTime = Performance.now();
+
        let rec _onFrame = () => {
          !(window |> Window.shouldClose)
            ? {
@@ -441,8 +547,25 @@ fromPromise(
            }
            : ();
 
+         let time = Performance.now() -. startTime;
+
          let commandEncoder =
            device |> Device.createCommandEncoder(CommandEncoder.descriptor());
+
+         let computePass =
+           commandEncoder
+           |> CommandEncoder.beginComputePass(
+                {
+                  PassEncoder.Compute.descriptor();
+                },
+              );
+         computePass |> PassEncoder.Compute.setPipeline(computePipeline);
+         computePass |> PassEncoder.Compute.setBindGroup(0, computeBindGroup);
+         computePass |> PassEncoder.Compute.dispatchX(3);
+         computePass |> PassEncoder.Compute.endPass;
+
+         //  queue |> Queue.submit([|commandEncoder |> CommandEncoder.finish|]);
+
          let rtPass =
            commandEncoder
            |> CommandEncoder.beginRayTracingPass(
@@ -463,11 +586,9 @@ fromPromise(
             );
          rtPass |> PassEncoder.RayTracing.endPass;
 
-         queue |> Queue.submit([|commandEncoder |> CommandEncoder.finish|]);
+         //  queue |> Queue.submit([|commandEncoder |> CommandEncoder.finish|]);
 
          let backBufferView = swapChain |> SwapChain.getCurrentTextureView();
-         let commandEncoder =
-           device |> Device.createCommandEncoder(CommandEncoder.descriptor());
          let renderPass =
            commandEncoder
            |> CommandEncoder.beginRenderPass(
@@ -499,6 +620,8 @@ fromPromise(
 
          swapChain |> SwapChain.present;
          window |> Window.pollEvents();
+
+         _update(time, (computeConstantsData, computeConstantsBuffer));
 
          ();
        };
