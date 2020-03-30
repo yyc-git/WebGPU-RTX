@@ -155,6 +155,9 @@ module AccelerationInstanceFlag = {
 
 module AccelerationContainer = {
   type t;
+    // Js.t
+    //   // TODO return bigInt type
+    //   ({. [@bs.meth] "getHandle": unit => int});
 
   type geometryVertex = {
     .
@@ -202,8 +205,6 @@ module AccelerationContainer = {
     geometryContainer: t,
     [@bs.optional]
     transform,
-    [@bs.optional]
-    instanceBuffer: Js.Typed_array.ArrayBuffer.t,
   };
 
   [@bs.deriving abstract]
@@ -214,6 +215,8 @@ module AccelerationContainer = {
     geometries: array(geometry),
     [@bs.optional]
     instances: array(instance),
+    [@bs.optional]
+    instanceBuffer: Buffer.t,
   };
 };
 

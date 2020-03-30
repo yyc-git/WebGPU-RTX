@@ -1,0 +1,1 @@
+type cameraView = int;
