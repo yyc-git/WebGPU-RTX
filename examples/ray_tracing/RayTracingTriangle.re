@@ -34,7 +34,7 @@ fromPromise(
 
        let state = StateData.getState();
 
-       let state = state |> Scene.build;
+       let state = state |> Scene.build |> Scene.init(window);
 
        let baseShaderPath = "examples/ray_tracing/shaders/";
 
@@ -220,6 +220,8 @@ fromPromise(
               ),
             );
 
+       state |> StateData.setState |> ignore;
+
        let startTime = Performance.now();
 
        let rec _onFrame = () => {
@@ -230,6 +232,12 @@ fromPromise(
            : ();
 
          let time = Performance.now() -. startTime;
+
+
+         StateData.getState()
+         |> Scene.update(time, window)
+         |> StateData.setState
+         |> ignore;
 
          let commandEncoder =
            device |> Device.createCommandEncoder(CommandEncoder.descriptor());
@@ -247,7 +255,7 @@ fromPromise(
          |> PassEncoder.RayTracing.traceRays(
               0, // sbt ray-generation offset
               1, // sbt ray-hit offset
-              2, // sbt ray-miss offset
+              3, // sbt ray-miss offset
               Window.getWidth(window), // query width dimension
               Window.getHeight(window), // query height dimension
               1 // query depth dimension
@@ -286,11 +294,6 @@ fromPromise(
 
          swapChain |> SwapChain.present;
          window |> Window.pollEvents();
-
-         StateData.getState()
-         |> Scene.update(time, window)
-         |> StateData.setState
-         |> ignore;
        };
 
        Global.setTimeout(_onFrame, 1e3 /. 60.0) |> ignore;

@@ -54,7 +54,7 @@ let build = state => {
   let (tran1, state) = Transform.create(state);
   let state =
     state
-    |> Transform.setTranslation(tran1, (0., 0., 0.))
+    |> Transform.setTranslation(tran1, (0., -5., 0.))
     |> Transform.setRotation(tran1, (30., 45., 0.))
     |> Transform.setScale(tran1, (1., 1., 1.));
 
@@ -98,6 +98,7 @@ let build = state => {
     |> Transform.setRotation(tran2, (0., 0., 0.))
     |> Transform.setScale(tran2, (10., 10., 10.));
 
+
   let (geo2, state) = Geometry.create(state);
   let state =
     state
@@ -127,8 +128,10 @@ let build = state => {
   state;
 };
 
-let init = window => {
+let init = ( window, state ) => {
   ArcballCameraController.init(window);
+
+  state
 };
 
 let update = (time, window, state) => {
@@ -140,7 +143,7 @@ let update = (time, window, state) => {
          (
            (Window.getWidth(window) |> float_of_int)
            /. (Window.getHeight(window) |> float_of_int),
-           Js.Math._PI *. 2. /. 5.,
+           180.0 *. 2. /. 5.,
            0.1,
            4096.0,
          ),

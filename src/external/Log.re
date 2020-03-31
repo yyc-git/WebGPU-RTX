@@ -15,3 +15,8 @@ let buildFatalMessage = (~title, ~description, ~reason, ~solution, ~params) => {
   params
   $params
    |j};
+
+let print = value => {
+  Js.log(value);
+  value;
+};

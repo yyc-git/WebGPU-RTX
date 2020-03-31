@@ -152,13 +152,13 @@ let _changeOrbit = (e, state) => {
   |> setTheta(
        currentArcballCameraController,
        unsafeGetTheta(currentArcballCameraController, state)
-       +. float_of_int(y)
+       -. float_of_int(y)
        /. (100. /. rotateSpeed),
      );
 };
 
 let _bindDragStartEvent = window => {
-  MostUtils.fromEvent("mouseup", window)
+  MostUtils.fromEvent("mousedown", window)
   |> tap(e => {
        StateData.getState() |> setIsDrag(true) |> StateData.setState |> ignore
      });
@@ -202,7 +202,8 @@ let _changeDistance = (e, state) => {
   state
   |> setDistance(
        currentArcballCameraController,
-       _getWheel(e)
+       unsafeGetDistance(currentArcballCameraController, state)
+       -. _getWheel(e)
        *. unsafeGetWheelSpeed(currentArcballCameraController, state),
      );
 };
@@ -217,11 +218,43 @@ let _bindMouseWheelEvent = window => {
      });
 };
 
+let _handleDomEventStreamError = e => {
+  // let message = Obj.magic(e)##message;
+  // let stack = Obj.magic(e)##stack;
+  // WonderLog.Log.debug(
+  //   WonderLog.Log.buildDebugMessage(
+  //     ~description={j|from dom event stream error|j},
+  //     ~params={j|message:$message\nstack:$stack|j},
+  //   ),
+  //   IsDebugMainService.getIsDebug(StateDataMain.stateData),
+  // );
+  // /* WonderLog.Log.fatal(
+  //      WonderLog.Log.buildFatalMessage(
+  //        ~title="InitEventJob",
+  //        ~description={j|from dom event stream error|j},
+  //        ~reason="",
+  //        ~solution={j||j},
+  //        ~params={j|message:$message\nstack:$stack|j},
+  //      ),
+  //    ); */
+  Js.logMany([|
+    e |> Obj.magic,
+  |]);
+};
+
 let init = window => {
-  _bindDragStartEvent(window);
-  _bindDragOverEvent(window);
-  _bindDragDropEvent(window);
-  _bindMouseWheelEvent(window);
+  mergeArray([|
+    _bindDragStartEvent(window),
+    _bindDragOverEvent(window),
+    _bindDragDropEvent(window),
+    _bindMouseWheelEvent(window),
+  |])
+  |> subscribe({
+       "next": _ => (),
+       "error": e => _handleDomEventStreamError(e),
+       "complete": () => (),
+     })
+  |> ignore;
 };
 
 let getLookFrom = (arcballCameraController, state) => {

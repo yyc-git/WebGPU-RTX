@@ -18,6 +18,7 @@
     "refmt": 3,
     "bs-dependencies": [
         "wonder-bs-jest",
+        "wonder-bs-sinon",
         "wonder-bs-most"
     ],
     "package-specs": [

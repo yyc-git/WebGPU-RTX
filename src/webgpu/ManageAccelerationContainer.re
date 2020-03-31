@@ -5,8 +5,8 @@ open WebGPU;
 module InstanceBuffer = {
   let _getInstanceBufferStride = () => 64;
 
-  let _computeGameObjectOffset = gameObjectIndex => {
-    gameObjectIndex * _getInstanceBufferStride();
+  let _computeInstanceOffset = instanceIndex => {
+    instanceIndex * _getInstanceBufferStride();
   };
 
   let createInstanceBuffer = (geometryCount, device) => {
@@ -24,7 +24,7 @@ module InstanceBuffer = {
 
   let setInstanceData =
       (
-        gameObjectIndex,
+        instanceIndex,
         (
           transformMatrix,
           instanceId,
@@ -36,7 +36,8 @@ module InstanceBuffer = {
         instanceBufferArrayBuffer,
       ) => {
     let dataView = DataView.make(instanceBufferArrayBuffer);
-    let offset = _computeGameObjectOffset(gameObjectIndex);
+    let offset = _computeInstanceOffset(instanceIndex);
+
 
     let offset =
       ArrayUtils.range(0, 12)
@@ -97,6 +98,7 @@ module InstanceBuffer = {
 
   let convertInstanceTransformDataToContainerTransformMatrix =
       ((translation, rotation, scale)) => {
+
     Matrix4.createIdentityMatrix4()
     |> Matrix4.fromTranslationRotationScale(
          translation,
@@ -129,7 +131,6 @@ let _buildSceneGeometryContainers = (device, state) => {
                 "size": geometryVertices |> Float32Array.byteLength,
                 "usage": BufferUsage.copy_dst,
               });
-
          Buffer.setSubFloat32Data(0, geometryVertices, geometryVertexBuffer);
 
          let geometryIndices = Uint32Array.make(indices);
@@ -179,10 +180,10 @@ let _buildSceneGeometryContainers = (device, state) => {
 
 let _updateInstanceBuffer =
     (geometryContainers, state, (instanceBufferArrayBuffer, instanceBuffer)) => {
-  let instanceBufferArrayBuffer =
+  let (instanceBufferArrayBuffer, _) =
     GameObject.getAllGeometryGameObjects(state)
     |> ArrayUtils.reduceOneParam(
-         (. instanceBufferArrayBuffer, gameObject) => {
+         (. (instanceBufferArrayBuffer, instanceIndex), gameObject) => {
            let transform =
              GameObject.getTransform(gameObject, state) |> Js.Option.getExn;
 
@@ -192,32 +193,35 @@ let _updateInstanceBuffer =
                GameObject.getGeometry(gameObject, state) |> Js.Option.getExn,
              );
 
-           InstanceBuffer.setInstanceData(
-             gameObject,
-             (
-               InstanceBuffer.convertInstanceTransformDataToContainerTransformMatrix((
-                 Transform.getTranslation(transform, state),
-                 Transform.getRotation(transform, state),
-                 Transform.getScale(transform, state),
-               )),
-               gameObject,
-               0xFF,
-               InstanceBuffer.convertHitGroupIndexToInstanceOffset(
-                 GameObject.getShader(gameObject, state) |> Js.Option.getExn,
-               ),
-               AccelerationInstanceFlag.triangle_cull_disable,
-               _getGeomtryContainerHandle(
-                 Array.unsafe_get(
-                   geometryContainers,
-                   GameObject.getGeometry(gameObject, state)
-                   |> Js.Option.getExn,
+           (
+             InstanceBuffer.setInstanceData(
+               instanceIndex,
+               (
+                 InstanceBuffer.convertInstanceTransformDataToContainerTransformMatrix((
+                   Transform.getTranslation(transform, state),
+                   Transform.getRotation(transform, state),
+                   Transform.getScale(transform, state),
+                 )),
+                 instanceIndex,
+                 0xFF,
+                 InstanceBuffer.convertHitGroupIndexToInstanceOffset(
+                   GameObject.getShader(gameObject, state) |> Js.Option.getExn,
+                 ),
+                 AccelerationInstanceFlag.triangle_cull_disable,
+                 _getGeomtryContainerHandle(
+                   Array.unsafe_get(
+                     geometryContainers,
+                     GameObject.getGeometry(gameObject, state)
+                     |> Js.Option.getExn,
+                   ),
                  ),
                ),
+               instanceBufferArrayBuffer,
              ),
-             instanceBufferArrayBuffer,
+             instanceIndex |> succ,
            );
          },
-         instanceBufferArrayBuffer,
+         (instanceBufferArrayBuffer, 0),
        );
 
   let instanceBuffer =
