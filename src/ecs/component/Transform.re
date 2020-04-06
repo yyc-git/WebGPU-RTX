@@ -53,3 +53,18 @@ let setScale = (transform, scale, state) => {
       state.transform.scaleMap |> ImmutableSparseMap.set(transform, scale),
   },
 };
+
+let buildNormalMatrix = modelMatrix => {
+  Matrix3.createEmptyMatrix3()
+  |> Matrix4.invertTo3x3(modelMatrix)
+  |> Matrix3.transposeSelf;
+};
+
+let buildModelMatrix = (transform, state) => {
+  Matrix4.createIdentityMatrix4()
+  |> Matrix4.fromTranslationRotationScale(
+       getTranslation(transform, state),
+       Quaternion.setFromEulerAngles(getRotation(transform, state)),
+       getScale(transform, state),
+     );
+};

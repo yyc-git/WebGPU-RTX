@@ -4,72 +4,107 @@ open WebGPU;
 
 open StateType;
 
+let setMat3DataToBufferData = (mat3, (bufferData, offset)) => {
+  Float32Array.unsafe_set(
+    bufferData,
+    offset,
+    Float32Array.unsafe_get(mat3, 0),
+  );
+  Float32Array.unsafe_set(
+    bufferData,
+    offset + 1,
+    Float32Array.unsafe_get(mat3, 1),
+  );
+  Float32Array.unsafe_set(
+    bufferData,
+    offset + 2,
+    Float32Array.unsafe_get(mat3, 2),
+  );
+  Float32Array.unsafe_set(bufferData, offset + 3, 0.0);
+  Float32Array.unsafe_set(
+    bufferData,
+    offset + 4,
+    Float32Array.unsafe_get(mat3, 3),
+  );
+  Float32Array.unsafe_set(
+    bufferData,
+    offset + 5,
+    Float32Array.unsafe_get(mat3, 4),
+  );
+  Float32Array.unsafe_set(
+    bufferData,
+    offset + 6,
+    Float32Array.unsafe_get(mat3, 5),
+  );
+  Float32Array.unsafe_set(bufferData, offset + 7, 0.0);
+  Float32Array.unsafe_set(
+    bufferData,
+    offset + 8,
+    Float32Array.unsafe_get(mat3, 6),
+  );
+  Float32Array.unsafe_set(
+    bufferData,
+    offset + 9,
+    Float32Array.unsafe_get(mat3, 7),
+  );
+  Float32Array.unsafe_set(
+    bufferData,
+    offset + 10,
+    Float32Array.unsafe_get(mat3, 8),
+  );
+  Float32Array.unsafe_set(bufferData, offset + 11, 0.0);
+
+  (bufferData, offset + 12);
+};
+
 module UniformBuffer = {
-  let unsafeGetCameraBufferData = state => {
-    (
-      state.gpuBuffer.uniformBuffer.cameraBufferData.cameraData
-      |> Js.Option.getExn,
-      state.gpuBuffer.uniformBuffer.cameraBufferData.cameraBuffer
-      |> Js.Option.getExn,
-    );
+  let getAlignedBufferBytes = singleEntityBufferSize => {
+    Js.Math.ceil(float_of_int(singleEntityBufferSize) /. 256.) * 256;
   };
 
-  let setCameraBufferData = ((cameraData, cameraBuffer), state) => {
-    ...state,
-    gpuBuffer: {
-      ...state.gpuBuffer,
-      uniformBuffer: {
-        ...state.gpuBuffer.uniformBuffer,
-        cameraBufferData: {
-          cameraData: Some(cameraData),
-          cameraBuffer: Some(cameraBuffer),
-        },
-      },
-    },
+  let getAlignedBufferFloats = alignedBufferBytes => {
+    alignedBufferBytes / Float32Array._BYTES_PER_ELEMENT;
   };
 
-  let buildCameraBufferData = (device, state) => {
-    let currentCamerView = CameraView.unsafeGetCurrentCameraView(state);
+  // let unsafeGetCameraBufferData = state => {
+  //   (
+  //     state.gpuBuffer.uniformBuffer.cameraBufferData.cameraData
+  //     |> Js.Option.getExn,
+  //     state.gpuBuffer.uniformBuffer.cameraBufferData.cameraBuffer
+  //     |> Js.Option.getExn,
+  //   );
+  // };
 
-    let cameraData =
-      Float32Array.fromLength(
-        (
-          CameraView.unsafeGetViewMatrixInverse(currentCamerView, state)
-          |> Float32Array.length
-        )
-        + (
-          CameraView.unsafeGetProjectionMatrixInverse(currentCamerView, state)
-          |> Float32Array.length
-        ),
-      );
-    let cameraBufferSize = cameraData |> Float32Array.byteLength;
-    let cameraBuffer =
-      device
-      |> Device.createBuffer({
-           "size": cameraBufferSize,
-           "usage": BufferUsage.copy_dst lor BufferUsage.uniform,
-         });
+  // let setCameraBufferData = ((cameraData, cameraBuffer), state) => {
+  //   ...state,
+  //   gpuBuffer: {
+  //     ...state.gpuBuffer,
+  //     uniformBuffer: {
+  //       ...state.gpuBuffer.uniformBuffer,
+  //       cameraBufferData: {
+  //         cameraData: Some(cameraData),
+  //         cameraBuffer: Some(cameraBuffer),
+  //       },
+  //     },
+  //   },
+  // };
 
-    (cameraData, cameraBufferSize, cameraBuffer);
-  };
-
-  let buildResolutionBufferData = (window, device ) => {
-    let resolutionData =
-      Float32Array.make([|
-        Window.getWidth(window) |> float_of_int,
-        Window.getHeight(window) |> float_of_int,
-      |]);
-    let resolutionBufferSize = resolutionData |> Float32Array.byteLength;
-    let resolutionUniformBuffer =
-      device
-      |> Device.createBuffer({
-           "size": resolutionBufferSize,
-           "usage": BufferUsage.copy_dst lor BufferUsage.uniform,
-         });
-    resolutionUniformBuffer |> Buffer.setSubFloat32Data(0, resolutionData);
-
-    (resolutionBufferSize, resolutionUniformBuffer);
-  };
+  // let buildResolutionBufferData = (window, device ) => {
+  //   let resolutionData =
+  //     Float32Array.make([|
+  //       Window.getWidth(window) |> float_of_int,
+  //       Window.getHeight(window) |> float_of_int,
+  //     |]);
+  //   let resolutionBufferSize = resolutionData |> Float32Array.byteLength;
+  //   let resolutionUniformBuffer =
+  //     device
+  //     |> Device.createBuffer({
+  //          "size": resolutionBufferSize,
+  //          "usage": BufferUsage.copy_dst lor BufferUsage.uniform,
+  //        });
+  //   resolutionUniformBuffer |> Buffer.setSubFloat32Data(0, resolutionData);
+  //   (resolutionBufferSize, resolutionUniformBuffer);
+  // };
 };
 
 module StorageBuffer = {

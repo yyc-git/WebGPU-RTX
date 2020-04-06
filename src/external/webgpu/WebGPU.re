@@ -2,6 +2,65 @@ type textureFormat = string;
 
 module TextureView = {
   type t;
+
+  [@bs.deriving abstract]
+  type descriptor = {
+    format: textureFormat,
+    [@bs.optional]
+    dimension: string,
+    [@bs.optional]
+    aspect: string,
+    [@bs.optional]
+    baseMipLevel: int,
+    [@bs.optional]
+    mipLevelCount: int,
+    [@bs.optional]
+    baseArrayLayer: int,
+    [@bs.optional]
+    arrayLayerCount: int,
+  };
+};
+
+module Extend3D = {
+  type t = {
+    .
+    "width": int,
+    "height": int,
+    "depth": int,
+  };
+};
+
+module TextureUsage = {
+  type t = int;
+
+  [@bs.val] [@bs.scope "GPUTextureUsage"] [@bs.module "webgpu"]
+  external copy_src: t = "COPY_SRC";
+  [@bs.val] [@bs.scope "GPUTextureUsage"] [@bs.module "webgpu"]
+  external copy_dst: t = "COPY_DST";
+  [@bs.val] [@bs.scope "GPUTextureUsage"] [@bs.module "webgpu"]
+  external sampled: t = "SAMPLED";
+  [@bs.val] [@bs.scope "GPUTextureUsage"] [@bs.module "webgpu"]
+  external storage: t = "STORAGE";
+  [@bs.val] [@bs.scope "GPUTextureUsage"] [@bs.module "webgpu"]
+  external output_attachment: t = "OUTPUT_ATTACHMENT";
+};
+
+module Texture = {
+  type t;
+
+  [@bs.send.pipe: t]
+  external createView: TextureView.descriptor => TextureView.t;
+
+  [@bs.deriving abstract]
+  type descriptor = {
+    size: Extend3D.t,
+    arrayLayerCount: int,
+    mipLevelCount: int,
+    sampleCount: int,
+    dimension: string,
+    format: textureFormat,
+    usage: TextureUsage.t,
+  };
 };
 
 module SwapChain = {
@@ -155,9 +214,9 @@ module AccelerationInstanceFlag = {
 
 module AccelerationContainer = {
   type t;
-    // Js.t
-    //   // TODO return bigInt type
-    //   ({. [@bs.meth] "getHandle": unit => int});
+  // Js.t
+  //   // TODO return bigInt type
+  //   ({. [@bs.meth] "getHandle": unit => int});
 
   type geometryVertex = {
     .
@@ -225,12 +284,16 @@ module BindGroupLayout = {
 
   type bindingPoint = int;
 
+  [@bs.deriving abstract]
   type layoutBinding = {
-    .
-    "binding": bindingPoint,
-    "visibility": ShaderStage.t,
-    "type": string,
+    binding: bindingPoint,
+    visibility: ShaderStage.t,
+    [@bs.as "type"]
+    type_: string,
+    [@bs.optional]
+    hasDynamicOffset: bool,
   };
+
   type descriptor = {. "bindings": array(layoutBinding)};
 };
 
@@ -244,6 +307,9 @@ module BindGroup = {
     binding: BindGroupLayout.bindingPoint,
     [@bs.optional]
     buffer: Buffer.t,
+    [@bs.optional]
+    textureView: TextureView.t,
+    [@bs.optional]
     offset: int,
     size: int,
   };
@@ -308,6 +374,21 @@ module Pipeline = {
       [@bs.as "module"]
       module_: ShaderModule.t,
       entryPoint: string,
+    };
+
+    [@bs.deriving abstract]
+    type vertexAttribute = {
+      shaderLocation: int,
+      offset: int,
+      format: string,
+    };
+
+    [@bs.deriving abstract]
+    type vertexBuffer = {
+      arrayStride: int,
+      [@bs.optional]
+      stepMode: string,
+      attributes: array(vertexAttribute),
     };
 
     [@bs.deriving abstract]
@@ -437,6 +518,8 @@ module PassEncoder = {
     [@bs.send.pipe: t] external setPipeline: Pipeline.Render.t => unit;
     [@bs.send.pipe: t]
     external setBindGroup: (BindGroupLayout.bindingPoint, BindGroup.t) => unit;
+    [@bs.send.pipe: t] external setVertexBuffer: (int, Buffer.t, int) => unit;
+    [@bs.send.pipe: t] external setIndexBuffer: Buffer.t => unit;
     [@bs.send.pipe: t]
     external draw:
       (vertexCount, instanceCount, firstVertex, firstInstance) => unit;
@@ -462,6 +545,10 @@ module PassEncoder = {
     [@bs.send.pipe: t] external setPipeline: Pipeline.RayTracing.t => unit;
     [@bs.send.pipe: t]
     external setBindGroup: (BindGroupLayout.bindingPoint, BindGroup.t) => unit;
+    [@bs.send.pipe: t]
+    external setDynamicBindGroup:
+      (BindGroupLayout.bindingPoint, BindGroup.t, int) => unit =
+      "setBindGroup";
     [@bs.send.pipe: t]
     external traceRays:
       (
@@ -555,6 +642,7 @@ module Device = {
     AccelerationContainer.descriptor => AccelerationContainer.t;
   [@bs.send.pipe: t]
   external createCommandEncoder: CommandEncoder.descriptor => CommandEncoder.t;
+  [@bs.send.pipe: t] external createTexture: Texture.descriptor => Texture.t;
 };
 
 module Context = {

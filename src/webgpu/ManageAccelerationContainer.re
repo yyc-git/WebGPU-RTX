@@ -38,7 +38,6 @@ module InstanceBuffer = {
     let dataView = DataView.make(instanceBufferArrayBuffer);
     let offset = _computeInstanceOffset(instanceIndex);
 
-
     let offset =
       ArrayUtils.range(0, 12)
       |> ArrayUtils.reduceOneParam(
@@ -98,7 +97,6 @@ module InstanceBuffer = {
 
   let convertInstanceTransformDataToContainerTransformMatrix =
       ((translation, rotation, scale)) => {
-
     Matrix4.createIdentityMatrix4()
     |> Matrix4.fromTranslationRotationScale(
          translation,
@@ -184,13 +182,12 @@ let _updateInstanceBuffer =
     GameObject.getAllGeometryGameObjects(state)
     |> ArrayUtils.reduceOneParam(
          (. (instanceBufferArrayBuffer, instanceIndex), gameObject) => {
-           let transform =
-             GameObject.getTransform(gameObject, state) |> Js.Option.getExn;
+           let transform = GameObject.unsafeGetTransform(gameObject, state);
 
            let geometryContainer =
              Array.unsafe_get(
                geometryContainers,
-               GameObject.getGeometry(gameObject, state) |> Js.Option.getExn,
+               GameObject.unsafeGetGeometry(gameObject, state),
              );
 
            (
@@ -205,14 +202,13 @@ let _updateInstanceBuffer =
                  instanceIndex,
                  0xFF,
                  InstanceBuffer.convertHitGroupIndexToInstanceOffset(
-                   GameObject.getShader(gameObject, state) |> Js.Option.getExn,
+                   GameObject.unsafeGetShader(gameObject, state) 
                  ),
                  AccelerationInstanceFlag.triangle_cull_disable,
                  _getGeomtryContainerHandle(
                    Array.unsafe_get(
                      geometryContainers,
-                     GameObject.getGeometry(gameObject, state)
-                     |> Js.Option.getExn,
+                     GameObject.unsafeGetGeometry(gameObject, state)
                    ),
                  ),
                ),

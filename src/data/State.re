@@ -61,16 +61,16 @@ let create = () => {
   cameraView: {
     index: 0,
     currentCameraView: None,
-    viewMatrixInverseMap: ImmutableSparseMap.createEmpty(),
+    cameraPositionMap: ImmutableSparseMap.createEmpty(),
     lastViewMatrixInverseMap: ImmutableSparseMap.createEmpty(),
     projectionMatrixInverseMap: ImmutableSparseMap.createEmpty(),
   },
-  gpuBuffer: {
-    uniformBuffer: {
-      cameraBufferData: {
-        cameraData: None,
-        cameraBuffer: None,
-      },
-    },
-  },
+  // gpuBuffer: {
+  //   uniformBuffer: {
+  //     cameraBufferData: {
+  //       cameraData: None,
+  //       cameraBuffer: None,
+  //     },
+  //   },
+  // },
 };

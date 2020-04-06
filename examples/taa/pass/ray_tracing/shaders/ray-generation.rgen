@@ -1,0 +1,87 @@
+#version 460
+#extension GL_NV_ray_tracing : require
+#pragma shader_stage(raygen)
+
+#include "../../shaders/camera.glsl"
+#include "../../shaders/phong_material.glsl"
+#include "isShadowedDefine.glsl"
+#include "light.glsl"
+#include "phong_compute.glsl"
+#include "shadow_ray.glsl"
+
+
+layout(binding = 0) uniform sampler2D gPositionTexture;
+layout(binding = 1) uniform sampler2D gNormalTexture;
+layout(binding = 2) uniform sampler2D gDiffuseTexture;
+layout(binding = 3) uniform sampler2D gSpecularShininessTexture;
+layout(binding = 4) uniform sampler2D gDepthTexture;
+
+layout(location = 0) rayPayloadNV vec3 hitValue;
+
+layout(set = 0, binding = 0) uniform accelerationStructureNV topLevelAS;
+
+layout(std140, set = 0, binding = 1) buffer PixelBuffer { vec4 pixels[]; }
+pixelBuffer;
+
+vec2 getLanuchIndex(uvec3 launchIDNV, uvec3 launchSizeNV) {
+  const vec2 pixelCenter = vec2(launchIDNV.xy) + vec2(0.5);
+  const vec2 inUV = pixelCenter / vec2(launchSizeNV.xy);
+
+  return inUV * 2.0 - 1.0;
+}
+
+bool isNotBackground(vec4 worldPosition) { return worldPosition.w != 0.0; }
+
+void main() {
+  vec2 lanuchIndex = getLanuchIndex(gl_LaunchIDNV, gl_LaunchSizeNV);
+
+  vec4 worldPosition = texture(gPositionTexture, lanuchIndex);
+  vec3 worldNormal = texture(gNormalTexture, lanuchIndex).rgb;
+  vec3 diffuse = texture(gDiffuseTexture, lanuchIndex).rgb;
+  vec4 specularShininess = texture(gSpecularShininessTexture, lanuchIndex);
+  vec3 specular = vec3(specularShininess);
+  float shininess = specularShininess.a;
+  float depth = texture(gDepthTexture, lanuchIndex).r;
+
+  hitValue = vec3(0.0);
+
+  if (isNotBackground(worldPosition)) {
+    vec3 lightDir;
+    float lightIntensity;
+    float lightDistance;
+
+    getLightData(lightIntensity, lightDistance, lightDir);
+
+    // Diffuse
+    vec3 diffuse = computeDiffuse(getMaterialDiffuse(), lightDir, worldNormal);
+
+    vec3 specular = vec3(0.0);
+    float attenuation = 1.0;
+
+    // Tracing shadow ray only if the light is visible from the surface
+    if (dot(worldNormal, lightDir) > 0) {
+      float tMin = 0.001;
+      float tMax = lightDistance;
+      // vec3 origin = gl_WorldRayOriginNV + gl_WorldRayDirectionNV * gl_HitTNV;
+      vec3 origin = vec3(worldPosition);
+      vec3 rayDir = lightDir;
+
+      bool isShadowed =
+          shadowRayVisibility(topLevelAS, 1, origin, rayDir, tMin, tMax);
+
+      if (isShadowed) {
+        attenuation = 0.3;
+      } else {
+        specular = computeSpecular(
+            getMaterialSpecular(), getMaterialShininess(),
+            getViewDir(vec3(worldPosition)), lightDir, worldNormal);
+      }
+    }
+
+    hitValue = vec3(lightIntensity * attenuation * (diffuse + specular));
+  }
+
+  const uint pixelIndex = gl_LaunchIDNV.y * gl_LaunchSizeNV.x + gl_LaunchIDNV.x;
+
+  pixelBuffer.pixels[pixelIndex] = vec4(hitValue, 1.0);
+}

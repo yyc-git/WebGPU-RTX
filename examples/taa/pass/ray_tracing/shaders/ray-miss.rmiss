@@ -4,6 +4,4 @@
 
 layout(location = 0) rayPayloadInNV vec3 hitValue;
 
-void main() {
-  hitValue = vec3(0.15);
-}
+void main() { hitValue = vec3(0.15); }

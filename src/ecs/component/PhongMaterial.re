@@ -13,14 +13,19 @@ let create = state => {
   );
 };
 
-let setAmbient = (phongMaterial, ambient, state) => {
-  ...state,
-  phongMaterial: {
-    ...state.phongMaterial,
-    ambientMap:
-      state.phongMaterial.ambientMap
-      |> ImmutableSparseMap.set(phongMaterial, ambient),
-  },
+// let setAmbient = (phongMaterial, ambient, state) => {
+//   ...state,
+//   phongMaterial: {
+//     ...state.phongMaterial,
+//     ambientMap:
+//       state.phongMaterial.ambientMap
+//       |> ImmutableSparseMap.set(phongMaterial, ambient),
+//   },
+// };
+
+let unsafeGetDiffuse = (phongMaterial, state) => {
+  state.phongMaterial.diffuseMap
+  |> ImmutableSparseMap.unsafeGet(phongMaterial);
 };
 
 let setDiffuse = (phongMaterial, diffuse, state) => {
@@ -33,6 +38,11 @@ let setDiffuse = (phongMaterial, diffuse, state) => {
   },
 };
 
+let unsafeGetSpecular = (phongMaterial, state) => {
+  state.phongMaterial.specularMap
+  |> ImmutableSparseMap.unsafeGet(phongMaterial);
+};
+
 let setSpecular = (phongMaterial, specular, state) => {
   ...state,
   phongMaterial: {
@@ -41,6 +51,11 @@ let setSpecular = (phongMaterial, specular, state) => {
       state.phongMaterial.specularMap
       |> ImmutableSparseMap.set(phongMaterial, specular),
   },
+};
+
+let unsafeGetShininess = (phongMaterial, state) => {
+  state.phongMaterial.shininessMap
+  |> ImmutableSparseMap.unsafeGet(phongMaterial);
 };
 
 let setShininess = (phongMaterial, shininess, state) => {
@@ -53,22 +68,22 @@ let setShininess = (phongMaterial, shininess, state) => {
   },
 };
 
-let setIllum = (phongMaterial, illum, state) => {
-  ...state,
-  phongMaterial: {
-    ...state.phongMaterial,
-    illumMap:
-      state.phongMaterial.illumMap
-      |> ImmutableSparseMap.set(phongMaterial, illum),
-  },
-};
+// let setIllum = (phongMaterial, illum, state) => {
+//   ...state,
+//   phongMaterial: {
+//     ...state.phongMaterial,
+//     illumMap:
+//       state.phongMaterial.illumMap
+//       |> ImmutableSparseMap.set(phongMaterial, illum),
+//   },
+// };
 
-let setDissolve = (phongMaterial, dissolve, state) => {
-  ...state,
-  phongMaterial: {
-    ...state.phongMaterial,
-    dissolveMap:
-      state.phongMaterial.dissolveMap
-      |> ImmutableSparseMap.set(phongMaterial, dissolve),
-  },
-};
+// let setDissolve = (phongMaterial, dissolve, state) => {
+//   ...state,
+//   phongMaterial: {
+//     ...state.phongMaterial,
+//     dissolveMap:
+//       state.phongMaterial.dissolveMap
+//       |> ImmutableSparseMap.set(phongMaterial, dissolve),
+//   },
+// };

@@ -92,16 +92,21 @@ let addArcballCameraController = (gameObject, cameraController, state) => {
   },
 };
 
-let getTransform = (gameObject, state) => {
-  state.gameObject.transformMap |> ImmutableSparseMap.get(gameObject);
+let unsafeGetTransform = (gameObject, state) => {
+  state.gameObject.transformMap |> ImmutableSparseMap.unsafeGet(gameObject);
 };
 
-let getShader = (gameObject, state) => {
-  state.gameObject.shaderMap |> ImmutableSparseMap.get(gameObject);
+let unsafeGetPhongMaterial = (gameObject, state) => {
+  state.gameObject.phongMaterialMap
+  |> ImmutableSparseMap.unsafeGet(gameObject);
 };
 
-let getGeometry = (gameObject, state) => {
-  state.gameObject.geometryMap |> ImmutableSparseMap.get(gameObject);
+let unsafeGetShader = (gameObject, state) => {
+  state.gameObject.shaderMap |> ImmutableSparseMap.unsafeGet(gameObject);
+};
+
+let unsafeGetGeometry = (gameObject, state) => {
+  state.gameObject.geometryMap |> ImmutableSparseMap.unsafeGet(gameObject);
 };
 
 let getAllGeometryGameObjects = state => {

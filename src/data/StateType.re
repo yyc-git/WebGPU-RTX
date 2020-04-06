@@ -1,5 +1,7 @@
 open WebGPU;
 
+open Js.Typed_array;
+
 type transform = {
   index: int,
   translationMap:
@@ -12,24 +14,20 @@ type transform = {
 
 type geometry = {
   index: int,
-  vertexDataMap:
-    ImmutableSparseMap.t(
-      GeometryType.geometry,
-      (array(float), array(float), array(float)),
-    ),
+  vertexDataMap: ImmutableSparseMap.t(GeometryType.geometry, array(float)),
   indexDataMap: ImmutableSparseMap.t(GeometryType.geometry, array(int)),
 };
 
-type color3 = (float, float, float);
-
 type phongMaterial = {
   index: int,
-  ambientMap: ImmutableSparseMap.t(PhongMaterialType.phongMaterial, color3),
-  diffuseMap: ImmutableSparseMap.t(PhongMaterialType.phongMaterial, color3),
-  specularMap: ImmutableSparseMap.t(PhongMaterialType.phongMaterial, color3),
+  // ambientMap: ImmutableSparseMap.t(PhongMaterialType.phongMaterial, ColorType.color3),
+  diffuseMap:
+    ImmutableSparseMap.t(PhongMaterialType.phongMaterial, ColorType.color3),
+  specularMap:
+    ImmutableSparseMap.t(PhongMaterialType.phongMaterial, ColorType.color3),
   shininessMap: ImmutableSparseMap.t(PhongMaterialType.phongMaterial, float),
-  illumMap: ImmutableSparseMap.t(PhongMaterialType.phongMaterial, int),
-  dissolveMap: ImmutableSparseMap.t(PhongMaterialType.phongMaterial, float),
+  // illumMap: ImmutableSparseMap.t(PhongMaterialType.phongMaterial, int),
+  // dissolveMap: ImmutableSparseMap.t(PhongMaterialType.phongMaterial, float),
 };
 
 type directionLight = {
@@ -98,17 +96,34 @@ type arcballCameraController = {
 type cameraView = {
   index: int,
   currentCameraView: option(CameraViewType.cameraView),
-  viewMatrixInverseMap:
+  // viewMatrixInverseMap:
+  //   ImmutableSparseMap.t(
+  //     CameraViewType.cameraView,
+  //     Js.Typed_array.Float32Array.t,
+  //   ),
+  // lastViewMatrixInverseMap:
+  //   ImmutableSparseMap.t(
+  //     CameraViewType.cameraView,
+  //     option(Js.Typed_array.Float32Array.t),
+  //   ),
+  // projectionMatrixInverseMap:
+  //   ImmutableSparseMap.t(
+  //     CameraViewType.cameraView,
+  //     Js.Typed_array.Float32Array.t,
+  //   ),
+  cameraPositionMap:
+    ImmutableSparseMap.t(CameraViewType.cameraView, (float, float, float)),
+  viewMatrixMap:
     ImmutableSparseMap.t(
       CameraViewType.cameraView,
       Js.Typed_array.Float32Array.t,
     ),
-  lastViewMatrixInverseMap:
-    ImmutableSparseMap.t(
-      CameraViewType.cameraView,
-      option(Js.Typed_array.Float32Array.t),
-    ),
-  projectionMatrixInverseMap:
+  // lastViewMatrixMap:
+  //   ImmutableSparseMap.t(
+  //     CameraViewType.cameraView,
+  //     option(Js.Typed_array.Float32Array.t),
+  //   ),
+  projectionMatrixMap:
     ImmutableSparseMap.t(
       CameraViewType.cameraView,
       Js.Typed_array.Float32Array.t,
@@ -150,16 +165,115 @@ type gameObject = {
     ),
 };
 
-type cameraBufferData = {
-  cameraData: option(Js.Typed_array.Float32Array.t),
-  cameraBuffer: option(Buffer.t),
+// type cameraBufferData = {
+//   cameraData: option(Js.Typed_array.Float32Array.t),
+//   cameraBuffer: option(Buffer.t),
+// };
+
+// type uniformBuffer = {cameraBufferData};
+
+// type gpuBuffer = {uniformBuffer};
+
+type setSlot = int;
+
+type bufferName = string;
+
+type textureViewName = string;
+
+type staticBindGroupData = {
+  setSlot,
+  bindGroup: BindGroup.t,
 };
 
-type uniformBuffer = {cameraBufferData};
+type dynamicBindGroupData = {
+  setSlot,
+  bindGroup: BindGroup.t,
+  // offset: int,
+  // alignedUniformBytes: int,
+  offsetArrMap: ImmutableSparseMap.t(GameObjectType.gameObject, array(int)),
+};
 
-type gpuBuffer = {uniformBuffer};
+// type vertexBufferData = {
+//   buffer: Buffer.t,
+//   offset: int,
+// };
 
-type state = {
+// type renderGameObjectData = {
+//   // dynamicBindGroupData,
+//   vertexBufferOffset: int,
+//   vertexCount: int,
+// };
+
+type gbufferPassData = {
+  pipeline: option(Pipeline.t),
+  vertexBuffer: option(Buffer.t),
+  indexBuffer: option(Buffer.t),
+  depthTextureView: option(TextureView.t),
+  staticBindGroupDataArr: array(staticBindGroupData),
+  dynamicBindGroupDataArr: array(dynamicBindGroupData),
+  renderGameObjectArr: array(GameObjectType.gameObject),
+  // renderGameObjectDataMap:
+  //   ImmutableSparseMap.t(GameObjectType.gameObject, renderGameObjectData),
+  vertexBufferOffsetMap: ImmutableSparseMap.t(GameObjectType.gameObject, int),
+  vertexCountMap: ImmutableSparseMap.t(GameObjectType.gameObject, int),
+};
+
+type blitPassData = {
+  pipeline: option(Pipeline.t),
+  bindGroup: option(BindGroup.t),
+};
+
+// type rayTracingPassData = {
+//   pipeline: Pipeline.t,
+//   indexBuffer: Buffer.t,
+//   drawDataList:list(drawData)
+// };
+
+// type renderPassData = {
+//   execOrder: int,
+//   dynamicBindGroups: list(dynamicBindGroupData),
+//   uniformBufferMap: ImmutableHashMap.t(bufferName, Buffer.t),
+//   storageBufferMap: ImmutableHashMap.t(bufferName, Buffer.t),
+//   textureViewMap: ImmutableHashMap.t(textureViewName, TextureView.t),
+// };
+
+// // type traceRayData = {
+// //   rayGenerationOffset: int,
+// //   rayCloestHitOffset: int,
+// //   rayMissOffset: int,
+// //   queryWidthDimension: int,
+// //   queryHeightDimension: int,
+// //   queryDepthDimension: int,
+// // };
+
+// type rayTracingPassData = {
+//   execOrder: int,
+//   dynamicBindGroups: list(dynamicBindGroupData),
+//   uniformBufferMap: ImmutableHashMap.t(bufferName, Buffer.t),
+//   storageBufferMap: ImmutableHashMap.t(bufferName, Buffer.t),
+//   textureViewMap: ImmutableHashMap.t(textureViewName, TextureView.t),
+//   traceRayData,
+// };
+
+type pass = {
+  gbufferPassData,
+  blitPassData,
+  uniformBufferDataMap:
+    ImmutableHashMap.t(bufferName, (Buffer.t, Float32Array.t)),
+  // storageBufferMap: ImmutableHashMap.t(bufferName, Buffer.t),
+  textureViewMap: ImmutableHashMap.t(textureViewName, TextureView.t),
+};
+
+type passFuncData = {
+  init: state => state,
+  execute: state => unit,
+}
+and director = {
+  initFuncArr: array(state => state),
+  updateFuncArr: array(state => state),
+  passFuncDataArr: array(passFuncData),
+}
+and state = {
   gameObject,
   transform,
   geometry,
@@ -169,5 +283,5 @@ type state = {
   transformAnimation,
   cameraView,
   arcballCameraController,
-  gpuBuffer,
+  pass,
 };

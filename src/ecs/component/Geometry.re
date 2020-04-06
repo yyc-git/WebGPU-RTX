@@ -14,11 +14,31 @@ let create = state => {
 };
 
 let buildTriangleVertexData = () => {
-  let vertices = [|0.0, 1.0, 0.0, (-1.0), (-1.0), 0.0, 1.0, (-1.0), 0.0|];
-  let normals = [|0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0|];
-  let texCoords = [|0.5, 1.0, 0.0, 0.0, 1.0, 0.0|];
-
-  (vertices, normals, texCoords);
+  [|
+    // let vertices = [|0.0, 1.0, 0.0, (-1.0), (-1.0), 0.0, 1.0, (-1.0), 0.0|];
+    // let normals = [|0.0, 0.0, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0, 1.0|];
+    // // let texCoords = [|0.5, 1.0, 0.0, 0.0, 1.0, 0.0|];
+    // // (vertices, normals, texCoords);
+    // (vertices, normals);
+    0.0,
+    1.0,
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    (-1.0),
+    (-1.0),
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+    1.0,
+    (-1.0),
+    0.0,
+    0.0,
+    0.0,
+    1.0,
+  |];
 };
 
 let buildTriangleIndexData = () => {
@@ -28,43 +48,77 @@ let buildTriangleIndexData = () => {
 };
 
 let buildPlaneVertexData = () => {
-  let vertices = [|
+  [|
+    // let vertices = [|
+    //   1.0,
+    //   0.0,
+    //   (-1.0),
+    //   1.0,
+    //   0.0,
+    //   1.0,
+    //   (-1.0),
+    //   0.0,
+    //   1.0,
+    //   (-1.0),
+    //   0.0,
+    //   (-1.0),
+    // |];
+    // let normals = [|
+    //   0.0,
+    //   1.0,
+    //   0.0,
+    //   0.0,
+    //   1.0,
+    //   0.0,
+    //   0.0,
+    //   1.0,
+    //   0.0,
+    //   0.0,
+    //   1.0,
+    //   0.0,
+    // |];
+    // // let texCoords = [|0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0|];
+    // // (vertices, normals, texCoords);
+    // (vertices, normals);
     1.0,
     0.0,
     (-1.0),
+    0.0,
     1.0,
     0.0,
     1.0,
+    0.0,
+    1.0,
+    0.0,
+    1.0,
+    0.0,
     (-1.0),
     0.0,
     1.0,
+    0.0,
+    1.0,
+    0.0,
     (-1.0),
     0.0,
     (-1.0),
+    0.0,
+    1.0,
+    0.0,
   |];
-  let normals = [|
-    0.0,
-    1.0,
-    0.0,
-    0.0,
-    1.0,
-    0.0,
-    0.0,
-    1.0,
-    0.0,
-    0.0,
-    1.0,
-    0.0,
-  |];
-  let texCoords = [|0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0|];
-
-  (vertices, normals, texCoords);
 };
 
 let buildPlaneIndexData = () => {
   let indices = [|2, 1, 0, 0, 3, 2|];
 
   indices;
+};
+
+let computeVertexCount = vertices => {
+  (vertices |> Js.Array.length) / 6;
+};
+
+let unsafeGetVertexData = (geometry, state) => {
+  state.geometry.vertexDataMap |> ImmutableSparseMap.unsafeGet(geometry);
 };
 
 let setVertexData = (geometry, vertexData, state) => {
@@ -75,6 +129,10 @@ let setVertexData = (geometry, vertexData, state) => {
       state.geometry.vertexDataMap
       |> ImmutableSparseMap.set(geometry, vertexData),
   },
+};
+
+let unsafeGetIndexData = (geometry, state) => {
+  state.geometry.indexDataMap |> ImmutableSparseMap.unsafeGet(geometry);
 };
 
 let setIndexData = (geometry, indexData, state) => {
@@ -94,8 +152,6 @@ let getAllVertexData = state => {
 let getAllIndexData = state => {
   state.geometry.indexDataMap |> ImmutableSparseMap.getValidValues;
 };
-
-
 
 let getCount = state => {
   state.geometry.index;
