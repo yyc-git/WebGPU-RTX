@@ -137,7 +137,8 @@ let _ =
             |> toCalledWith([|
                  0,
                  Float32Array.make(
-                   Geometry.buildTriangleVertexData() |> Tuple3.getFirst,
+                   //  Geometry.buildTriangleVertexData() |> Tuple3.getFirst,
+                   Geometry.buildTriangleVertexData(),
                  )
                  |> Obj.magic,
                |]);
@@ -259,12 +260,12 @@ let _ =
             let (mat1, state) = PhongMaterial.create(state);
             let state =
               state
-              |> PhongMaterial.setAmbient(mat1, (0.1, 0.1, 0.1))
+              // |> PhongMaterial.setAmbient(mat1, (0.1, 0.1, 0.1))
               |> PhongMaterial.setDiffuse(mat1, (1.0, 0., 0.))
               |> PhongMaterial.setSpecular(mat1, (0.2, 0.0, 1.0))
-              |> PhongMaterial.setShininess(mat1, 36.)
-              |> PhongMaterial.setIllum(mat1, 2)
-              |> PhongMaterial.setDissolve(mat1, 1.);
+              |> PhongMaterial.setShininess(mat1, 36.);
+              // |> PhongMaterial.setIllum(mat1, 2)
+              // |> PhongMaterial.setDissolve(mat1, 1.);
 
             let (shader1, state) = Shader.create(state);
             let state = state |> Shader.setHitGroupIndex(shader1, 0);
@@ -303,12 +304,12 @@ let _ =
             let (mat2, state) = PhongMaterial.create(state);
             let state =
               state
-              |> PhongMaterial.setAmbient(mat2, (0.1, 0.1, 0.1))
+              // |> PhongMaterial.setAmbient(mat2, (0.1, 0.1, 0.1))
               |> PhongMaterial.setDiffuse(mat2, (0.0, 1., 0.))
               |> PhongMaterial.setSpecular(mat2, (0.5, 0.0, 0.5))
-              |> PhongMaterial.setShininess(mat2, 72.)
-              |> PhongMaterial.setIllum(mat2, 2)
-              |> PhongMaterial.setDissolve(mat2, 1.);
+              |> PhongMaterial.setShininess(mat2, 72.);
+              // |> PhongMaterial.setIllum(mat2, 2)
+              // |> PhongMaterial.setDissolve(mat2, 1.);
 
             let (shader2, state) = Shader.create(state);
             let state = state |> Shader.setHitGroupIndex(shader2, 1);

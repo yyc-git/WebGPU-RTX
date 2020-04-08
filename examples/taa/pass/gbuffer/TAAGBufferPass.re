@@ -2,97 +2,43 @@ open WebGPU;
 
 open Js.Typed_array;
 
-let _buildVertexBufferDataAndSetVertexData =
-    (device, allRenderGameObjects, state) => {
-  let allRenderGameObjectVertexData =
-    allRenderGameObjects
-    |> Js.Array.map(renderGameObject => {
-         let geometry = GameObject.unsafeGetGeometry(renderGameObject, state);
+open StateType;
 
-         (renderGameObject, Geometry.unsafeGetVertexData(geometry, state));
-       });
+let _buildVertexAndIndexBufferMap = (device, allRenderGameObjects, state) => {
+  allRenderGameObjects
+  |> Js.Array.map(renderGameObject => {
+       GameObject.unsafeGetGeometry(renderGameObject, state)
+     })
+  |> ArrayUtils2.removeDuplicateItems
+  |> ArrayUtils.reduceOneParam(
+       (. vertexAndIndexBufferMap, geometry) => {
+         let vertices = Geometry.unsafeGetVertexData(geometry, state);
+         let indices = Geometry.unsafeGetIndexData(geometry, state);
 
-  let vertexBufferDataLength =
-    allRenderGameObjectVertexData
-    |> ArrayUtils.reduceOneParam(
-         (. length, (_, vertices)) => {
-           length + (vertices |> Js.Array.length)
-         },
-         0,
-       );
+         let vertexBuffer =
+           device
+           |> Device.createBuffer({
+                "size":
+                  Js.Array.length(vertices) * Float32Array._BYTES_PER_ELEMENT,
+                "usage": BufferUsage.copy_dst lor BufferUsage.vertex,
+              });
+         vertexBuffer
+         |> Buffer.setSubFloat32Data(0, Float32Array.make(vertices));
 
-  let (vertexBufferData, _, state) =
-    allRenderGameObjectVertexData
-    |> ArrayUtils.reduceOneParam(
-         (. (vertexBufferData, offset, state), (renderGameObject, vertices)) => {
-           let (vertexBufferData, newOffset) =
-             vertexBufferData
-             |> TypeArray.Float32Array.setArray(offset, vertices);
+         let indexBuffer =
+           device
+           |> Device.createBuffer({
+                "size":
+                  Js.Array.length(indices) * Uint32Array._BYTES_PER_ELEMENT,
+                "usage": BufferUsage.copy_dst lor BufferUsage.index,
+              });
+         indexBuffer |> Buffer.setSubUint32Data(0, Uint32Array.make(indices));
 
-           (
-             vertexBufferData,
-             newOffset,
-             state
-             |> Pass.GBufferPass.setVertexBufferOffset(
-                  renderGameObject,
-                  offset * Float32Array.byteLength,
-                )
-             |> Pass.GBufferPass.setVertexCount(
-                  renderGameObject,
-                  Geometry.computeVertexCount(vertices),
-                ),
-           );
-         },
-         (Float32Array.fromLength(vertexBufferDataLength), 0, state),
-       );
-  let vertexBuffer =
-    device
-    |> Device.createBuffer({
-         "size": vertexBufferDataLength * Float32Array._BYTES_PER_ELEMENT,
-         "usage": BufferUsage.copy_dst lor BufferUsage.vertex,
-       });
-  vertexBuffer |> Buffer.setSubFloat32Data(0, vertexBufferData);
-
-  (vertexBuffer, state);
-};
-
-let _buildIndexBuffer = (device, allRenderGameObjects, state) => {
-  let allRenderGameObjectIndexData =
-    allRenderGameObjects
-    |> Js.Array.map(renderGameObject => {
-         let geometry = GameObject.unsafeGetGeometry(renderGameObject, state);
-
-         Geometry.unsafeGetIndexData(geometry, state);
-       });
-
-  let indexBufferDataLength =
-    allRenderGameObjectIndexData
-    |> ArrayUtils.reduceOneParam(
-         (. length, indices) => {length + (indices |> Js.Array.length)},
-         0,
-       );
-
-  let (indexBufferData, _) =
-    allRenderGameObjectIndexData
-    |> ArrayUtils.reduceOneParam(
-         (. (indexBufferData, offset), indices) => {
-           let (indexBufferData, newOffset) =
-             indexBufferData
-             |> TypeArray.Uint32Array.setArray(offset, indices);
-
-           (indexBufferData, newOffset);
-         },
-         (Uint32Array.fromLength(indexBufferDataLength), 0),
-       );
-  let indexBuffer =
-    device
-    |> Device.createBuffer({
-         "size": indexBufferDataLength * Uint32Array._BYTES_PER_ELEMENT,
-         "usage": BufferUsage.copy_dst lor BufferUsage.index,
-       });
-  indexBuffer |> Buffer.setSubUint32Data(0, indexBufferData);
-
-  indexBuffer;
+         vertexAndIndexBufferMap
+         |> ImmutableSparseMap.set(geometry, (vertexBuffer, indexBuffer));
+       },
+       ImmutableSparseMap.createEmpty(),
+     );
 };
 
 let _createTextureData = (device, window, format, usage) => {
@@ -353,7 +299,7 @@ let init = (device, window, state) => {
        );
 
   let (cameraBuffer, cameraBufferData) =
-    TAABuffer.CamerBuffer.unsafeGetCameraBufferData(state);
+    TAABuffer.CameraBuffer.unsafeGetCameraBufferData(state);
 
   let cameraBindGroup =
     device
@@ -373,18 +319,12 @@ let init = (device, window, state) => {
   let state =
     state |> Pass.GBufferPass.addStaticBindGroupData(2, cameraBindGroup);
 
-  let (vertexBuffer, state) =
-    _buildVertexBufferDataAndSetVertexData(
-      device,
-      allRenderGameObjects,
-      state,
-    );
+  let vertexAndIndexBufferMap =
+    _buildVertexAndIndexBufferMap(device, allRenderGameObjects, state);
 
-  let state = state |> Pass.GBufferPass.setVertexBuffer(vertexBuffer);
-
-  let indexBuffer = _buildIndexBuffer(device, allRenderGameObjects, state);
-
-  let state = state |> Pass.GBufferPass.setIndexBuffer(indexBuffer);
+  let state =
+    state
+    |> Pass.GBufferPass.setVertexAndIndexBufferMap(vertexAndIndexBufferMap);
 
   let baseShaderPath = "examples/taa/pass/gbuffer/shaders";
 
@@ -408,6 +348,8 @@ let init = (device, window, state) => {
   let shininessRenderTargetFormat = "r16float";
   let depthRenderTargetFormat = "r16float";
 
+  let depthTextureFormat = "depth24plus";
+
   let pipeline =
     device
     |> Device.createRenderPipeline(
@@ -417,7 +359,7 @@ let init = (device, window, state) => {
              |> Device.createPipelineLayout({
                   "bindGroupLayouts": [|
                     modelBindGroupLayout,
-                    phongMaterialBindGroup,
+                    phongMaterialBindGroupLayout,
                     cameraBindGroupLayout,
                   |],
                 }),
@@ -490,6 +432,13 @@ let init = (device, window, state) => {
                ~colorBlend=Pipeline.Render.blendDescriptor(),
              ),
            |],
+           ~depthStencilState=
+             Pipeline.Render.depthStencilState(
+               ~depthWriteEnabled=true,
+               ~depthCompare="less",
+               ~format=depthTextureFormat,
+               (),
+             ),
            (),
          ),
        );
@@ -534,7 +483,7 @@ let init = (device, window, state) => {
     _createTextureData(
       device,
       window,
-      "depth24plus",
+      depthTextureFormat,
       TextureUsage.output_attachment,
     );
 
@@ -551,7 +500,7 @@ let init = (device, window, state) => {
            ~mipLevelCount=1,
            ~sampleCount=1,
            ~dimension="2d",
-           ~format="depth24plus",
+           ~format=depthTextureFormat,
            ~usage=TextureUsage.output_attachment,
          ),
        );
@@ -610,26 +559,22 @@ let execute = (device, queue, state) => {
        Pass.GBufferPass.unsafeGetPipeline(state),
      );
   Pass.GBufferPass.getStaticBindGroupDataArr(state)
-  |> Js.Array.forEach(({setSlot, bindGroup}) => {
+  |> Js.Array.forEach(({setSlot, bindGroup}: staticBindGroupData) => {
        renderPass |> PassEncoder.Render.setBindGroup(setSlot, bindGroup)
      });
 
-  PassEncoder.Render.setIndexBuffer(
-    Pass.GBufferPass.unsafeGetIndexBuffer(state),
-  );
-
-  let vertexBuffer = Pass.GBufferPass.unsafeGetVertexBuffer(state);
-
   Pass.GBufferPass.getRenderGameObjectArr(state)
   |> Js.Array.forEach(renderGameObject => {
-       PassEncoder.Render.setVertexBuffer(
-         0,
-         vertexBuffer,
-         Pass.GBufferPass.unsafeGetVertexBufferOffset(state),
-       );
+       let geometry = GameObject.unsafeGetGeometry(renderGameObject, state);
+       let (vertexBuffer, indexBuffer) =
+         Pass.GBufferPass.unsafeGetVertexAndIndexBuffer(geometry, state);
+
+      renderPass |> PassEncoder.Render.setVertexBuffer(0, vertexBuffer);
+      renderPass |> PassEncoder.Render.setIndexBuffer(indexBuffer);
 
        Pass.GBufferPass.getDynamicBindGroupDataArr(state)
-       |> Js.Array.forEach(({setSlot, bindGroup, offsetArrMap}) => {
+       |> Js.Array.forEach(
+            ({setSlot, bindGroup, offsetArrMap}: dynamicBindGroupData) => {
             renderPass
             |> PassEncoder.Render.setDynamicBindGroup(
                  setSlot,

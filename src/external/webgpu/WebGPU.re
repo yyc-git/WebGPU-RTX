@@ -395,7 +395,7 @@ module Pipeline = {
     type vertexState = {
       indexFormat: string,
       [@bs.optional]
-      vertexBuffers: array(Buffer.t),
+      vertexBuffers: array(vertexBuffer),
     };
 
     [@bs.deriving abstract]
@@ -424,6 +424,25 @@ module Pipeline = {
     };
 
     [@bs.deriving abstract]
+    type stencilStateFaceDescriptor = {
+      compare: string,
+      failOp: string,
+      depthFailOp: string,
+      passOp: string,
+    };
+
+    [@bs.deriving abstract]
+    type depthStencilState = {
+      depthWriteEnabled: bool,
+      depthCompare: string,
+      format: string,
+      [@bs.optional]
+      stencilFront: stencilStateFaceDescriptor,
+      [@bs.optional]
+      stencilBack: stencilStateFaceDescriptor,
+    };
+
+    [@bs.deriving abstract]
     type descriptor = {
       layout,
       [@bs.optional]
@@ -434,6 +453,8 @@ module Pipeline = {
       vertexState,
       rasterizationState,
       colorStates: array(colorState),
+      [@bs.optional]
+      depthStencilState,
     };
   };
 
@@ -493,7 +514,6 @@ module PassEncoder = {
 
     type depthStencilAttachment = {
       .
-      "clearColor": clearColor,
       "clearDepth": float,
       "depthLoadOp": string,
       "depthStoreOp": string,
@@ -507,7 +527,7 @@ module PassEncoder = {
     type descriptor = {
       colorAttachments: array(colorAttachment),
       [@bs.optional]
-      depthStencilAttachments: array(depthStencilAttachment),
+      depthStencilAttachment,
     };
 
     type vertexCount = int;
@@ -518,7 +538,11 @@ module PassEncoder = {
     [@bs.send.pipe: t] external setPipeline: Pipeline.Render.t => unit;
     [@bs.send.pipe: t]
     external setBindGroup: (BindGroupLayout.bindingPoint, BindGroup.t) => unit;
-    [@bs.send.pipe: t] external setVertexBuffer: (int, Buffer.t, int) => unit;
+    [@bs.send.pipe: t]
+    external setDynamicBindGroup:
+      (BindGroupLayout.bindingPoint, BindGroup.t, array(int)) => unit =
+      "setBindGroup";
+    [@bs.send.pipe: t] external setVertexBuffer: (int, Buffer.t) => unit;
     [@bs.send.pipe: t] external setIndexBuffer: Buffer.t => unit;
     [@bs.send.pipe: t]
     external draw:
@@ -545,10 +569,6 @@ module PassEncoder = {
     [@bs.send.pipe: t] external setPipeline: Pipeline.RayTracing.t => unit;
     [@bs.send.pipe: t]
     external setBindGroup: (BindGroupLayout.bindingPoint, BindGroup.t) => unit;
-    [@bs.send.pipe: t]
-    external setDynamicBindGroup:
-      (BindGroupLayout.bindingPoint, BindGroup.t, int) => unit =
-      "setBindGroup";
     [@bs.send.pipe: t]
     external traceRays:
       (

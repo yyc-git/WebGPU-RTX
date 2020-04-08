@@ -22,11 +22,11 @@ Director.load(window)
             TAAGBufferPass.init(device, window),
             TAAGBufferPass.execute(device, queue),
           )
-       |> Director.addPass(
+       |> Director.addPassFuncs(
             TAABlitPass.init(device, swapChainFormat),
             TAABlitPass.execute(device, queue, swapChain),
           )
-       |> Director.start(window);
+       |> Director.start(window, swapChain);
      },
      "error": e => {
        Js.log(e);

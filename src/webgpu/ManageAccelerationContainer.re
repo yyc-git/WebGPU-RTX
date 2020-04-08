@@ -116,7 +116,7 @@ let _getGeomtryContainerHandle = (geometryContainer: AccelerationContainer.t) =>
 
 let _buildSceneGeometryContainers = (device, state) => {
   ArrayUtils.zipWith(
-    ((vertices, _, _), indexData) => {(vertices, indexData)},
+    (vertices, indices) => {(vertices, indices)},
     Geometry.getAllVertexData(state),
     Geometry.getAllIndexData(state),
   )
@@ -202,13 +202,13 @@ let _updateInstanceBuffer =
                  instanceIndex,
                  0xFF,
                  InstanceBuffer.convertHitGroupIndexToInstanceOffset(
-                   GameObject.unsafeGetShader(gameObject, state) 
+                   GameObject.unsafeGetShader(gameObject, state),
                  ),
                  AccelerationInstanceFlag.triangle_cull_disable,
                  _getGeomtryContainerHandle(
                    Array.unsafe_get(
                      geometryContainers,
-                     GameObject.unsafeGetGeometry(gameObject, state)
+                     GameObject.unsafeGetGeometry(gameObject, state),
                    ),
                  ),
                ),

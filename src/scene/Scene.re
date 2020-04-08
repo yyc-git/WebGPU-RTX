@@ -1,4 +1,4 @@
-let init = (window, _time, state) => {
+let init = (window, state) => {
   ArcballCameraController.init(window);
 
   state;

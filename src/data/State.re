@@ -26,13 +26,13 @@ let create = () => {
   },
   phongMaterial: {
     index: 0,
-    ambientMap: ImmutableSparseMap.createEmpty(),
+    // ambientMap: ImmutableSparseMap.createEmpty(),
     diffuseMap: ImmutableSparseMap.createEmpty(),
     specularMap: ImmutableSparseMap.createEmpty(),
     shininessMap: ImmutableSparseMap.createEmpty(),
-    illumMap: ImmutableSparseMap.createEmpty(),
-    dissolveMap: ImmutableSparseMap.createEmpty(),
   },
+  // illumMap: ImmutableSparseMap.createEmpty(),
+  // dissolveMap: ImmutableSparseMap.createEmpty(),
   directionLight: {
     index: 0,
     intensityMap: ImmutableSparseMap.createEmpty(),
@@ -62,15 +62,29 @@ let create = () => {
     index: 0,
     currentCameraView: None,
     cameraPositionMap: ImmutableSparseMap.createEmpty(),
-    lastViewMatrixInverseMap: ImmutableSparseMap.createEmpty(),
-    projectionMatrixInverseMap: ImmutableSparseMap.createEmpty(),
+    viewMatrixMap: ImmutableSparseMap.createEmpty(),
+    projectionMatrixMap: ImmutableSparseMap.createEmpty(),
   },
-  // gpuBuffer: {
-  //   uniformBuffer: {
-  //     cameraBufferData: {
-  //       cameraData: None,
-  //       cameraBuffer: None,
-  //     },
-  //   },
-  // },
+  pass: {
+    gbufferPassData: {
+      pipeline: None,
+      depthTextureView: None,
+      staticBindGroupDataArr: [||],
+      dynamicBindGroupDataArr: [||],
+      renderGameObjectArr: [||],
+      vertexAndIndexBufferMap: ImmutableSparseMap.createEmpty(),
+      vertexCountMap: ImmutableSparseMap.createEmpty(),
+    },
+    blitPassData: {
+      pipeline: None,
+      bindGroup: None,
+    },
+    uniformBufferDataMap: ImmutableHashMap.createEmpty(),
+    textureViewMap: ImmutableHashMap.createEmpty(),
+  },
+  director: {
+    initFuncArr: [||],
+    updateFuncArr: [||],
+    passFuncDataArr: [||],
+  },
 };

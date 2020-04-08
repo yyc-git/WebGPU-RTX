@@ -1,6 +1,4 @@
-// open WebGPU;
-
-// open Js.Typed_array;
+open WebGPU;
 
 let buildScene = state => {
   let (light1, state) = GameObject.create(state);
@@ -171,7 +169,7 @@ let update = (window, time, state) => {
   let currentCameraView = state |> CameraView.unsafeGetCurrentCameraView;
   let state =
     state
-    |> TAABuffer.update(
+    |> TAABuffer.CameraBuffer.update(
          CameraView.unsafeGetCameraPosition(currentCameraView, state),
          CameraView.unsafeGetViewMatrix(currentCameraView, state),
          CameraView.unsafeGetProjectionMatrix(currentCameraView, state),

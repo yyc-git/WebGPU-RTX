@@ -205,21 +205,20 @@ type dynamicBindGroupData = {
 // };
 
 type gbufferPassData = {
-  pipeline: option(Pipeline.t),
-  vertexBuffer: option(Buffer.t),
-  indexBuffer: option(Buffer.t),
+  pipeline: option(Pipeline.Render.t),
+  // indexBuffer: option(Buffer.t),
   depthTextureView: option(TextureView.t),
   staticBindGroupDataArr: array(staticBindGroupData),
   dynamicBindGroupDataArr: array(dynamicBindGroupData),
   renderGameObjectArr: array(GameObjectType.gameObject),
-  // renderGameObjectDataMap:
-  //   ImmutableSparseMap.t(GameObjectType.gameObject, renderGameObjectData),
-  vertexBufferOffsetMap: ImmutableSparseMap.t(GameObjectType.gameObject, int),
+  vertexAndIndexBufferMap:
+    ImmutableSparseMap.t(GeometryType.geometry, (Buffer.t, Buffer.t)),
+  // indexBufferMap: ImmutableSparseMap.t(GeometryType.geometry, Buffer.t),
   vertexCountMap: ImmutableSparseMap.t(GameObjectType.gameObject, int),
 };
 
 type blitPassData = {
-  pipeline: option(Pipeline.t),
+  pipeline: option(Pipeline.Render.t),
   bindGroup: option(BindGroup.t),
 };
 
@@ -264,16 +263,19 @@ type pass = {
   textureViewMap: ImmutableHashMap.t(textureViewName, TextureView.t),
 };
 
+type time = float;
+
 type passFuncData = {
   init: state => state,
   execute: state => unit,
 }
 and director = {
   initFuncArr: array(state => state),
-  updateFuncArr: array(state => state),
+  updateFuncArr: array((time, state ) => state),
   passFuncDataArr: array(passFuncData),
 }
 and state = {
+  director,
   gameObject,
   transform,
   geometry,

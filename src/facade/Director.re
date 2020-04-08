@@ -73,7 +73,7 @@ let _init = (window, state) => {
   state |> Scene.init(window);
 };
 
-let start = (window, state) => {
+let start = (window, swapChain, state) => {
   let state = state |> _init(window);
 
   let state =
