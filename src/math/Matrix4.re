@@ -1,6 +1,24 @@
 open Js.Typed_array;
 
-let createIdentityMatrix4 = () => Float32Array.fromLength(16);
+let createIdentityMatrix4 = () =>
+  Js.Typed_array.Float32Array.make([|
+    1.,
+    0.,
+    0.,
+    0.,
+    0.,
+    1.,
+    0.,
+    0.,
+    0.,
+    0.,
+    1.,
+    0.,
+    0.,
+    0.,
+    0.,
+    1.,
+  |]);
 
 let fromTranslation = ((x, y, z), resultFloat32Arr) => {
   Float32Array.unsafe_set(resultFloat32Arr, 0, 1.);

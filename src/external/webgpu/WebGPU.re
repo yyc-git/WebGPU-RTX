@@ -425,9 +425,13 @@ module Pipeline = {
 
     [@bs.deriving abstract]
     type stencilStateFaceDescriptor = {
+      [@bs.optional]
       compare: string,
+      [@bs.optional]
       failOp: string,
+      [@bs.optional]
       depthFailOp: string,
+      [@bs.optional]
       passOp: string,
     };
 
@@ -436,9 +440,7 @@ module Pipeline = {
       depthWriteEnabled: bool,
       depthCompare: string,
       format: string,
-      [@bs.optional]
       stencilFront: stencilStateFaceDescriptor,
-      [@bs.optional]
       stencilBack: stencilStateFaceDescriptor,
     };
 
@@ -531,9 +533,12 @@ module PassEncoder = {
     };
 
     type vertexCount = int;
+    type indexCount = int;
     type instanceCount = int;
     type firstVertex = int;
+    type firstIndex = int;
     type firstInstance = int;
+    type baseVertex = firstVertex;
 
     [@bs.send.pipe: t] external setPipeline: Pipeline.Render.t => unit;
     [@bs.send.pipe: t]
@@ -547,6 +552,10 @@ module PassEncoder = {
     [@bs.send.pipe: t]
     external draw:
       (vertexCount, instanceCount, firstVertex, firstInstance) => unit;
+    [@bs.send.pipe: t]
+    external drawIndexed:
+      (indexCount, instanceCount, firstIndex, baseVertex, firstInstance) =>
+      unit;
     [@bs.send.pipe: t] external endPass: unit;
   };
 

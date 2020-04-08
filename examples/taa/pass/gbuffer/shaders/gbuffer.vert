@@ -8,7 +8,6 @@ layout(location = 1) in vec3 normal;
 
 layout(location = 0) out vec3 vPosition;
 layout(location = 1) out vec3 vNormal;
-layout(location = 2) out float vDepth;
 
 layout(std140, set = 0, binding = 0) uniform Model {
   mat3 normalMatrix;
@@ -21,9 +20,6 @@ void main() {
   vPosition = vec3(worldPosition);
   vNormal = uModel.normalMatrix * normal;
 
-  // gl_Position = uCamera.projectionMatrix * uCamera.viewMatrix *
-  // worldPosition;
   gl_Position = getProjectionMatrix() * getViewMatrix() * worldPosition;
-
-  vDepth = gl_Position.z / gl_Position.w;
+  gl_Position.y = -gl_Position.y;
 }

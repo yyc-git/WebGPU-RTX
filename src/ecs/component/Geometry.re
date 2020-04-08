@@ -117,6 +117,10 @@ let computeVertexCount = vertices => {
   (vertices |> Js.Array.length) / 6;
 };
 
+let computeIndexCount = indices => {
+  indices |> Js.Array.length;
+};
+
 let unsafeGetVertexData = (geometry, state) => {
   state.geometry.vertexDataMap |> ImmutableSparseMap.unsafeGet(geometry);
 };

@@ -4,12 +4,8 @@ open Js.Typed_array;
 
 open StateType;
 
-let _buildVertexAndIndexBufferMap = (device, allRenderGameObjects, state) => {
-  allRenderGameObjects
-  |> Js.Array.map(renderGameObject => {
-       GameObject.unsafeGetGeometry(renderGameObject, state)
-     })
-  |> ArrayUtils2.removeDuplicateItems
+let _buildVertexAndIndexBufferMap = (device, allUniqueGeometries, state) => {
+  allUniqueGeometries
   |> ArrayUtils.reduceOneParam(
        (. vertexAndIndexBufferMap, geometry) => {
          let vertices = Geometry.unsafeGetVertexData(geometry, state);
@@ -34,11 +30,42 @@ let _buildVertexAndIndexBufferMap = (device, allRenderGameObjects, state) => {
               });
          indexBuffer |> Buffer.setSubUint32Data(0, Uint32Array.make(indices));
 
+         Log.printComplete("vertex data:", (geometry, vertices, indices));
+
          vertexAndIndexBufferMap
          |> ImmutableSparseMap.set(geometry, (vertexBuffer, indexBuffer));
        },
        ImmutableSparseMap.createEmpty(),
      );
+};
+
+let _buildIndexCountMap = (allUniqueGeometries, state) => {
+  allUniqueGeometries
+  |> ArrayUtils.reduceOneParam(
+       (. indexCountMap, geometry) => {
+         indexCountMap
+         |> ImmutableSparseMap.set(
+              geometry,
+              Geometry.unsafeGetIndexData(geometry, state)
+              |> Geometry.computeIndexCount,
+            )
+       },
+       ImmutableSparseMap.createEmpty(),
+     );
+};
+
+let _buildVertexData = (device, allRenderGameObjects, state) => {
+  let allUniqueGeometries =
+    allRenderGameObjects
+    |> Js.Array.map(renderGameObject => {
+         GameObject.unsafeGetGeometry(renderGameObject, state)
+       })
+    |> ArrayUtils2.removeDuplicateItems;
+
+  (
+    _buildVertexAndIndexBufferMap(device, allUniqueGeometries, state),
+    _buildIndexCountMap(allUniqueGeometries, state),
+  );
 };
 
 let _createTextureData = (device, window, format, usage) => {
@@ -149,15 +176,32 @@ let init = (device, window, state) => {
              (modelBufferData, offset)
              |> ManageBuffer.setMat3DataToBufferData(normalMatrix);
 
+           Log.printComplete(
+             "(modelBufferData, newOffset):",
+             (modelBufferData, newOffset),
+           );
+
            let (modelBufferData, _) =
              modelBufferData
              |> TypeArray.Float32Array.setFloat32Array(newOffset, modelMatrix);
+
+           Log.printComplete(
+             "(modelBufferData, newOffset):",
+             (modelBufferData, newOffset),
+           );
 
            (
              modelBufferData,
              offset + alignedModelBufferFloats,
              offsetArrMap
-             |> ImmutableSparseMap.set(renderGameObject, [|offset|]),
+             |> ImmutableSparseMap.set(
+                  renderGameObject,
+                  [|
+                    ManageBuffer.UniformBuffer.getAlignedBufferBytesFromFloats(
+                      offset,
+                    ),
+                  |],
+                ),
            );
          },
          (
@@ -168,6 +212,12 @@ let init = (device, window, state) => {
            ImmutableSparseMap.createEmpty(),
          ),
        );
+
+  Log.printComplete("modelBufferData:", (modelBufferData, offsetArrMap));
+
+  //        Log.print((
+  // (modelBufferData, offsetArrMap)
+  //        )) |> ignore;
 
   let modelBuffer =
     device
@@ -201,7 +251,7 @@ let init = (device, window, state) => {
        );
 
   let singleRenderGameObjectPhongMaterialBufferSize =
-    (4 + 4 + 4) * Float32Array._BYTES_PER_ELEMENT;
+    (4 + 4) * Float32Array._BYTES_PER_ELEMENT;
   let alignedPhongMaterialBufferBytes =
     ManageBuffer.UniformBuffer.getAlignedBufferBytes(
       singleRenderGameObjectPhongMaterialBufferSize,
@@ -230,12 +280,12 @@ let init = (device, window, state) => {
                   PhongMaterial.unsafeGetDiffuse(material, state),
                 );
 
-           let (phongMaterialBufferData, newOffset) =
-             phongMaterialBufferData
-             |> TypeArray.Float32Array.setFloatTuple3(
-                  newOffset + 1,
-                  PhongMaterial.unsafeGetSpecular(material, state),
-                );
+           //  let (phongMaterialBufferData, newOffset) =
+           //    phongMaterialBufferData
+           //    |> TypeArray.Float32Array.setFloatTuple3(
+           //         newOffset + 1,
+           //         PhongMaterial.unsafeGetSpecular(material, state),
+           //       );
 
            let (phongMaterialBufferData, newOffset) =
              phongMaterialBufferData
@@ -248,7 +298,14 @@ let init = (device, window, state) => {
              phongMaterialBufferData,
              offset + alignedPhongMaterialBufferFloats,
              offsetArrMap
-             |> ImmutableSparseMap.set(renderGameObject, [|offset|]),
+             |> ImmutableSparseMap.set(
+                  renderGameObject,
+                  [|
+                    ManageBuffer.UniformBuffer.getAlignedBufferBytesFromFloats(
+                      offset,
+                    ),
+                  |],
+                ),
            );
          },
          (
@@ -259,6 +316,11 @@ let init = (device, window, state) => {
            ImmutableSparseMap.createEmpty(),
          ),
        );
+
+  Log.printComplete(
+    "phongMaterialBufferData:",
+    (phongMaterialBufferData, offsetArrMap),
+  );
 
   let phongMaterialBuffer =
     device
@@ -316,15 +378,18 @@ let init = (device, window, state) => {
          |],
        });
 
+  Log.printComplete("cameraBufferData:", cameraBufferData);
+
   let state =
     state |> Pass.GBufferPass.addStaticBindGroupData(2, cameraBindGroup);
 
-  let vertexAndIndexBufferMap =
-    _buildVertexAndIndexBufferMap(device, allRenderGameObjects, state);
+  let (vertexAndIndexBufferMap, indexCountMap) =
+    _buildVertexData(device, allRenderGameObjects, state);
 
   let state =
     state
-    |> Pass.GBufferPass.setVertexAndIndexBufferMap(vertexAndIndexBufferMap);
+    |> Pass.GBufferPass.setVertexAndIndexBufferMap(vertexAndIndexBufferMap)
+    |> Pass.GBufferPass.setIndexCountMap(indexCountMap);
 
   let baseShaderPath = "examples/taa/pass/gbuffer/shaders";
 
@@ -344,11 +409,12 @@ let init = (device, window, state) => {
   let positionRenderTargetFormat = "rgba16float";
   let normalRenderTargetFormat = "rgba16float";
   let diffuseRenderTargetFormat = "rgba8unorm";
-  let specularRenderTargetFormat = "rgba8unorm";
-  let shininessRenderTargetFormat = "r16float";
-  let depthRenderTargetFormat = "r16float";
+  // let specularRenderTargetFormat = "rgba8unorm";
+  let depthShininessRenderTargetFormat = "rgba16float";
+  // let depthRenderTargetFormat = "r16float";
 
   let depthTextureFormat = "depth24plus";
+  // let depthTextureFormat = "depth24plus-stencil8";
 
   let pipeline =
     device
@@ -416,28 +482,29 @@ let init = (device, window, state) => {
                ~alphaBlend=Pipeline.Render.blendDescriptor(),
                ~colorBlend=Pipeline.Render.blendDescriptor(),
              ),
+             // Pipeline.Render.colorState(
+             //   ~format=specularRenderTargetFormat,
+             //   ~alphaBlend=Pipeline.Render.blendDescriptor(),
+             //   ~colorBlend=Pipeline.Render.blendDescriptor(),
+             // ),
              Pipeline.Render.colorState(
-               ~format=specularRenderTargetFormat,
+               ~format=depthShininessRenderTargetFormat,
                ~alphaBlend=Pipeline.Render.blendDescriptor(),
                ~colorBlend=Pipeline.Render.blendDescriptor(),
              ),
-             Pipeline.Render.colorState(
-               ~format=shininessRenderTargetFormat,
-               ~alphaBlend=Pipeline.Render.blendDescriptor(),
-               ~colorBlend=Pipeline.Render.blendDescriptor(),
-             ),
-             Pipeline.Render.colorState(
-               ~format=depthRenderTargetFormat,
-               ~alphaBlend=Pipeline.Render.blendDescriptor(),
-               ~colorBlend=Pipeline.Render.blendDescriptor(),
-             ),
+             //  Pipeline.Render.colorState(
+             //    ~format=depthRenderTargetFormat,
+             //    ~alphaBlend=Pipeline.Render.blendDescriptor(),
+             //    ~colorBlend=Pipeline.Render.blendDescriptor(),
+             //  ),
            |],
            ~depthStencilState=
              Pipeline.Render.depthStencilState(
                ~depthWriteEnabled=true,
                ~depthCompare="less",
                ~format=depthTextureFormat,
-               (),
+               ~stencilFront=Pipeline.Render.stencilStateFaceDescriptor(),
+               ~stencilBack=Pipeline.Render.stencilStateFaceDescriptor(),
              ),
            (),
          ),
@@ -451,12 +518,12 @@ let init = (device, window, state) => {
     _createRenderTargetData(device, window, normalRenderTargetFormat);
   let (diffuseRenderTarget, diffuseRenderTargetView) =
     _createRenderTargetData(device, window, diffuseRenderTargetFormat);
-  let (specularRenderTarget, specularRenderTargetView) =
-    _createRenderTargetData(device, window, specularRenderTargetFormat);
-  let (shininessRenderTarget, shininessRenderTargetView) =
-    _createRenderTargetData(device, window, shininessRenderTargetFormat);
-  let (depthRenderTarget, depthRenderTargetView) =
-    _createRenderTargetData(device, window, depthRenderTargetFormat);
+  // let (specularRenderTarget, specularRenderTargetView) =
+  //   _createRenderTargetData(device, window, specularRenderTargetFormat);
+  let (depthShininessRenderTarget, depthShininessRenderTargetView) =
+    _createRenderTargetData(device, window, depthShininessRenderTargetFormat);
+  // let (depthRenderTarget, depthRenderTargetView) =
+  //   _createRenderTargetData(device, window, depthRenderTargetFormat);
 
   let state =
     state
@@ -469,15 +536,15 @@ let init = (device, window, state) => {
          "diffuseRenderTargetView",
          diffuseRenderTargetView,
        )
+    // |> Pass.setTextureView(
+    //      "specularRenderTargetView",
+    //      specularRenderTargetView,
+    //    )
     |> Pass.setTextureView(
-         "specularRenderTargetView",
-         specularRenderTargetView,
-       )
-    |> Pass.setTextureView(
-         "shininessRenderTargetView",
-         shininessRenderTargetView,
-       )
-    |> Pass.setTextureView("depthRenderTargetView", depthRenderTargetView);
+         "depthShininessRenderTargetView",
+         depthShininessRenderTargetView,
+       );
+  // |> Pass.setTextureView("depthRenderTargetView", depthRenderTargetView);
 
   let (_, depthTextureView) =
     _createTextureData(
@@ -536,9 +603,9 @@ let execute = (device, queue, state) => {
                _buildColorAttachment("positionRenderTargetView", state),
                _buildColorAttachment("normalRenderTargetView", state),
                _buildColorAttachment("diffuseRenderTargetView", state),
-               _buildColorAttachment("specularRenderTargetView", state),
-               _buildColorAttachment("shininessRenderTargetView", state),
-               _buildColorAttachment("depthRenderTargetView", state),
+               // _buildColorAttachment("specularRenderTargetView", state),
+               _buildColorAttachment("depthShininessRenderTargetView", state),
+               //  _buildColorAttachment("depthRenderTargetView", state),
              |],
              ~depthStencilAttachment={
                "attachment":
@@ -565,12 +632,22 @@ let execute = (device, queue, state) => {
 
   Pass.GBufferPass.getRenderGameObjectArr(state)
   |> Js.Array.forEach(renderGameObject => {
+       //  let transform = GameObject.unsafeGetTransform(renderGameObject, state);
        let geometry = GameObject.unsafeGetGeometry(renderGameObject, state);
+      //  Log.printComplete(
+      //    "draw geometry:",
+      //    (
+      //      renderGameObject,
+      //      geometry,
+      //      Pass.GBufferPass.unsafeGetIndexCount(geometry, state),
+      //    ),
+      //  );
        let (vertexBuffer, indexBuffer) =
          Pass.GBufferPass.unsafeGetVertexAndIndexBuffer(geometry, state);
 
-      renderPass |> PassEncoder.Render.setVertexBuffer(0, vertexBuffer);
-      renderPass |> PassEncoder.Render.setIndexBuffer(indexBuffer);
+       // TODO perf: judge last geometry
+       renderPass |> PassEncoder.Render.setVertexBuffer(0, vertexBuffer);
+       renderPass |> PassEncoder.Render.setIndexBuffer(indexBuffer);
 
        Pass.GBufferPass.getDynamicBindGroupDataArr(state)
        |> Js.Array.forEach(
@@ -585,9 +662,10 @@ let execute = (device, queue, state) => {
           });
 
        renderPass
-       |> PassEncoder.Render.draw(
-            Pass.GBufferPass.unsafeGetVertexCount(renderGameObject, state),
+       |> PassEncoder.Render.drawIndexed(
+            Pass.GBufferPass.unsafeGetIndexCount(geometry, state),
             1,
+            0,
             0,
             0,
           );

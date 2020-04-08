@@ -46,7 +46,11 @@ module CameraBuffer = {
       cameraData
       |> TypeArray.Float32Array.setFloat32Array(offset + 1, viewMatrix);
     let (cameraData, offset) =
-      cameraData |> TypeArray.Float32Array.setFloat32Array(offset, viewMatrix);
+      cameraData |> TypeArray.Float32Array.setFloat32Array(offset, projectionMatrix);
+//       Log.printComplete(
+//       "cameraData:",
+// cameraData
+//       );
 
     cameraBuffer |> Buffer.setSubFloat32Data(0, cameraData);
     let state = state |> _setCameraBufferData((cameraBuffer, cameraData));

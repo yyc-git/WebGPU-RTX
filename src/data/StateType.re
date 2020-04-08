@@ -206,15 +206,13 @@ type dynamicBindGroupData = {
 
 type gbufferPassData = {
   pipeline: option(Pipeline.Render.t),
-  // indexBuffer: option(Buffer.t),
   depthTextureView: option(TextureView.t),
   staticBindGroupDataArr: array(staticBindGroupData),
   dynamicBindGroupDataArr: array(dynamicBindGroupData),
   renderGameObjectArr: array(GameObjectType.gameObject),
   vertexAndIndexBufferMap:
     ImmutableSparseMap.t(GeometryType.geometry, (Buffer.t, Buffer.t)),
-  // indexBufferMap: ImmutableSparseMap.t(GeometryType.geometry, Buffer.t),
-  vertexCountMap: ImmutableSparseMap.t(GameObjectType.gameObject, int),
+  indexCountMap: ImmutableSparseMap.t(GeometryType.geometry, int),
 };
 
 type blitPassData = {

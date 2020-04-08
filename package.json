@@ -10,7 +10,7 @@
         "watch": "bsb -clean-world -make-world -w",
         "test:watch": "jest --watch --config jest.json",
         "build": "bsb -clean-world -make-world",
-        "runTest": "node lib/js/examples/ray_tracing/RayTracingTriangle.js"
+        "runTest": "node lib/js/examples/taa/TAAMain.js"
     },
     "devDependencies": {
         "http-server": "^0.12.0",

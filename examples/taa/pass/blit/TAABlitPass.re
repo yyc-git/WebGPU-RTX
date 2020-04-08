@@ -29,18 +29,6 @@ let init = (device, swapChainFormat, state) => {
              ~type_="sampled-texture",
              (),
            ),
-           BindGroupLayout.layoutBinding(
-             ~binding=4,
-             ~visibility=ShaderStage.fragment,
-             ~type_="sampled-texture",
-             (),
-           ),
-           BindGroupLayout.layoutBinding(
-             ~binding=5,
-             ~visibility=ShaderStage.fragment,
-             ~type_="sampled-texture",
-             (),
-           ),
          |],
        });
 
@@ -70,27 +58,27 @@ let init = (device, swapChainFormat, state) => {
              ~size=0,
              (),
            ),
+          //  BindGroup.binding(
+          //    ~binding=3,
+          //    ~textureView=
+          //      Pass.unsafeGetTextureView("specularRenderTargetView", state),
+          //    ~size=0,
+          //    (),
+          //  ),
            BindGroup.binding(
              ~binding=3,
              ~textureView=
-               Pass.unsafeGetTextureView("specularRenderTargetView", state),
+               Pass.unsafeGetTextureView("depthShininessRenderTargetView", state),
              ~size=0,
              (),
            ),
-           BindGroup.binding(
-             ~binding=4,
-             ~textureView=
-               Pass.unsafeGetTextureView("shininessRenderTargetView", state),
-             ~size=0,
-             (),
-           ),
-           BindGroup.binding(
-             ~binding=5,
-             ~textureView=
-               Pass.unsafeGetTextureView("depthRenderTargetView", state),
-             ~size=0,
-             (),
-           ),
+          //  BindGroup.binding(
+          //    ~binding=5,
+          //    ~textureView=
+          //      Pass.unsafeGetTextureView("depthRenderTargetView", state),
+          //    ~size=0,
+          //    (),
+          //  ),
          |],
        });
 

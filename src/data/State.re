@@ -73,7 +73,7 @@ let create = () => {
       dynamicBindGroupDataArr: [||],
       renderGameObjectArr: [||],
       vertexAndIndexBufferMap: ImmutableSparseMap.createEmpty(),
-      vertexCountMap: ImmutableSparseMap.createEmpty(),
+      indexCountMap: ImmutableSparseMap.createEmpty(),
     },
     blitPassData: {
       pipeline: None,

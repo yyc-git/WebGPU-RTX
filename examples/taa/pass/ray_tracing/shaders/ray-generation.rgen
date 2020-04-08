@@ -30,7 +30,7 @@ vec2 getLanuchIndex(uvec3 launchIDNV, uvec3 launchSizeNV) {
   return inUV * 2.0 - 1.0;
 }
 
-bool isNotBackground(vec4 worldPosition) { return worldPosition.w != 0.0; }
+bool isNotBackground(vec4 worldPosition) { return worldPosition.w == 0.0; }
 
 void main() {
   vec2 lanuchIndex = getLanuchIndex(gl_LaunchIDNV, gl_LaunchSizeNV);

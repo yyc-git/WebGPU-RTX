@@ -62,10 +62,13 @@ module UniformBuffer = {
     Js.Math.ceil(float_of_int(singleEntityBufferSize) /. 256.) * 256;
   };
 
+  let getAlignedBufferBytesFromFloats = alignedBufferFloats => {
+    alignedBufferFloats * Float32Array._BYTES_PER_ELEMENT;
+  };
+
   let getAlignedBufferFloats = alignedBufferBytes => {
     alignedBufferBytes / Float32Array._BYTES_PER_ELEMENT;
   };
-
   // let unsafeGetCameraBufferData = state => {
   //   (
   //     state.gpuBuffer.uniformBuffer.cameraBufferData.cameraData
@@ -74,7 +77,6 @@ module UniformBuffer = {
   //     |> Js.Option.getExn,
   //   );
   // };
-
   // let setCameraBufferData = ((cameraData, cameraBuffer), state) => {
   //   ...state,
   //   gpuBuffer: {
@@ -88,7 +90,6 @@ module UniformBuffer = {
   //     },
   //   },
   // };
-
   // let buildResolutionBufferData = (window, device ) => {
   //   let resolutionData =
   //     Float32Array.make([|

@@ -56,6 +56,7 @@ let buildScene = state => {
     |> Transform.setRotation(tran1, (30., 45., 0.))
     |> Transform.setScale(tran1, (1., 1., 1.));
 
+
   let (geo1, state) = Geometry.create(state);
   let state =
     state
@@ -67,7 +68,7 @@ let buildScene = state => {
     state
     // |> PhongMaterial.setAmbient(mat1, (0.1, 0.1, 0.1))
     |> PhongMaterial.setDiffuse(mat1, (1.0, 0., 0.))
-    |> PhongMaterial.setSpecular(mat1, (0.2, 0.0, 1.0))
+    // |> PhongMaterial.setSpecular(mat1, (0.2, 0.0, 1.0))
     |> PhongMaterial.setShininess(mat1, 36.);
   // |> PhongMaterial.setIllum(mat1, 2)
   // |> PhongMaterial.setDissolve(mat1, 1.);
@@ -92,7 +93,7 @@ let buildScene = state => {
   let (tran2, state) = Transform.create(state);
   let state =
     state
-    |> Transform.setTranslation(tran2, (0., (-10.), 0.))
+    |> Transform.setTranslation(tran2, (0., (-10.), -5.))
     |> Transform.setRotation(tran2, (0., 0., 0.))
     |> Transform.setScale(tran2, (10., 10., 10.));
 
@@ -107,7 +108,7 @@ let buildScene = state => {
     state
     // |> PhongMaterial.setAmbient(mat2, (0.1, 0.1, 0.1))
     |> PhongMaterial.setDiffuse(mat2, (0.0, 1., 0.))
-    |> PhongMaterial.setSpecular(mat2, (0.5, 0.0, 0.5))
+    // |> PhongMaterial.setSpecular(mat2, (0.5, 0.0, 0.5))
     |> PhongMaterial.setShininess(mat2, 72.);
   // |> PhongMaterial.setIllum(mat2, 2)
   // |> PhongMaterial.setDissolve(mat2, 1.);

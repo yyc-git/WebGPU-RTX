@@ -103,20 +103,18 @@ module GBufferPass = {
   //   },
   // };
 
-  let unsafeGetVertexCount = (renderGameObject, state) => {
-    _getPassData(state).vertexCountMap
-    |> ImmutableSparseMap.unsafeGet(renderGameObject);
+  let unsafeGetIndexCount = (geometry, state) => {
+    _getPassData(state).indexCountMap
+    |> ImmutableSparseMap.unsafeGet(geometry);
   };
 
-  let setVertexCount = (renderGameObject, vertexCount, state) => {
+  let setIndexCountMap = (indexCountMap, state) => {
     ...state,
     pass: {
       ...state.pass,
       gbufferPassData: {
         ..._getPassData(state),
-        vertexCountMap:
-          _getPassData(state).vertexCountMap
-          |> ImmutableSparseMap.set(renderGameObject, vertexCount),
+        indexCountMap,
       },
     },
   };
@@ -185,17 +183,18 @@ module GBufferPass = {
     },
   };
 
-  let unsafeGetVertexAndIndexBuffer = (geometry, state ) => {
-    _getPassData(state).vertexAndIndexBufferMap |> ImmutableSparseMap.unsafeGet(geometry)
+  let unsafeGetVertexAndIndexBuffer = (geometry, state) => {
+    _getPassData(state).vertexAndIndexBufferMap
+    |> ImmutableSparseMap.unsafeGet(geometry);
   };
 
-  let setVertexAndIndexBufferMap = ( vertexAndIndexBufferMap, state) => {
+  let setVertexAndIndexBufferMap = (vertexAndIndexBufferMap, state) => {
     ...state,
     pass: {
       ...state.pass,
       gbufferPassData: {
         ..._getPassData(state),
-        vertexAndIndexBufferMap
+        vertexAndIndexBufferMap,
       },
     },
   };
