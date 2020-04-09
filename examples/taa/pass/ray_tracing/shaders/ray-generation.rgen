@@ -25,7 +25,8 @@ vec2 getLanuchIndex(uvec3 launchIDNV, uvec3 launchSizeNV) {
   const vec2 pixelCenter = vec2(launchIDNV.xy) + vec2(0.5);
   const vec2 inUV = pixelCenter / vec2(launchSizeNV.xy);
 
-  return inUV * 2.0 - 1.0;
+  // // return inUV * 2.0 - 1.0;
+  return inUV;
 }
 
 float LinearDepth(float depth) {
