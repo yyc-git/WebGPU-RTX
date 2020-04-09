@@ -106,8 +106,11 @@ module InstanceBuffer = {
     |> _convertMat4To34RowMajorMatrix;
   };
 
-  let convertHitGroupIndexToInstanceOffset = hitGroupIndex =>
+  let convertHitGroupIndexToInstanceOffset = hitGroupIndex => {
+    Log.print(("groupIndex:", hitGroupIndex)) |> ignore;
+
     MathUtils.convertDecimalToHex(hitGroupIndex, 16);
+  };
 };
 
 let _getGeomtryContainerHandle = (geometryContainer: AccelerationContainer.t) => {
@@ -141,12 +144,7 @@ let _buildSceneGeometryContainers = (device, state) => {
 
          Buffer.setSubUint32Data(0, geometryIndices, geometryIndexBuffer);
 
-         Log.printComplete(
-         "accle:",
-         (
-geometryVertices, geometryIndices
-         )
-         );
+         Log.printComplete("accle:", (geometryVertices, geometryIndices));
 
          geometryContainers
          |> ArrayUtils.push(
@@ -209,7 +207,10 @@ let _updateInstanceBuffer =
                  instanceIndex,
                  0xFF,
                  InstanceBuffer.convertHitGroupIndexToInstanceOffset(
-                   GameObject.unsafeGetShader(gameObject, state),
+                   Shader.unsafeGetHitGroupIndex(
+                     GameObject.unsafeGetShader(gameObject, state),
+                     state,
+                   ),
                  ),
                  AccelerationInstanceFlag.triangle_cull_disable,
                  _getGeomtryContainerHandle(

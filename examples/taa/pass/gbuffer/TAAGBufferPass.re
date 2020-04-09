@@ -644,7 +644,6 @@ let _buildColorAttachment = (textureViewName, state) => {
 };
 
 let execute = (device, queue, state) => {
-  Log.print("gbuffer") |> ignore;
   let commandEncoder =
     device |> Device.createCommandEncoder(CommandEncoder.descriptor());
   let renderPass =

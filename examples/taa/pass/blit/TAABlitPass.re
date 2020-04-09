@@ -107,7 +107,6 @@ let init = (device, window, swapChainFormat, state) => {
 };
 
 let execute = (device, queue, swapChain, state) => {
-  Log.print("blit") |> ignore;
   let backBufferView = swapChain |> SwapChain.getCurrentTextureView();
 
   let commandEncoder =

@@ -2,6 +2,6 @@
 #extension GL_NV_ray_tracing : require
 #pragma shader_stage(miss)
 
-#include "isShadowedDefine.glsl"
+layout(location = 1) rayPayloadInNV bool isShadowed;
 
 void main() { isShadowed = false; }

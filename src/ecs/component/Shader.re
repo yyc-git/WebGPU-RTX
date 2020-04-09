@@ -13,12 +13,15 @@ let create = state => {
   );
 };
 
+let unsafeGetHitGroupIndex = (shader, state) => {
+  state.shader.hitGroupIndexMap |> ImmutableSparseMap.unsafeGet(shader);
+};
+
 let setHitGroupIndex = (shader, index, state) => {
   ...state,
   shader: {
     ...state.shader,
     hitGroupIndexMap:
-      state.shader.hitGroupIndexMap
-      |> ImmutableSparseMap.set(shader, index),
+      state.shader.hitGroupIndexMap |> ImmutableSparseMap.set(shader, index),
   },
 };

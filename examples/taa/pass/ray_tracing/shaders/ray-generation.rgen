@@ -4,12 +4,13 @@
 
 #include "../../shaders/camera.glsl"
 #include "../../shaders/definition.glsl"
-#include "isShadowedDefine.glsl"
 #include "light.glsl"
 #include "phong_compute.glsl"
-#include "shadow_ray.glsl"
 
 layout(location = 0) rayPayloadNV vec3 hitValue;
+layout(location = 1) rayPayloadNV bool isShadowed;
+
+#include "shadow_ray.glsl"
 
 layout(binding = 0) uniform sampler2D gPositionTexture;
 layout(binding = 1) uniform sampler2D gNormalTexture;
@@ -38,59 +39,54 @@ void main() {
 
   vec4 worldPosition = texture(gPositionTexture, lanuchIndex);
   vec3 worldNormal = texture(gNormalTexture, lanuchIndex).rgb;
-  vec3 diffuse = texture(gDiffuseTexture, lanuchIndex).rgb;
-  // vec3 specular = texture(gSpecularTexture, lanuchIndex).rgb;
-  vec3 specular = vec3(0.5, 0.0, 0.5);
+  vec3 materialDiffuse = texture(gDiffuseTexture, lanuchIndex).rgb;
+  // vec3 materialSpecular = texture(gSpecularTexture, lanuchIndex).rgb;
+  vec3 materialSpecular = vec3(0.5, 0.0, 0.5);
   vec4 depthShininess = texture(gDepthShininessTexture, lanuchIndex);
   // float depth = LinearDepth(depthShininess.r);
   float shininess = depthShininess.g;
 
-  TODO why has 4 parts???
+  hitValue = vec3(0.0);
 
-  // hitValue = vec3(0.0);
-  hitValue = vec3(diffuse);
-  // hitValue = vec3(lanuchIndex, 1.0);
-  // hitValue = texture(gDiffuseTexture, vec2(0.2,0.6)).rgb;
+  vec3 specular = vec3(0.0);
 
-  // if (isNotBackground(worldPosition)) {
-  //   // vec3 lightDir;
-  //   // float lightIntensity;
-  //   // float lightDistance;
+  if (isNotBackground(worldPosition)) {
 
-  //   // getLightData(lightIntensity, lightDistance, lightDir);
+    vec3 lightDir;
+    float lightIntensity;
+    float lightDistance;
 
-  //   // // Diffuse
-  //   // diffuse = computeDiffuse(diffuse, lightDir, worldNormal);
+    getLightData(lightIntensity, lightDistance, lightDir);
 
-  //   // // vec3 specular = vec3(0.0);
-  //   // float attenuation = 1.0;
+    // Diffuse
+    vec3 diffuse = computeDiffuse(materialDiffuse, lightDir, worldNormal);
 
-  //   // // Tracing shadow ray only if the light is visible from the surface
-  //   // if (isLightVisibleFromTheSurface(worldNormal, lightDir)) {
-  //   //   float tMin = 0.001;
-  //   //   float tMax = lightDistance;
-  //   //   // vec3 origin = gl_WorldRayOriginNV + gl_WorldRayDirectionNV * gl_HitTNV;
-  //   //   vec3 origin = vec3(worldPosition);
-  //   //   vec3 rayDir = lightDir;
+    float attenuation = 1.0;
 
-  //   //   bool isShadowed =
-  //   //       shadowRayVisibility(topLevelAS, 1, origin, rayDir, tMin, tMax);
+    // Tracing shadow ray only if the light is visible from the surface
+    if (isLightVisibleFromTheSurface(worldNormal, lightDir)) {
+      float tMin = 0.001;
+      float tMax = lightDistance;
+      // vec3 origin = gl_WorldRayOriginNV + gl_WorldRayDirectionNV * gl_HitTNV;
+      vec3 origin = vec3(worldPosition);
+      vec3 rayDir = lightDir;
 
-  //   //   if (isShadowed) {
-  //   //     attenuation = 0.3;
-  //   //   } else {
-  //   //     specular = computeSpecular(specular, shininess,
-  //   //                                getViewDir(vec3(worldPosition)), lightDir,
-  //   //                                worldNormal);
-  //   //   }
-  //   // }
+      isShadowed =
+          shadowRayVisibility(topLevelAS, 0, origin, rayDir, tMin, tMax);
 
-  //   // hitValue = computeColor(lightIntensity, attenuation, diffuse, specular);
-  //   hitValue=vec3(1.0,0.0,0.0);
-  // }
+      if (isShadowed) {
+        attenuation = 0.3;
+      } else {
+        specular = computeSpecular(materialSpecular, shininess,
+                                   getViewDir(vec3(worldPosition)), lightDir,
+                                   worldNormal);
+      }
+    }
+
+    hitValue = computeColor(lightIntensity, attenuation, diffuse, specular);
+  }
 
   const uint pixelIndex = gl_LaunchIDNV.y * gl_LaunchSizeNV.x + gl_LaunchIDNV.x;
 
   pixelBuffer.pixels[pixelIndex] = vec4(hitValue, 1.0);
-  // pixelBuffer.pixels[pixelIndex] = vec4(1.0, 0.0, 0.0, 1.0);
 }

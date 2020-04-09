@@ -53,7 +53,8 @@ let buildScene = state => {
   let state =
     state
     |> Transform.setTranslation(tran1, (0., (-5.), 0.))
-    |> Transform.setRotation(tran1, (30., 45., 0.))
+    // |> Transform.setRotation(tran1, (30., 45., 0.))
+    |> Transform.setRotation(tran1, (0., 0., 0.))
     |> Transform.setScale(tran1, (1., 1., 1.));
 
   let (geo1, state) = Geometry.create(state);
@@ -94,7 +95,7 @@ let buildScene = state => {
     state
     |> Transform.setTranslation(tran2, (0., (-10.), (-5.)))
     |> Transform.setRotation(tran2, (0., 0., 0.))
-    |> Transform.setScale(tran2, (10., 10., 10.));
+    |> Transform.setScale(tran2, (50., 50., 50.));
 
   let (geo2, state) = Geometry.create(state);
   let state =
@@ -113,7 +114,8 @@ let buildScene = state => {
   // |> PhongMaterial.setDissolve(mat2, 1.);
 
   let (shader2, state) = Shader.create(state);
-  let state = state |> Shader.setHitGroupIndex(shader2, 1);
+  // let state = state |> Shader.setHitGroupIndex(shader2, 1);
+  let state = state |> Shader.setHitGroupIndex(shader2, 0);
 
   let state =
     state

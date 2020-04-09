@@ -1,1 +1,0 @@
-layout(location = 1) rayPayloadNV bool isShadowed;

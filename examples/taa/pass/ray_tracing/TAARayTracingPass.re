@@ -17,13 +17,9 @@ let _createShaderBindingTable = (baseShaderPath, device) => {
     device
     |> Device.createShaderModule({
          "code":
-           WebGPUUtils.loadShaderFile({j|$(baseShaderPath)/ray-closest-hit.rchit|j}),
-       });
-  let rayMissShaderModule =
-    device
-    |> Device.createShaderModule({
-         "code":
-           WebGPUUtils.loadShaderFile({j|$(baseShaderPath)/ray-miss.rmiss|j}),
+           WebGPUUtils.loadShaderFile(
+             {j|$(baseShaderPath)/ray-closest-hit.rchit|j},
+           ),
        });
   let rayMissShadowShaderModule =
     device
@@ -38,8 +34,10 @@ let _createShaderBindingTable = (baseShaderPath, device) => {
   |> Device.createRayTracingShaderBindingTable({
        "stages": [|
          {"module": rayGenShaderModule, "stage": ShaderStage.ray_generation},
-         {"module": rayRChitShaderModule, "stage": ShaderStage.ray_closest_hit},
-         {"module": rayMissShaderModule, "stage": ShaderStage.ray_miss},
+         {
+           "module": rayRChitShaderModule,
+           "stage": ShaderStage.ray_closest_hit,
+         },
          {"module": rayMissShadowShaderModule, "stage": ShaderStage.ray_miss},
        |],
        "groups": [|
@@ -51,7 +49,7 @@ let _createShaderBindingTable = (baseShaderPath, device) => {
            "intersectionIndex": (-1),
          },
          {
-           "type": "general",
+           "type": "triangle-hit-group",
            "generalIndex": (-1),
            "anyHitIndex": (-1),
            "closestHitIndex": 1,
@@ -60,13 +58,6 @@ let _createShaderBindingTable = (baseShaderPath, device) => {
          {
            "type": "general",
            "generalIndex": 2,
-           "anyHitIndex": (-1),
-           "closestHitIndex": (-1),
-           "intersectionIndex": (-1),
-         },
-         {
-           "type": "general",
-           "generalIndex": 3,
            "anyHitIndex": (-1),
            "closestHitIndex": (-1),
            "intersectionIndex": (-1),
@@ -127,6 +118,19 @@ let init = (device, queue, state) => {
        });
 
   let cameraBindGroupLayout =
+    device
+    |> Device.createBindGroupLayout({
+         "bindings": [|
+           BindGroupLayout.layoutBinding(
+             ~binding=0,
+             ~visibility=ShaderStage.ray_generation,
+             ~type_="uniform-buffer",
+             (),
+           ),
+         |],
+       });
+
+  let directionLightBindGroupLayout =
     device
     |> Device.createBindGroupLayout({
          "bindings": [|
@@ -224,11 +228,30 @@ let init = (device, queue, state) => {
          |],
        });
 
+  let (directionLightBufferSize, directionLightBuffer) =
+    TAABuffer.DirectionLightBuffer.buildData(device, state);
+
+  let directionLightBindGroup =
+    device
+    |> Device.createBindGroup({
+         "layout": directionLightBindGroupLayout,
+         "bindings": [|
+           BindGroup.binding(
+             ~binding=0,
+             ~buffer=directionLightBuffer,
+             ~offset=0,
+             ~size=directionLightBufferSize,
+             (),
+           ),
+         |],
+       });
+
   let state =
     state
     |> Pass.RayTracingPass.addStaticBindGroupData(0, gbufferBindGroup)
     |> Pass.RayTracingPass.addStaticBindGroupData(1, rtBindGroup)
-    |> Pass.RayTracingPass.addStaticBindGroupData(2, cameraBindGroup);
+    |> Pass.RayTracingPass.addStaticBindGroupData(2, cameraBindGroup)
+    |> Pass.RayTracingPass.addStaticBindGroupData(3, directionLightBindGroup);
 
   let pipeline =
     device
@@ -241,6 +264,7 @@ let init = (device, queue, state) => {
                     gbufferBindGroupLayout,
                     rtBindGroupLayout,
                     cameraBindGroupLayout,
+                    directionLightBindGroupLayout,
                   |],
                 }),
            ~rayTracingState={
@@ -262,7 +286,6 @@ let init = (device, queue, state) => {
 };
 
 let execute = (device, window, queue, state) => {
-  Log.print("rt") |> ignore;
   let commandEncoder =
     device |> Device.createCommandEncoder(CommandEncoder.descriptor());
   let rtPass =

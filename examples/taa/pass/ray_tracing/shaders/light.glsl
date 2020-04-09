@@ -1,4 +1,4 @@
-layout(std140, set = 2, binding = 0) uniform DirectionLight {
+layout(std140, set = 3, binding = 0) uniform DirectionLight {
   // include intentity
   vec4 compressedData;
   vec4 position;

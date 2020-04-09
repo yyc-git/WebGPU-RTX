@@ -6,7 +6,7 @@ layout(std140, set = 2, binding = 0) uniform Camera {
 uCamera;
 
 vec3 getViewDir(vec3 worldPosition) {
-  return normalize(vec3(uCamera.cameraPosition) - worldPosition);
+  return normalize(worldPosition - vec3(uCamera.cameraPosition));
 }
 
 mat4 getViewMatrix() { return uCamera.viewMatrix; }

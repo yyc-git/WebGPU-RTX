@@ -59,3 +59,21 @@ module CameraBuffer = {
     state;
   };
 };
+
+module DirectionLightBuffer = {
+  let buildData = (device, state) => {
+    let directionLightData =
+      Float32Array.make([|1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0|]);
+    let directionLightBufferSize =
+      directionLightData |> Float32Array.byteLength;
+    let directionLightBuffer =
+      device
+      |> Device.createBuffer({
+           "size": directionLightBufferSize,
+           "usage": BufferUsage.copy_dst lor BufferUsage.uniform,
+         });
+    directionLightBuffer |> Buffer.setSubFloat32Data(0, directionLightData);
+
+    (directionLightBufferSize, directionLightBuffer);
+  };
+};
