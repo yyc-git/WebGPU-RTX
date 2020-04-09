@@ -1,6 +1,12 @@
 open WebGPU;
 
-let init = (device, swapChainFormat, state) => {
+let init = (device, window, swapChainFormat, state) => {
+  let (resolutionBufferSize, resolutionUniformBuffer) =
+    ManageBuffer.UniformBuffer.buildResolutionBufferData(window, device);
+
+  let (pixelBufferSize, pixelBuffer) =
+    Pass.unsafeGetStorageBufferData("pixelBuffer", state);
+
   let bindGroupLayout =
     device
     |> Device.createBindGroupLayout({
@@ -8,25 +14,13 @@ let init = (device, swapChainFormat, state) => {
            BindGroupLayout.layoutBinding(
              ~binding=0,
              ~visibility=ShaderStage.fragment,
-             ~type_="sampled-texture",
+             ~type_="storage-buffer",
              (),
            ),
            BindGroupLayout.layoutBinding(
              ~binding=1,
              ~visibility=ShaderStage.fragment,
-             ~type_="sampled-texture",
-             (),
-           ),
-           BindGroupLayout.layoutBinding(
-             ~binding=2,
-             ~visibility=ShaderStage.fragment,
-             ~type_="sampled-texture",
-             (),
-           ),
-           BindGroupLayout.layoutBinding(
-             ~binding=3,
-             ~visibility=ShaderStage.fragment,
-             ~type_="sampled-texture",
+             ~type_="uniform-buffer",
              (),
            ),
          |],
@@ -39,46 +33,18 @@ let init = (device, swapChainFormat, state) => {
          "bindings": [|
            BindGroup.binding(
              ~binding=0,
-             ~textureView=
-               Pass.unsafeGetTextureView("positionRenderTargetView", state),
-             ~size=0,
+             ~buffer=pixelBuffer,
+             ~offset=0,
+             ~size=pixelBufferSize,
              (),
            ),
            BindGroup.binding(
              ~binding=1,
-             ~textureView=
-               Pass.unsafeGetTextureView("normalRenderTargetView", state),
-             ~size=0,
+             ~buffer=resolutionUniformBuffer,
+             ~offset=0,
+             ~size=resolutionBufferSize,
              (),
            ),
-           BindGroup.binding(
-             ~binding=2,
-             ~textureView=
-               Pass.unsafeGetTextureView("diffuseRenderTargetView", state),
-             ~size=0,
-             (),
-           ),
-          //  BindGroup.binding(
-          //    ~binding=3,
-          //    ~textureView=
-          //      Pass.unsafeGetTextureView("specularRenderTargetView", state),
-          //    ~size=0,
-          //    (),
-          //  ),
-           BindGroup.binding(
-             ~binding=3,
-             ~textureView=
-               Pass.unsafeGetTextureView("depthShininessRenderTargetView", state),
-             ~size=0,
-             (),
-           ),
-          //  BindGroup.binding(
-          //    ~binding=5,
-          //    ~textureView=
-          //      Pass.unsafeGetTextureView("depthRenderTargetView", state),
-          //    ~size=0,
-          //    (),
-          //  ),
          |],
        });
 
@@ -141,6 +107,7 @@ let init = (device, swapChainFormat, state) => {
 };
 
 let execute = (device, queue, swapChain, state) => {
+  Log.print("blit") |> ignore;
   let backBufferView = swapChain |> SwapChain.getCurrentTextureView();
 
   let commandEncoder =

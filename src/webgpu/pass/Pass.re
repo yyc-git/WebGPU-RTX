@@ -4,28 +4,29 @@ let unsafeGetUniformBufferData = (bufferName, state) => {
   state.pass.uniformBufferDataMap |> ImmutableHashMap.unsafeGet(bufferName);
 };
 
-let setUniformBufferData = (bufferName, (buffer, bufferData), state) => {
+let setUniformBufferData = (bufferName, (bufferData, buffer), state) => {
   ...state,
   pass: {
     ...state.pass,
     uniformBufferDataMap:
       state.pass.uniformBufferDataMap
-      |> ImmutableHashMap.set(bufferName, (buffer, bufferData)),
+      |> ImmutableHashMap.set(bufferName, (bufferData, buffer)),
   },
 };
 
-// let unsafeGetStorageBuffer = (bufferName, state) => {
-//   state.pass.storageBufferMap |> ImmutableHashMap.unsafeGet(bufferName);
-// };
+let unsafeGetStorageBufferData = (bufferName, state) => {
+  state.pass.storageBufferDataMap |> ImmutableHashMap.unsafeGet(bufferName);
+};
 
-// let setStorageBuffer = (bufferName, buffer, state) => {
-//   ...state,
-//   pass: {
-//     ...state.pass,
-//     storageBufferMap:
-//       state.pass.storageBufferMap |> ImmutableHashMap.set(bufferName, buffer),
-//   },
-// };
+let setStorageBufferData = (bufferName, (bufferSize, buffer), state) => {
+  ...state,
+  pass: {
+    ...state.pass,
+    storageBufferDataMap:
+      state.pass.storageBufferDataMap
+      |> ImmutableHashMap.set(bufferName, (bufferSize, buffer)),
+  },
+};
 
 let unsafeGetTextureView = (textureViewName, state) => {
   state.pass.textureViewMap |> ImmutableHashMap.unsafeGet(textureViewName);
@@ -222,6 +223,44 @@ module GBufferPass = {
         },
       },
     };
+  };
+};
+
+module RayTracingPass = {
+  let _getPassData = state => {
+    state.pass.rayTracingPassData;
+  };
+
+  let unsafeGetPipeline = state => {
+    _getPassData(state).pipeline |> Js.Option.getExn;
+  };
+
+  let setPipeline = (pipeline, state) => {
+    ...state,
+    pass: {
+      ...state.pass,
+      rayTracingPassData: {
+        ..._getPassData(state),
+        pipeline: Some(pipeline),
+      },
+    },
+  };
+
+  let getStaticBindGroupDataArr = state => {
+    _getPassData(state).staticBindGroupDataArr;
+  };
+
+  let addStaticBindGroupData = (setSlot, bindGroup, state) => {
+    ...state,
+    pass: {
+      ...state.pass,
+      rayTracingPassData: {
+        ..._getPassData(state),
+        staticBindGroupDataArr:
+          _getPassData(state).staticBindGroupDataArr
+          |> ArrayUtils.push({setSlot, bindGroup}),
+      },
+    },
   };
 };
 

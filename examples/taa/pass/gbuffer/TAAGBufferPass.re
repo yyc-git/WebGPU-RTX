@@ -4,22 +4,71 @@ open Js.Typed_array;
 
 open StateType;
 
+let _mergeVertexData = ((vertices, normals)) => {
+  let vertexCount = Geometry.computeVertexCount(vertices);
+
+  Log.print(("vertexCount:", vertexCount)) |> ignore;
+
+  ArrayUtils.range(0, vertexCount)
+  |> ArrayUtils.reduceOneParam(
+       (. vertexBufferData, vertexIndex) => {
+         Log.print(("vertexIndex: ", vertexIndex)) |> ignore;
+         let offset = vertexIndex * 6;
+         let componentIndex = vertexIndex * 3;
+
+         Float32Array.unsafe_set(
+           vertexBufferData,
+           offset,
+           Array.unsafe_get(vertices, componentIndex),
+         );
+         Float32Array.unsafe_set(
+           vertexBufferData,
+           offset + 1,
+           Array.unsafe_get(vertices, componentIndex + 1),
+         );
+         Float32Array.unsafe_set(
+           vertexBufferData,
+           offset + 2,
+           Array.unsafe_get(vertices, componentIndex + 2),
+         );
+
+         Float32Array.unsafe_set(
+           vertexBufferData,
+           offset + 3,
+           Array.unsafe_get(normals, componentIndex),
+         );
+         Float32Array.unsafe_set(
+           vertexBufferData,
+           offset + 4,
+           Array.unsafe_get(normals, componentIndex + 1),
+         );
+         Float32Array.unsafe_set(
+           vertexBufferData,
+           offset + 5,
+           Array.unsafe_get(normals, componentIndex + 2),
+         );
+
+         vertexBufferData;
+       },
+       Float32Array.fromLength(vertexCount * 6),
+     );
+};
+
 let _buildVertexAndIndexBufferMap = (device, allUniqueGeometries, state) => {
   allUniqueGeometries
   |> ArrayUtils.reduceOneParam(
        (. vertexAndIndexBufferMap, geometry) => {
-         let vertices = Geometry.unsafeGetVertexData(geometry, state);
+         let vertexBufferData =
+           Geometry.unsafeGetVertexData(geometry, state) |> _mergeVertexData;
          let indices = Geometry.unsafeGetIndexData(geometry, state);
 
          let vertexBuffer =
            device
            |> Device.createBuffer({
-                "size":
-                  Js.Array.length(vertices) * Float32Array._BYTES_PER_ELEMENT,
+                "size": vertexBufferData |> Float32Array.byteLength,
                 "usage": BufferUsage.copy_dst lor BufferUsage.vertex,
               });
-         vertexBuffer
-         |> Buffer.setSubFloat32Data(0, Float32Array.make(vertices));
+         vertexBuffer |> Buffer.setSubFloat32Data(0, vertexBufferData);
 
          let indexBuffer =
            device
@@ -30,7 +79,10 @@ let _buildVertexAndIndexBufferMap = (device, allUniqueGeometries, state) => {
               });
          indexBuffer |> Buffer.setSubUint32Data(0, Uint32Array.make(indices));
 
-         Log.printComplete("vertex data:", (geometry, vertices, indices));
+         Log.printComplete(
+           "vertex data:",
+           (geometry, vertexBufferData, indices),
+         );
 
          vertexAndIndexBufferMap
          |> ImmutableSparseMap.set(geometry, (vertexBuffer, indexBuffer));
@@ -349,7 +401,7 @@ let init = (device, window, state) => {
     state
     |> Pass.setUniformBufferData(
          "phongMaterialBuffer",
-         (phongMaterialBuffer, phongMaterialBufferData),
+         (phongMaterialBufferData, phongMaterialBuffer),
        );
 
   let state =
@@ -360,7 +412,7 @@ let init = (device, window, state) => {
          offsetArrMap,
        );
 
-  let (cameraBuffer, cameraBufferData) =
+  let (cameraBufferData, cameraBuffer) =
     TAABuffer.CameraBuffer.unsafeGetCameraBufferData(state);
 
   let cameraBindGroup =
@@ -592,6 +644,7 @@ let _buildColorAttachment = (textureViewName, state) => {
 };
 
 let execute = (device, queue, state) => {
+  Log.print("gbuffer") |> ignore;
   let commandEncoder =
     device |> Device.createCommandEncoder(CommandEncoder.descriptor());
   let renderPass =
@@ -634,14 +687,14 @@ let execute = (device, queue, state) => {
   |> Js.Array.forEach(renderGameObject => {
        //  let transform = GameObject.unsafeGetTransform(renderGameObject, state);
        let geometry = GameObject.unsafeGetGeometry(renderGameObject, state);
-      //  Log.printComplete(
-      //    "draw geometry:",
-      //    (
-      //      renderGameObject,
-      //      geometry,
-      //      Pass.GBufferPass.unsafeGetIndexCount(geometry, state),
-      //    ),
-      //  );
+       //  Log.printComplete(
+       //    "draw geometry:",
+       //    (
+       //      renderGameObject,
+       //      geometry,
+       //      Pass.GBufferPass.unsafeGetIndexCount(geometry, state),
+       //    ),
+       //  );
        let (vertexBuffer, indexBuffer) =
          Pass.GBufferPass.unsafeGetVertexAndIndexBuffer(geometry, state);
 

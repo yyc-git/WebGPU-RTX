@@ -14,7 +14,7 @@ type transform = {
 
 type geometry = {
   index: int,
-  vertexDataMap: ImmutableSparseMap.t(GeometryType.geometry, array(float)),
+  vertexDataMap: ImmutableSparseMap.t(GeometryType.geometry, ( array(float), array(float) )),
   indexDataMap: ImmutableSparseMap.t(GeometryType.geometry, array(int)),
 };
 
@@ -215,6 +215,11 @@ type gbufferPassData = {
   indexCountMap: ImmutableSparseMap.t(GeometryType.geometry, int),
 };
 
+type rayTracingPassData = {
+  pipeline: option(Pipeline.RayTracing.t),
+  staticBindGroupDataArr: array(staticBindGroupData),
+};
+
 type blitPassData = {
   pipeline: option(Pipeline.Render.t),
   bindGroup: option(BindGroup.t),
@@ -252,12 +257,20 @@ type blitPassData = {
 //   traceRayData,
 // };
 
+type uniformBuffer = Buffer.t;
+type uniformBufferData = Float32Array.t;
+
+type storageBuffer = Buffer.t;
+type storageBufferSize = int;
+
 type pass = {
   gbufferPassData,
+  rayTracingPassData,
   blitPassData,
   uniformBufferDataMap:
-    ImmutableHashMap.t(bufferName, (Buffer.t, Float32Array.t)),
-  // storageBufferMap: ImmutableHashMap.t(bufferName, Buffer.t),
+    ImmutableHashMap.t(bufferName, (uniformBufferData, uniformBuffer)),
+  storageBufferDataMap:
+    ImmutableHashMap.t(bufferName, (storageBufferSize, storageBuffer)),
   textureViewMap: ImmutableHashMap.t(textureViewName, TextureView.t),
 };
 
@@ -269,7 +282,7 @@ type passFuncData = {
 }
 and director = {
   initFuncArr: array(state => state),
-  updateFuncArr: array((time, state ) => state),
+  updateFuncArr: array((time, state) => state),
   passFuncDataArr: array(passFuncData),
 }
 and state = {

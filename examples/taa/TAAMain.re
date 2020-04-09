@@ -16,14 +16,18 @@ Director.load(window)
 
        StateData.getState()
        |> TAAScene.buildScene
-       |> Director.addInitFunc(TAAScene.init(device))
+       |> Director.addInitFunc(TAAScene.init(device, window))
        |> Director.addUpdateFunc(TAAScene.update(window))
        |> Director.addPassFuncs(
             TAAGBufferPass.init(device, window),
             TAAGBufferPass.execute(device, queue),
           )
        |> Director.addPassFuncs(
-            TAABlitPass.init(device, swapChainFormat),
+            TAARayTracingPass.init(device, queue),
+            TAARayTracingPass.execute(device, window, queue),
+          )
+       |> Director.addPassFuncs(
+            TAABlitPass.init(device, window, swapChainFormat),
             TAABlitPass.execute(device, queue, swapChain),
           )
        |> Director.start(window, swapChain);

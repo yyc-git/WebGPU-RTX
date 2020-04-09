@@ -33,12 +33,12 @@ module CameraBuffer = {
     Pass.unsafeGetUniformBufferData("cameraBuffer", state);
   };
 
-  let _setCameraBufferData = ((buffer, bufferData), state) => {
-    Pass.setUniformBufferData("cameraBuffer", (buffer, bufferData), state);
+  let _setCameraBufferData = ((bufferData, buffer), state) => {
+    Pass.setUniformBufferData("cameraBuffer", (bufferData, buffer), state);
   };
 
   let update = (lookFrom, viewMatrix, projectionMatrix, state) => {
-    let (cameraBuffer, cameraData) = unsafeGetCameraBufferData(state);
+    let (cameraData, cameraBuffer) = unsafeGetCameraBufferData(state);
 
     let (cameraData, offset) =
       cameraData |> TypeArray.Float32Array.setFloatTuple3(0, lookFrom);
@@ -46,14 +46,15 @@ module CameraBuffer = {
       cameraData
       |> TypeArray.Float32Array.setFloat32Array(offset + 1, viewMatrix);
     let (cameraData, offset) =
-      cameraData |> TypeArray.Float32Array.setFloat32Array(offset, projectionMatrix);
-//       Log.printComplete(
-//       "cameraData:",
-// cameraData
-//       );
+      cameraData
+      |> TypeArray.Float32Array.setFloat32Array(offset, projectionMatrix);
+    //       Log.printComplete(
+    //       "cameraData:",
+    // cameraData
+    //       );
 
     cameraBuffer |> Buffer.setSubFloat32Data(0, cameraData);
-    let state = state |> _setCameraBufferData((cameraBuffer, cameraData));
+    let state = state |> _setCameraBufferData((cameraData, cameraBuffer));
 
     state;
   };

@@ -116,7 +116,7 @@ let _getGeomtryContainerHandle = (geometryContainer: AccelerationContainer.t) =>
 
 let _buildSceneGeometryContainers = (device, state) => {
   ArrayUtils.zipWith(
-    (vertices, indices) => {(vertices, indices)},
+    ((vertices, normals), indices) => {(vertices, indices)},
     Geometry.getAllVertexData(state),
     Geometry.getAllIndexData(state),
   )
@@ -140,6 +140,13 @@ let _buildSceneGeometryContainers = (device, state) => {
               });
 
          Buffer.setSubUint32Data(0, geometryIndices, geometryIndexBuffer);
+
+         Log.printComplete(
+         "accle:",
+         (
+geometryVertices, geometryIndices
+         )
+         );
 
          geometryContainers
          |> ArrayUtils.push(

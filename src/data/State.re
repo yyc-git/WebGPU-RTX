@@ -75,11 +75,16 @@ let create = () => {
       vertexAndIndexBufferMap: ImmutableSparseMap.createEmpty(),
       indexCountMap: ImmutableSparseMap.createEmpty(),
     },
+    rayTracingPassData: {
+      pipeline: None,
+      staticBindGroupDataArr: [||],
+    },
     blitPassData: {
       pipeline: None,
       bindGroup: None,
     },
     uniformBufferDataMap: ImmutableHashMap.createEmpty(),
+    storageBufferDataMap: ImmutableHashMap.createEmpty(),
     textureViewMap: ImmutableHashMap.createEmpty(),
   },
   director: {

@@ -56,7 +56,6 @@ let buildScene = state => {
     |> Transform.setRotation(tran1, (30., 45., 0.))
     |> Transform.setScale(tran1, (1., 1., 1.));
 
-
   let (geo1, state) = Geometry.create(state);
   let state =
     state
@@ -93,7 +92,7 @@ let buildScene = state => {
   let (tran2, state) = Transform.create(state);
   let state =
     state
-    |> Transform.setTranslation(tran2, (0., (-10.), -5.))
+    |> Transform.setTranslation(tran2, (0., (-10.), (-5.)))
     |> Transform.setRotation(tran2, (0., 0., 0.))
     |> Transform.setScale(tran2, (10., 10., 10.));
 
@@ -130,15 +129,18 @@ let getAllRenderGameObjects = state => {
   GameObject.getAllGeometryGameObjects(state);
 };
 
-let init = (device, state) => {
+let init = (device, window, state) => {
   let (cameraBufferData, cameraBufferSize, cameraBuffer) =
     TAABuffer.CameraBuffer.buildData(device, state);
+  let (pixelBufferSize, pixelBuffer) =
+    ManageBuffer.StorageBuffer.buildPixelBufferData(window, device);
 
   state
   |> Pass.setUniformBufferData(
        "cameraBuffer",
-       (cameraBuffer, cameraBufferData),
-     );
+       (cameraBufferData, cameraBuffer),
+     )
+  |> Pass.setStorageBufferData("pixelBuffer", (pixelBufferSize, pixelBuffer));
 };
 
 let update = (window, time, state) => {

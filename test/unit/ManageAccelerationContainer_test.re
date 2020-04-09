@@ -137,8 +137,8 @@ let _ =
             |> toCalledWith([|
                  0,
                  Float32Array.make(
-                   //  Geometry.buildTriangleVertexData() |> Tuple3.getFirst,
-                   Geometry.buildTriangleVertexData(),
+                    Geometry.buildTriangleVertexData() |> Tuple2.getFirst,
+                  //  Geometry.buildTriangleVertexData(),
                  )
                  |> Obj.magic,
                |]);

@@ -7,7 +7,6 @@ vec3 computeDiffuse(vec3 matDiffuse, vec3 lightDir, vec3 normal) {
   return c;
 }
 
-
 vec3 computeSpecular(vec3 matSpecular, float shininess, vec3 viewDir,
                      vec3 lightDir, vec3 normal) {
   // if (getMaterialIllum(mat) < 2)
@@ -24,4 +23,9 @@ vec3 computeSpecular(vec3 matSpecular, float shininess, vec3 viewDir,
   float specular = kEnergyConservation * pow(max(dot(V, R), 0.0), kShininess);
 
   return matSpecular * specular;
+}
+
+vec3 computeColor(float lightIntensity, float attenuation, vec3 diffuse,
+                  vec3 specular) {
+  return vec3(lightIntensity * attenuation * (diffuse + specular));
 }
