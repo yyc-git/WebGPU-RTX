@@ -315,4 +315,6 @@ let execute = (device, window, queue, state) => {
   rtPass |> PassEncoder.RayTracing.endPass;
 
   queue |> Queue.submit([|commandEncoder |> CommandEncoder.finish|]);
+
+  state
 };

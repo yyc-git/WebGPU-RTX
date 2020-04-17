@@ -201,83 +201,15 @@ let init = (device, window, state) => {
   let state =
     state |> Pass.GBufferPass.setRenderGameObjectArr(allRenderGameObjects);
 
-  let singleRenderGameObjectModelBufferSize =
-    (16 + 12) * Float32Array._BYTES_PER_ELEMENT;
-  let alignedModelBufferBytes =
-    ManageBuffer.UniformBuffer.getAlignedBufferBytes(
-      singleRenderGameObjectModelBufferSize,
-    );
-  let alignedModelBufferFloats =
-    ManageBuffer.UniformBuffer.getAlignedBufferFloats(
-      alignedModelBufferBytes,
-    );
-  let modelBufferSize =
-    (allRenderGameObjects |> Js.Array.length) * alignedModelBufferBytes;
+  let (offsetArrMap, modelBufferData, singleRenderGameObjectModelBufferSize, modelBuffer) =
+    TAABuffer.ModelBuffer.buildData(device, allRenderGameObjects, state);
 
-  let (modelBufferData, _, offsetArrMap) =
-    allRenderGameObjects
-    |> ArrayUtils.reduceOneParam(
-         (. (modelBufferData, offset, offsetArrMap), renderGameObject) => {
-           let transform =
-             GameObject.unsafeGetTransform(renderGameObject, state);
-
-           let modelMatrix = Transform.buildModelMatrix(transform, state);
-           let normalMatrix = Transform.buildNormalMatrix(modelMatrix);
-
-           let (modelBufferData, newOffset) =
-             (modelBufferData, offset)
-             |> ManageBuffer.setMat3DataToBufferData(normalMatrix);
-
-           Log.printComplete(
-             "(modelBufferData, newOffset):",
-             (modelBufferData, newOffset),
-           );
-
-           let (modelBufferData, _) =
-             modelBufferData
-             |> TypeArray.Float32Array.setFloat32Array(newOffset, modelMatrix);
-
-           Log.printComplete(
-             "(modelBufferData, newOffset):",
-             (modelBufferData, newOffset),
-           );
-
-           (
-             modelBufferData,
-             offset + alignedModelBufferFloats,
-             offsetArrMap
-             |> ImmutableSparseMap.set(
-                  renderGameObject,
-                  [|
-                    ManageBuffer.UniformBuffer.getAlignedBufferBytesFromFloats(
-                      offset,
-                    ),
-                  |],
-                ),
-           );
-         },
-         (
-           Float32Array.fromLength(
-             modelBufferSize / Float32Array._BYTES_PER_ELEMENT,
-           ),
-           0,
-           ImmutableSparseMap.createEmpty(),
-         ),
+  let state =
+    state
+    |> Pass.setUniformBufferData(
+         "modelBuffer",
+         (modelBufferData, modelBuffer),
        );
-
-  Log.printComplete("modelBufferData:", (modelBufferData, offsetArrMap));
-
-  //        Log.print((
-  // (modelBufferData, offsetArrMap)
-  //        )) |> ignore;
-
-  let modelBuffer =
-    device
-    |> Device.createBuffer({
-         "size": modelBufferSize,
-         "usage": BufferUsage.copy_dst lor BufferUsage.uniform,
-       });
-  modelBuffer |> Buffer.setSubFloat32Data(0, modelBufferData);
 
   let modelBindGroup =
     device
@@ -726,4 +658,6 @@ let execute = (device, queue, state) => {
   renderPass |> PassEncoder.Render.endPass;
 
   queue |> Queue.submit([|commandEncoder |> CommandEncoder.finish|]);
+
+  state;
 };

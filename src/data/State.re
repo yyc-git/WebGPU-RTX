@@ -66,7 +66,12 @@ let create = () => {
     projectionMatrixMap: ImmutableSparseMap.createEmpty(),
   },
   pass: {
+    accumulatedFrameIndex: 0,
+    jitterArr: [||],
     gbufferPassData: {
+      lastModelMatrixMap: ImmutableSparseMap.createEmpty(),
+      lastViewJitterdProjectionMatrix: None,
+      jitteredProjectionMatrix: None,
       pipeline: None,
       depthTextureView: None,
       staticBindGroupDataArr: [||],
@@ -79,9 +84,12 @@ let create = () => {
       pipeline: None,
       staticBindGroupDataArr: [||],
     },
-    blitPassData: {
-      pipeline: None,
-      bindGroup: None,
+    taaPassData: {
+      isFirstFrame: true,
+      firstFramePipeline: None,
+      firstFrameBindGroup: None,
+      otherFramePipeline: None,
+      otherFrameBindGroup: None,
     },
     uniformBufferDataMap: ImmutableHashMap.createEmpty(),
     storageBufferDataMap: ImmutableHashMap.createEmpty(),

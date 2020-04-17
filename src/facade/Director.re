@@ -110,8 +110,12 @@ let start = (window, swapChain, state) => {
            state,
          );
 
-    _getPassExecuteFuncArr(state)
-    |> Js.Array.forEach(executeFunc => {executeFunc(state)});
+    let state =
+      _getPassExecuteFuncArr(state)
+      |> ArrayUtils.reduceOneParam(
+           (. state, executeFunc) => {executeFunc(state)},
+           state,
+         );
 
     state |> StateData.setState |> ignore;
 

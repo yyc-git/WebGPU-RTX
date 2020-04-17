@@ -8,10 +8,13 @@ layout(location = 1) in vec3 normal;
 
 layout(location = 0) out vec3 vPosition;
 layout(location = 1) out vec3 vNormal;
+layout(location = 2) out vec4 vClipPosition;
+layout(location = 3) out vec4 vLastClipPosition;
 
 layout(std140, set = 0, binding = 0) uniform Model {
   mat3 normalMatrix;
   mat4 modelMatrix;
+  mat4 lastModelMatrix;
 }
 uModel;
 
@@ -20,6 +23,11 @@ void main() {
   vPosition = vec3(worldPosition);
   vNormal = uModel.normalMatrix * normal;
 
-  gl_Position = getProjectionMatrix() * getViewMatrix() * worldPosition;
+  vec4 clipPosition = getProjectionMatrix() * getViewMatrix() * worldPosition;
+  vClipPosition = clipPosition;
+  vLastClipPosition = getLastViewProjectionMatrix() * uModel.lastModelMatrix *
+                      vec4(position, 1.0);
+
+  gl_Position = clipPosition;
   gl_Position.y = -gl_Position.y;
 }

@@ -3,7 +3,6 @@
 #pragma shader_stage(raygen)
 
 #include "../../shaders/camera.glsl"
-#include "../../shaders/definition.glsl"
 #include "light.glsl"
 #include "phong_compute.glsl"
 
@@ -15,7 +14,7 @@ layout(location = 1) rayPayloadNV bool isShadowed;
 layout(binding = 0) uniform sampler2D gPositionTexture;
 layout(binding = 1) uniform sampler2D gNormalTexture;
 layout(binding = 2) uniform sampler2D gDiffuseTexture;
-layout(binding = 3) uniform sampler2D gDepthShininessTexture;
+layout(binding = 3) uniform sampler2D gMotionVectorDepthShininessTexture;
 
 layout(set = 1, binding = 0) uniform accelerationStructureNV topLevelAS;
 layout(std140, set = 1, binding = 1) buffer PixelBuffer { vec4 pixels[]; }
@@ -29,10 +28,6 @@ vec2 getLanuchIndex(uvec3 launchIDNV, uvec3 launchSizeNV) {
   return inUV;
 }
 
-float LinearDepth(float depth) {
-  return (2.0 * NEAR_Z) / (FAR_Z + NEAR_Z - depth * (FAR_Z - NEAR_Z));
-}
-
 bool isNotBackground(vec4 worldPosition) { return worldPosition.w == 0.0; }
 
 void main() {
@@ -43,9 +38,9 @@ void main() {
   vec3 materialDiffuse = texture(gDiffuseTexture, lanuchIndex).rgb;
   // vec3 materialSpecular = texture(gSpecularTexture, lanuchIndex).rgb;
   vec3 materialSpecular = vec3(0.5, 0.0, 0.5);
-  vec4 depthShininess = texture(gDepthShininessTexture, lanuchIndex);
-  // float depth = LinearDepth(depthShininess.r);
-  float shininess = depthShininess.g;
+  vec4 motionVectorDepthShininess =
+      texture(gMotionVectorDepthShininessTexture, lanuchIndex);
+  float shininess = motionVectorDepthShininess.w;
 
   hitValue = vec3(0.0);
 

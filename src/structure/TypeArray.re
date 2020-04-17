@@ -21,10 +21,16 @@ module Float32Array = {
     (source, offset + (target |> Float32Array.length));
   };
 
-  let setFloatTuple3 = (offset, target: ColorType.color3, source) => {
+  let setFloatTuple3 = (offset, target: (float, float, float), source) => {
     source |> Float32Array.setArrayOffset(Obj.magic(target), offset);
 
     (source, offset + 3);
+  };
+
+  let setFloatTuple2 = (offset, target: (float, float), source) => {
+    source |> Float32Array.setArrayOffset(Obj.magic(target), offset);
+
+    (source, offset + 2);
   };
 
   let setFloat = (offset, target: float, source) => {

@@ -27,8 +27,8 @@ Director.load(window)
             TAARayTracingPass.execute(device, window, queue),
           )
        |> Director.addPassFuncs(
-            TAABlitPass.init(device, window, swapChainFormat),
-            TAABlitPass.execute(device, queue, swapChain),
+            TAATAAPass.init(device, window, swapChainFormat),
+            TAATAAPass.execute(device, queue, swapChain),
           )
        |> Director.start(window, swapChain);
      },

@@ -131,21 +131,59 @@ let getAllRenderGameObjects = state => {
   GameObject.getAllGeometryGameObjects(state);
 };
 
+let _getAccumulatedFrameCount = () => 16;
+
 let init = (device, window, state) => {
   let (cameraBufferData, cameraBufferSize, cameraBuffer) =
     TAABuffer.CameraBuffer.buildData(device, state);
   let (pixelBufferSize, pixelBuffer) =
     ManageBuffer.StorageBuffer.buildPixelBufferData(window, device);
+  let (historyPixelBufferSize, historyPixelBuffer) =
+    ManageBuffer.StorageBuffer.buildPixelBufferData(window, device);
+  let (taaBufferData, taaBufferSize, taaBuffer) =
+    TAABuffer.TAABuffer.buildData(device, state);
 
   state
+  |> Pass.setAccumulatedFrameIndex(0)
+  |> Pass.setJitterArr(
+       TAAJitter.generateHaltonJiters(
+         _getAccumulatedFrameCount(),
+         Window.getWidth(window),
+         Window.getHeight(window),
+       ),
+     )
   |> Pass.setUniformBufferData(
        "cameraBuffer",
        (cameraBufferData, cameraBuffer),
      )
-  |> Pass.setStorageBufferData("pixelBuffer", (pixelBufferSize, pixelBuffer));
+  |> Pass.setUniformBufferData("taaBuffer", (taaBufferData, taaBuffer))
+  |> Pass.setStorageBufferData(
+       "pixelBuffer",
+       (pixelBufferSize, pixelBuffer),
+     )
+  |> Pass.setStorageBufferData(
+       "historyPixelBuffer",
+       (historyPixelBufferSize, historyPixelBuffer),
+     );
 };
 
-let update = (window, time, state) => {
+let _updateCameraData = (window, state) => {
+  let currentCameraView = state |> CameraView.unsafeGetCurrentCameraView;
+
+  let lastViewJitterdProjectionMatrixOpt =
+    switch (Pass.GBufferPass.getJitterdProjectionMatrix(state)) {
+    | None => None
+    | Some(jitterdProjectionMatrix) =>
+      (
+        Matrix4.createIdentityMatrix4()
+        |> Matrix4.multiply(
+             CameraView.unsafeGetViewMatrix(currentCameraView, state),
+             jitterdProjectionMatrix,
+           )
+      )
+      ->Some
+    };
+
   let currentArcballCameraController =
     state |> ArcballCameraController.unsafeGetCurrentArcballCameraController;
   let state =
@@ -171,14 +209,75 @@ let update = (window, time, state) => {
          ),
        );
 
-  let currentCameraView = state |> CameraView.unsafeGetCurrentCameraView;
+  let viewMatrix = CameraView.unsafeGetViewMatrix(currentCameraView, state);
+  let jitterdProjectionMatrix =
+    TAAJitter.jitterProjectionMatrix(
+      CameraView.unsafeGetProjectionMatrix(currentCameraView, state),
+      state,
+    );
+  let state =
+    state
+    |> Pass.GBufferPass.setJitterdProjectionMatrix(jitterdProjectionMatrix)
+    |> Pass.GBufferPass.setLastViewJitterdProjectionMatrix(
+         Matrix4.createIdentityMatrix4()
+         |> Matrix4.multiply(viewMatrix, jitterdProjectionMatrix),
+       );
+
   let state =
     state
     |> TAABuffer.CameraBuffer.update(
          CameraView.unsafeGetCameraPosition(currentCameraView, state),
-         CameraView.unsafeGetViewMatrix(currentCameraView, state),
-         CameraView.unsafeGetProjectionMatrix(currentCameraView, state),
+         viewMatrix,
+         jitterdProjectionMatrix,
+         lastViewJitterdProjectionMatrixOpt,
        );
 
   state;
+};
+
+let _updateJitterData = state => {
+  let state =
+    state
+    |> TAABuffer.TAABuffer.update(
+         Pass.getJitter(Pass.getAccumulatedFrameIndex(state), state),
+       );
+
+  state
+  |> Pass.setAccumulatedFrameIndex(
+       (Pass.getAccumulatedFrameIndex(state) |> succ)
+       mod _getAccumulatedFrameCount(),
+     );
+};
+
+let _updateTransformData = state => {
+  let allRenderGameObjects = getAllRenderGameObjects(state);
+
+  let state =
+    allRenderGameObjects
+    |> ArrayUtils.reduceOneParam(
+         (. state, renderGameObject) => {
+           state
+           |> Pass.GBufferPass.setLastModelMatrix(
+                GameObject.unsafeGetTransform(renderGameObject, state),
+                Transform.buildModelMatrix(
+                  GameObject.unsafeGetTransform(renderGameObject, state),
+                  state,
+                ),
+              )
+         },
+         state,
+       );
+
+  // TODO update transform
+
+  let state = state |> TAABuffer.ModelBuffer.update(allRenderGameObjects);
+
+  state;
+};
+
+let update = (window, time, state) => {
+  state
+  |> _updateCameraData(window)
+  |> _updateTransformData
+  |> _updateJitterData;
 };

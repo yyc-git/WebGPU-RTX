@@ -14,7 +14,11 @@ type transform = {
 
 type geometry = {
   index: int,
-  vertexDataMap: ImmutableSparseMap.t(GeometryType.geometry, ( array(float), array(float) )),
+  vertexDataMap:
+    ImmutableSparseMap.t(
+      GeometryType.geometry,
+      (array(float), array(float)),
+    ),
   indexDataMap: ImmutableSparseMap.t(GeometryType.geometry, array(int)),
 };
 
@@ -205,6 +209,10 @@ type dynamicBindGroupData = {
 // };
 
 type gbufferPassData = {
+  lastModelMatrixMap:
+    ImmutableSparseMap.t(TransformType.transform, Float32Array.t),
+  lastViewJitterdProjectionMatrix: option(Float32Array.t),
+  jitteredProjectionMatrix: option(Float32Array.t),
   pipeline: option(Pipeline.Render.t),
   depthTextureView: option(TextureView.t),
   staticBindGroupDataArr: array(staticBindGroupData),
@@ -220,9 +228,12 @@ type rayTracingPassData = {
   staticBindGroupDataArr: array(staticBindGroupData),
 };
 
-type blitPassData = {
-  pipeline: option(Pipeline.Render.t),
-  bindGroup: option(BindGroup.t),
+type taaPassData = {
+  isFirstFrame: bool,
+  firstFramePipeline: option(Pipeline.Render.t),
+  firstFrameBindGroup: option(BindGroup.t),
+  otherFramePipeline: option(Pipeline.Render.t),
+  otherFrameBindGroup: option(BindGroup.t),
 };
 
 // type rayTracingPassData = {
@@ -263,10 +274,16 @@ type uniformBufferData = Float32Array.t;
 type storageBuffer = Buffer.t;
 type storageBufferSize = int;
 
+type jitterX = float;
+type jitterY = float;
+type jitter = (jitterX, jitterY);
+
 type pass = {
   gbufferPassData,
   rayTracingPassData,
-  blitPassData,
+  taaPassData,
+  accumulatedFrameIndex: int,
+  jitterArr: array(jitter),
   uniformBufferDataMap:
     ImmutableHashMap.t(bufferName, (uniformBufferData, uniformBuffer)),
   storageBufferDataMap:
@@ -278,7 +295,7 @@ type time = float;
 
 type passFuncData = {
   init: state => state,
-  execute: state => unit,
+  execute: state => state,
 }
 and director = {
   initFuncArr: array(state => state),
