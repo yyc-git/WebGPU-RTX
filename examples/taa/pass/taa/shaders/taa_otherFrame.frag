@@ -36,26 +36,27 @@ vec2 convertMotionVectorRangeTo0To1(vec2 motionVector) {
 }
 
 void main() {
-  vec2 jitteredUV = getJitterdUV(uv);
   vec2 unjitteredUV = getUnjitterdUV(uv, uTaa.jitter);
 
-  // vec3 motionVectorDepth =
-  //     texture(gMotionVectorDepthShininessTexture, jitteredUV).xyz;
-  // vec2 motionVector = motionVectorDepth.xy;
-  // float depth = LinearDepth(motionVectorDepth.z);
+  vec3 motionVectorDepth = texture(gMotionVectorDepthShininessTexture, uv).xyz;
+  vec2 motionVector = motionVectorDepth.xy;
+
+  // outColor = vec4(convertMotionVectorRangeTo0To1(motionVector), 1.0,1.0);
+  // return;
+
+
+  float depth = LinearDepth(motionVectorDepth.z);
 
   uint currentColorPixelIndex = getPixelIndex(unjitteredUV, resolution);
   vec4 currentColor = pixelBuffer.pixels[currentColorPixelIndex];
 
-  // vec4 prevColor = historyPixelBuffer.pixels[getPixelIndex(
-  //     jitteredUV - convertMotionVectorRangeTo0To1(motionVector),
-  //     resolution)];
-  // float weight = 0.05;
-  // vec4 compositeColor = mix(currentColor, prevColor, weight);
+  vec4 prevColor = historyPixelBuffer.pixels[getPixelIndex(
+      uv - convertMotionVectorRangeTo0To1(motionVector),
+      resolution)];
+  float weight = 0.05;
+  vec4 compositeColor = mix(currentColor, prevColor, weight);
 
-  // historyPixelBuffer.pixels[currentColorPixelIndex] = compositeColor;
+  outColor = compositeColor;
 
-  // outColor = compositeColor;
-
-  outColor = currentColor;
+  historyPixelBuffer.pixels[getPixelIndex(uv, resolution)] = outColor;
 }

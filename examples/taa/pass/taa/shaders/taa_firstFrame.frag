@@ -29,12 +29,11 @@ uint getPixelIndex(vec2 uv, vec2 resolution) {
 
 void main() {
   vec2 unjitteredUV = getUnjitterdUV(uv, uTaa.jitter);
-  // vec2 unjitteredUV = getUnjitterdUV(uv);
 
   uint currentColorPixelIndex = getPixelIndex(unjitteredUV, resolution);
   vec4 currentColor = pixelBuffer.pixels[currentColorPixelIndex];
 
-  historyPixelBuffer.pixels[currentColorPixelIndex] = currentColor;
-
   outColor = currentColor;
+
+  historyPixelBuffer.pixels[getPixelIndex(uv, resolution)] = outColor;
 }

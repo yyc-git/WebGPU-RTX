@@ -52,7 +52,8 @@ let buildScene = state => {
   let (tran1, state) = Transform.create(state);
   let state =
     state
-    |> Transform.setTranslation(tran1, (0., (-5.), 0.))
+    // |> Transform.setTranslation(tran1, (0., (-5.), 0.))
+    |> Transform.setTranslation(tran1, (0., 0., 0.))
     // |> Transform.setRotation(tran1, (30., 45., 0.))
     |> Transform.setRotation(tran1, (0., 20., 0.))
     |> Transform.setScale(tran1, (1., 1., 1.));
@@ -147,15 +148,12 @@ let init = (device, window, state) => {
   |> Pass.setAccumulatedFrameIndex(0)
   |> Pass.setJitterArr(
        TAAJitter.generateHaltonJiters(
-         _getAccumulatedFrameCount()
-         
-      //  |> Log.printComplete("_getAccumulatedFrameCount")
-         ,
+         _getAccumulatedFrameCount(),
+         //  |> Log.printComplete("_getAccumulatedFrameCount")
          Window.getWidth(window),
          Window.getHeight(window),
-       )
-      //  |> Log.printComplete("HaltonJiters")
-       ,
+       ),
+       //  |> Log.printComplete("HaltonJiters")
      )
   |> Pass.setUniformBufferData(
        "cameraBuffer",
@@ -175,16 +173,16 @@ let init = (device, window, state) => {
 let _updateCameraData = (window, state) => {
   let currentCameraView = state |> CameraView.unsafeGetCurrentCameraView;
 
-  let lastViewJitterdProjectionMatrixOpt =Pass.GBufferPass.getLastViewJitterdProjectionMatrix(state);
-    //     Matrix4.createIdentityMatrix4()
-    //     |> Matrix4.multiply(
-    //          CameraView.unsafeGetViewMatrix(currentCameraView, state),
-    //          TAAJitter.jitterProjectionMatrix(
-    //   CameraView.unsafeGetProjectionMatrix(currentCameraView, state),
-    // ),
-    //   state,
-    //        );
-
+  let lastViewJitterdProjectionMatrixOpt =
+    Pass.GBufferPass.getLastViewJitterdProjectionMatrix(state);
+  //     Matrix4.createIdentityMatrix4()
+  //     |> Matrix4.multiply(
+  //          CameraView.unsafeGetViewMatrix(currentCameraView, state),
+  //          TAAJitter.jitterProjectionMatrix(
+  //   CameraView.unsafeGetProjectionMatrix(currentCameraView, state),
+  // ),
+  //   state,
+  //        );
 
   let currentArcballCameraController =
     state |> ArcballCameraController.unsafeGetCurrentArcballCameraController;
@@ -221,7 +219,7 @@ let _updateCameraData = (window, state) => {
     state
     |> Pass.GBufferPass.setLastViewJitterdProjectionMatrix(
          Matrix4.createIdentityMatrix4()
-         |> Matrix4.multiply(viewMatrix, jitterdProjectionMatrix),
+         |> Matrix4.multiply(jitterdProjectionMatrix, viewMatrix),
        );
 
   let state =
@@ -240,10 +238,11 @@ let _updateJitterData = state => {
   let state =
     state
     |> TAABuffer.TAABuffer.update(
-         Pass.getJitter(Pass.getAccumulatedFrameIndex(state)
-         
-      //  |> Log.printComplete("getAccumulatedFrameCount")
-         , state),
+         Pass.getJitter(
+           Pass.getAccumulatedFrameIndex(state),
+           //  |> Log.printComplete("getAccumulatedFrameCount")
+           state,
+         ),
        );
 
   state

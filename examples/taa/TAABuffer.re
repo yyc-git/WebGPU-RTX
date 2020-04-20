@@ -164,14 +164,16 @@ module ModelBuffer = {
              let modelMatrix = Transform.buildModelMatrix(transform, state);
              let normalMatrix = Transform.buildNormalMatrix(modelMatrix);
 
+
+            //  Log.printComplete(
+            //    "(lastModelMatrix, modelMatrix):",
+            //    (lastModelMatrix, modelMatrix),
+            //  );
+
              let (modelBufferData, newOffset) =
                (modelBufferData, offset)
                |> ManageBuffer.setMat3DataToBufferData(normalMatrix);
 
-            //  Log.printComplete(
-            //    "(modelBufferData, newOffset):",
-            //    (modelBufferData, newOffset),
-            //  );
 
              let (modelBufferData, newOffset) =
                modelBufferData
