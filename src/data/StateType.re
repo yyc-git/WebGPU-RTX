@@ -212,7 +212,7 @@ type gbufferPassData = {
   lastModelMatrixMap:
     ImmutableSparseMap.t(TransformType.transform, Float32Array.t),
   lastViewJitterdProjectionMatrix: option(Float32Array.t),
-  jitteredProjectionMatrix: option(Float32Array.t),
+  // jitteredProjectionMatrix: option(Float32Array.t),
   pipeline: option(Pipeline.Render.t),
   depthTextureView: option(TextureView.t),
   staticBindGroupDataArr: array(staticBindGroupData),
@@ -231,9 +231,9 @@ type rayTracingPassData = {
 type taaPassData = {
   isFirstFrame: bool,
   firstFramePipeline: option(Pipeline.Render.t),
-  firstFrameBindGroup: option(BindGroup.t),
+  firstFrameStaticBindGroupDataArr: array(staticBindGroupData),
   otherFramePipeline: option(Pipeline.Render.t),
-  otherFrameBindGroup: option(BindGroup.t),
+  otherFrameStaticBindGroupDataArr: array(staticBindGroupData),
 };
 
 // type rayTracingPassData = {

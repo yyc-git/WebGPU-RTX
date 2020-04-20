@@ -201,7 +201,12 @@ let init = (device, window, state) => {
   let state =
     state |> Pass.GBufferPass.setRenderGameObjectArr(allRenderGameObjects);
 
-  let (offsetArrMap, modelBufferData, singleRenderGameObjectModelBufferSize, modelBuffer) =
+  let (
+    offsetArrMap,
+    modelBufferData,
+    singleRenderGameObjectModelBufferSize,
+    modelBuffer,
+  ) =
     TAABuffer.ModelBuffer.buildData(device, allRenderGameObjects, state);
 
   let state =
@@ -394,7 +399,7 @@ let init = (device, window, state) => {
   let normalRenderTargetFormat = "rgba16float";
   let diffuseRenderTargetFormat = "rgba8unorm";
   // let specularRenderTargetFormat = "rgba8unorm";
-  let depthShininessRenderTargetFormat = "rgba16float";
+  let motionVectorDepthShininessRenderTargetFormat = "rgba16float";
   // let depthRenderTargetFormat = "r16float";
 
   let depthTextureFormat = "depth24plus";
@@ -472,7 +477,7 @@ let init = (device, window, state) => {
              //   ~colorBlend=Pipeline.Render.blendDescriptor(),
              // ),
              Pipeline.Render.colorState(
-               ~format=depthShininessRenderTargetFormat,
+               ~format=motionVectorDepthShininessRenderTargetFormat,
                ~alphaBlend=Pipeline.Render.blendDescriptor(),
                ~colorBlend=Pipeline.Render.blendDescriptor(),
              ),
@@ -504,8 +509,12 @@ let init = (device, window, state) => {
     _createRenderTargetData(device, window, diffuseRenderTargetFormat);
   // let (specularRenderTarget, specularRenderTargetView) =
   //   _createRenderTargetData(device, window, specularRenderTargetFormat);
-  let (depthShininessRenderTarget, depthShininessRenderTargetView) =
-    _createRenderTargetData(device, window, depthShininessRenderTargetFormat);
+  let (_, motionVectorDepthShininessRenderTargetView) =
+    _createRenderTargetData(
+      device,
+      window,
+      motionVectorDepthShininessRenderTargetFormat,
+    );
   // let (depthRenderTarget, depthRenderTargetView) =
   //   _createRenderTargetData(device, window, depthRenderTargetFormat);
 
@@ -525,8 +534,8 @@ let init = (device, window, state) => {
     //      specularRenderTargetView,
     //    )
     |> Pass.setTextureView(
-         "depthShininessRenderTargetView",
-         depthShininessRenderTargetView,
+         "motionVectorDepthShininessRenderTargetView",
+         motionVectorDepthShininessRenderTargetView,
        );
   // |> Pass.setTextureView("depthRenderTargetView", depthRenderTargetView);
 
@@ -588,7 +597,10 @@ let execute = (device, queue, state) => {
                _buildColorAttachment("normalRenderTargetView", state),
                _buildColorAttachment("diffuseRenderTargetView", state),
                // _buildColorAttachment("specularRenderTargetView", state),
-               _buildColorAttachment("depthShininessRenderTargetView", state),
+               _buildColorAttachment(
+                 "motionVectorDepthShininessRenderTargetView",
+                 state,
+               ),
                //  _buildColorAttachment("depthRenderTargetView", state),
              |],
              ~depthStencilAttachment={

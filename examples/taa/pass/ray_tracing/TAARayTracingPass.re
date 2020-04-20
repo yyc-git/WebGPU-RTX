@@ -173,7 +173,7 @@ let init = (device, queue, state) => {
              ~binding=3,
              ~textureView=
                Pass.unsafeGetTextureView(
-                 "depthShininessRenderTargetView",
+                 "motionVectorDepthShininessRenderTargetView",
                  state,
                ),
              ~size=0,

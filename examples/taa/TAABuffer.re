@@ -57,7 +57,7 @@ module CameraBuffer = {
              lastViewJitterdProjectionMatrix,
            )
       };
-    Log.printComplete("cameraBufferData:", cameraBufferData);
+    // Log.printComplete("cameraBufferData:", cameraBufferData);
 
     cameraBuffer |> Buffer.setSubFloat32Data(0, cameraBufferData);
     let state =
@@ -116,25 +116,26 @@ module ModelBuffer = {
            (. (offset, offsetArrMap), renderGameObject) => {
              (
                offset + alignedModelBufferFloats,
-                offsetArrMap
-                |> ImmutableSparseMap.set(
-                     renderGameObject,
-                     [|
-                       ManageBuffer.UniformBuffer.getAlignedBufferBytesFromFloats(
-                         offset,
-                       ),
-                     |],
-                   ),
-             );
+               offsetArrMap
+               |> ImmutableSparseMap.set(
+                    renderGameObject,
+                    [|
+                      ManageBuffer.UniformBuffer.getAlignedBufferBytesFromFloats(
+                        offset,
+                      ),
+                    |],
+                  ),
+             )
            },
-           (
-             0,
-              ImmutableSparseMap.createEmpty(),
-           ),
+           (0, ImmutableSparseMap.createEmpty()),
          );
 
-
-    (offsetArrMap, modelBufferData, singleRenderGameObjectModelBufferSize, modelBuffer);
+    (
+      offsetArrMap,
+      modelBufferData,
+      singleRenderGameObjectModelBufferSize,
+      modelBuffer,
+    );
   };
 
   let unsafeGetModelBufferData = state => {
@@ -167,10 +168,10 @@ module ModelBuffer = {
                (modelBufferData, offset)
                |> ManageBuffer.setMat3DataToBufferData(normalMatrix);
 
-             Log.printComplete(
-               "(modelBufferData, newOffset):",
-               (modelBufferData, newOffset),
-             );
+            //  Log.printComplete(
+            //    "(modelBufferData, newOffset):",
+            //    (modelBufferData, newOffset),
+            //  );
 
              let (modelBufferData, newOffset) =
                modelBufferData
@@ -179,10 +180,10 @@ module ModelBuffer = {
                     modelMatrix,
                   );
 
-             Log.printComplete(
-               "(modelBufferData, newOffset):",
-               (modelBufferData, newOffset),
-             );
+            //  Log.printComplete(
+            //    "(modelBufferData, newOffset):",
+            //    (modelBufferData, newOffset),
+            //  );
 
              let (modelBufferData, _) =
                modelBufferData
@@ -191,19 +192,12 @@ module ModelBuffer = {
                     lastModelMatrix,
                   );
 
-             (
-               modelBufferData,
-               offset + alignedModelBufferFloats,
-             );
+             (modelBufferData, offset + alignedModelBufferFloats);
            },
-           (
-             modelBufferData,
-             0,
-           ),
+           (modelBufferData, 0),
          );
 
-    Log.printComplete("modelBufferData:", modelBufferData);
-
+    // Log.printComplete("modelBufferData:", modelBufferData);
 
     modelBuffer |> Buffer.setSubFloat32Data(0, modelBufferData);
 
@@ -249,6 +243,10 @@ module TAABuffer = {
     Pass.unsafeGetUniformBufferData("taaBuffer", state);
   };
 
+  let getTAABufferSize = (bufferData) =>{
+bufferData |> Float32Array.byteLength
+  };
+
   let _setTAABufferData = ((bufferData, buffer), state) => {
     Pass.setUniformBufferData("taaBuffer", (bufferData, buffer), state);
   };
@@ -259,7 +257,7 @@ module TAABuffer = {
     let (taaBufferData, offset) =
       taaBufferData |> TypeArray.Float32Array.setFloatTuple2(0, jitter);
 
-    Log.printComplete("taaBufferData:", taaBufferData);
+    // Log.printComplete("taaBufferData:", taaBufferData);
 
     taaBuffer |> Buffer.setSubFloat32Data(0, taaBufferData);
     let state = state |> _setTAABufferData((taaBufferData, taaBuffer));

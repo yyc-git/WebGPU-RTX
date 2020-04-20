@@ -1,5 +1,7 @@
 open WebGPU;
 
+open StateType;
+
 let _initFrameData =
     (
       device,
@@ -10,10 +12,23 @@ let _initFrameData =
         (historyPixelBufferSize, historyPixelBuffer),
         (taaBufferSize, taaBuffer),
       ),
-      (fragmentShaderName, setBindGroupFunc, setPipelineFunc),
+      (fragmentShaderName, addStaticBindGroupDataFunc, setPipelineFunc),
       state,
     ) => {
-  let bindGroupLayout =
+  let gbufferBindGroupLayout =
+    device
+    |> Device.createBindGroupLayout({
+         "bindings": [|
+           BindGroupLayout.layoutBinding(
+             ~binding=0,
+             ~visibility=ShaderStage.fragment,
+             ~type_="sampled-texture",
+             (),
+           ),
+         |],
+       });
+
+  let otherBindGroupLayout =
     device
     |> Device.createBindGroupLayout({
          "bindings": [|
@@ -44,10 +59,28 @@ let _initFrameData =
          |],
        });
 
-  let bindGroup =
+  let gbufferBindGroup =
     device
     |> Device.createBindGroup({
-         "layout": bindGroupLayout,
+         "layout": gbufferBindGroupLayout,
+         "bindings": [|
+           BindGroup.binding(
+             ~binding=0,
+             ~textureView=
+               Pass.unsafeGetTextureView(
+                 "motionVectorDepthShininessRenderTargetView",
+                 state,
+               ),
+             ~size=0,
+             (),
+           ),
+         |],
+       });
+
+  let otherBindGroup =
+    device
+    |> Device.createBindGroup({
+         "layout": otherBindGroupLayout,
          "bindings": [|
            BindGroup.binding(
              ~binding=0,
@@ -80,7 +113,10 @@ let _initFrameData =
          |],
        });
 
-  let state = state |> setBindGroupFunc(bindGroup);
+  let state =
+    state
+    |> addStaticBindGroupDataFunc(0, gbufferBindGroup)
+    |> addStaticBindGroupDataFunc(1, otherBindGroup);
 
   let baseShaderPath = "examples/taa/pass/taa/shaders";
 
@@ -105,7 +141,10 @@ let _initFrameData =
            ~layout=
              device
              |> Device.createPipelineLayout({
-                  "bindGroupLayouts": [|bindGroupLayout|],
+                  "bindGroupLayouts": [|
+                    gbufferBindGroupLayout,
+                    otherBindGroupLayout,
+                  |],
                 }),
            ~vertexStage={
              Pipeline.Render.vertexStage(
@@ -160,7 +199,7 @@ let _initFirstFrameData =
     ),
     (
       "taa_firstFrame",
-      Pass.TAAPass.setFirstFrameBindGroup,
+      Pass.TAAPass.addFirstFrameStaticBindGroupData,
       Pass.TAAPass.setFirstFramePipeline,
     ),
     state,
@@ -190,7 +229,7 @@ let _initOtherFrameData =
     ),
     (
       "taa_otherFrame",
-      Pass.TAAPass.setOtherFrameBindGroup,
+      Pass.TAAPass.addOtherFrameStaticBindGroupData,
       Pass.TAAPass.setOtherFramePipeline,
     ),
     state,
@@ -205,8 +244,8 @@ let init = (device, window, swapChainFormat, state) => {
     Pass.unsafeGetStorageBufferData("pixelBuffer", state);
   let (historyPixelBufferSize, historyPixelBuffer) =
     Pass.unsafeGetStorageBufferData("historyPixelBuffer", state);
-  let (taaBufferSize, taaBuffer) =
-    Pass.unsafeGetStorageBufferData("taaBuffer", state);
+  let (taaBufferData, taaBuffer) =
+    Pass.unsafeGetUniformBufferData("taaBuffer", state);
 
   state
   |> Pass.TAAPass.markFirstFrame
@@ -217,7 +256,7 @@ let init = (device, window, swapChainFormat, state) => {
          (resolutionBufferSize, resolutionBuffer),
          (pixelBufferSize, pixelBuffer),
          (historyPixelBufferSize, historyPixelBuffer),
-         (taaBufferSize, taaBuffer),
+         (TAABuffer.TAABuffer.getTAABufferSize(taaBufferData), taaBuffer),
        ),
      )
   |> _initOtherFrameData(
@@ -227,7 +266,7 @@ let init = (device, window, swapChainFormat, state) => {
          (resolutionBufferSize, resolutionBuffer),
          (pixelBufferSize, pixelBuffer),
          (historyPixelBufferSize, historyPixelBuffer),
-         (taaBufferSize, taaBuffer),
+         (TAABuffer.TAABuffer.getTAABufferSize(taaBufferData), taaBuffer),
        ),
      );
 };
@@ -260,23 +299,28 @@ let execute = (device, queue, swapChain, state) => {
          },
        );
 
-  let (bindGroup, pipeline) =
+  let (staticBindGroupDataArr, pipeline) =
     Pass.TAAPass.isFirstFrame(state)
       ? (
-        Pass.TAAPass.unsafeGetFirstFrameBindGroup(state),
+        Pass.TAAPass.getFirstFrameStaticBindGroupDataArr(state),
         Pass.TAAPass.unsafeGetFirstFramePipeline(state),
       )
       : (
-        Pass.TAAPass.unsafeGetOtherFrameBindGroup(state),
+        Pass.TAAPass.getOtherFrameStaticBindGroupDataArr(state),
         Pass.TAAPass.unsafeGetOtherFramePipeline(state),
       );
 
   renderPass |> PassEncoder.Render.setPipeline(pipeline);
-  renderPass |> PassEncoder.Render.setBindGroup(0, bindGroup);
+
+  staticBindGroupDataArr
+  |> Js.Array.forEach(({setSlot, bindGroup}: staticBindGroupData) => {
+       renderPass |> PassEncoder.Render.setBindGroup(setSlot, bindGroup)
+     });
+
   renderPass |> PassEncoder.Render.draw(3, 1, 0, 0);
   renderPass |> PassEncoder.Render.endPass;
 
   queue |> Queue.submit([|commandEncoder |> CommandEncoder.finish|]);
 
-  state |> Pass.TAAPass.markNotFirstFrame
+  state |> Pass.TAAPass.markNotFirstFrame;
 };

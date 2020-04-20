@@ -89,8 +89,8 @@ module GBufferPass = {
     },
   };
 
-  let unsafeGetLastViewJitterdProjectionMatrix = state => {
-    _getPassData(state).lastViewJitterdProjectionMatrix |> Js.Option.getExn;
+  let getLastViewJitterdProjectionMatrix = state => {
+    _getPassData(state).lastViewJitterdProjectionMatrix ;
   };
 
   let setLastViewJitterdProjectionMatrix =
@@ -106,20 +106,20 @@ module GBufferPass = {
     },
   };
 
-  let getJitterdProjectionMatrix = state => {
-    _getPassData(state).jitteredProjectionMatrix;
-  };
+  // let getJitterdProjectionMatrix = state => {
+  //   _getPassData(state).jitteredProjectionMatrix;
+  // };
 
-  let setJitterdProjectionMatrix = (jitteredProjectionMatrix, state) => {
-    ...state,
-    pass: {
-      ...state.pass,
-      gbufferPassData: {
-        ..._getPassData(state),
-        jitteredProjectionMatrix: Some(jitteredProjectionMatrix),
-      },
-    },
-  };
+  // let setJitterdProjectionMatrix = (jitteredProjectionMatrix, state) => {
+  //   ...state,
+  //   pass: {
+  //     ...state.pass,
+  //     gbufferPassData: {
+  //       ..._getPassData(state),
+  //       jitteredProjectionMatrix: Some(jitteredProjectionMatrix),
+  //     },
+  //   },
+  // };
 
   let unsafeGetDepthTextureView = state => {
     _getPassData(state).depthTextureView |> Js.Option.getExn;
@@ -399,33 +399,37 @@ module TAAPass = {
     },
   };
 
-  let unsafeGetFirstFrameBindGroup = state => {
-    _getPassData(state).firstFrameBindGroup |> Js.Option.getExn;
-  };
-
-  let setFirstFrameBindGroup = (firstFrameBindGroup, state) => {
+  let addFirstFrameStaticBindGroupData = (setSlot, bindGroup, state) => {
     ...state,
     pass: {
       ...state.pass,
       taaPassData: {
         ..._getPassData(state),
-        firstFrameBindGroup: Some(firstFrameBindGroup),
+        firstFrameStaticBindGroupDataArr:
+          _getPassData(state).firstFrameStaticBindGroupDataArr
+          |> ArrayUtils.push({setSlot, bindGroup}),
       },
     },
   };
 
-  let unsafeGetOtherFrameBindGroup = state => {
-    _getPassData(state).otherFrameBindGroup |> Js.Option.getExn;
+  let getFirstFrameStaticBindGroupDataArr = state => {
+    _getPassData(state).firstFrameStaticBindGroupDataArr;
   };
 
-  let setOtherFrameBindGroup = (otherFrameBindGroup, state) => {
+  let addOtherFrameStaticBindGroupData = (setSlot, bindGroup, state) => {
     ...state,
     pass: {
       ...state.pass,
       taaPassData: {
         ..._getPassData(state),
-        otherFrameBindGroup: Some(otherFrameBindGroup),
+        otherFrameStaticBindGroupDataArr:
+          _getPassData(state).otherFrameStaticBindGroupDataArr
+          |> ArrayUtils.push({setSlot, bindGroup}),
       },
     },
+  };
+
+  let getOtherFrameStaticBindGroupDataArr = state => {
+    _getPassData(state).otherFrameStaticBindGroupDataArr;
   };
 };

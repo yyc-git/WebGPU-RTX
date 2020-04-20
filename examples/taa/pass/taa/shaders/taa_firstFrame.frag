@@ -2,6 +2,7 @@
 #pragma shader_stage(fragment)
 
 #include "../../shaders/definition.glsl"
+#include "../../shaders/jitter.glsl"
 
 layout(location = 0) in vec2 uv;
 layout(location = 0) out vec4 outColor;
@@ -27,7 +28,8 @@ uint getPixelIndex(vec2 uv, vec2 resolution) {
 }
 
 void main() {
-  vec2 unjitteredUV = uv - uTaa.jitter;
+  vec2 unjitteredUV = getUnjitterdUV(uv, uTaa.jitter);
+  // vec2 unjitteredUV = getUnjitterdUV(uv);
 
   uint currentColorPixelIndex = getPixelIndex(unjitteredUV, resolution);
   vec4 currentColor = pixelBuffer.pixels[currentColorPixelIndex];

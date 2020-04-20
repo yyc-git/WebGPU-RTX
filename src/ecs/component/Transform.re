@@ -1,18 +1,5 @@
 open StateType;
 
-let create = state => {
-  (
-    state.transform.index,
-    {
-      ...state,
-      transform: {
-        ...state.transform,
-        index: state.transform.index |> succ,
-      },
-    },
-  );
-};
-
 let getTranslation = (transform, state) => {
   state.transform.translationMap |> ImmutableSparseMap.unsafeGet(transform);
 };
@@ -52,6 +39,27 @@ let setScale = (transform, scale, state) => {
     scaleMap:
       state.transform.scaleMap |> ImmutableSparseMap.set(transform, scale),
   },
+};
+
+let create = state => {
+  let newTransform = state.transform.index;
+
+  let state =
+    state
+    |> setTranslation(newTransform, (0., 0., 0.))
+    |> setRotation(newTransform, (0., 0., 0.))
+    |> setScale(newTransform, (1., 1., 1.));
+
+  (
+    newTransform,
+    {
+      ...state,
+      transform: {
+        ...state.transform,
+        index: state.transform.index |> succ,
+      },
+    },
+  );
 };
 
 let buildNormalMatrix = modelMatrix => {
