@@ -291,6 +291,15 @@ type pass = {
   textureViewMap: ImmutableHashMap.t(textureViewName, TextureView.t),
 };
 
+type accelerationContainer = {
+  geometryContainers: option(array(AccelerationContainer.t)),
+  instanceContainer: option(AccelerationContainer.t),
+  instanceBufferArrayBuffer: option(ArrayBuffer.t),
+  instanceBuffer: option(Buffer.t),
+};
+
+type rayTracing = {accelerationContainer};
+
 type time = float;
 
 type passFuncData = {
@@ -314,4 +323,5 @@ and state = {
   cameraView,
   arcballCameraController,
   pass,
+  rayTracing,
 };

@@ -252,7 +252,25 @@ let _updateJitterData = state => {
      );
 };
 
-let _updateTransformData = state => {
+let _updateTransformAnim = (time, state) => {
+  TransformAnimation.getAllDynamicTransforms(state)
+  |> ArrayUtils.reduceOneParam(
+       (. state, transform) => {
+         let (tx, ty, tz) = Transform.getTranslation(transform, state);
+         let (rx, ry, rz) = Transform.getRotation(transform, state);
+
+         let newTx = tx +. 0.3 *. time /. 20.0;
+         let newTx = newTx > 10.0 ? 0.0 : newTx;
+
+         state
+         |> Transform.setTranslation(transform, (newTx, ty, tz))
+         |> Transform.setRotation(transform, (rx, ry +. time /. 20.0, rz));
+       },
+       state,
+     );
+};
+
+let _updateTransformData = (time, device, queue, state) => {
   let allRenderGameObjects = getAllRenderGameObjects(state);
 
   let state =
@@ -271,16 +289,20 @@ let _updateTransformData = state => {
          state,
        );
 
-  // TODO update transform
+  let state = state |> _updateTransformAnim(time);
+
+  let state =
+    state
+    |> ManageAccelerationContainer.updateInstanceContainer(device, queue);
 
   let state = state |> TAABuffer.ModelBuffer.update(allRenderGameObjects);
 
   state;
 };
 
-let update = (window, time, state) => {
+let update = (device, queue, window, time, state) => {
   state
   |> _updateCameraData(window)
-  |> _updateTransformData
+  |> _updateTransformData(time, device, queue)
   |> _updateJitterData;
 };

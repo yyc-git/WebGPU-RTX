@@ -17,7 +17,7 @@ Director.load(window)
        StateData.getState()
        |> TAAScene.buildScene
        |> Director.addInitFunc(TAAScene.init(device, window))
-       |> Director.addUpdateFunc(TAAScene.update(window))
+       |> Director.addUpdateFunc(TAAScene.update(device, queue, window))
        |> Director.addPassFuncs(
             TAAGBufferPass.init(device, window),
             TAAGBufferPass.execute(device, queue),

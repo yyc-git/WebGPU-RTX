@@ -182,8 +182,21 @@ let init = (device, queue, state) => {
          |],
        });
 
-  let ((instanceBufferArrayBuffer, instanceBuffer), instanceContainer) =
+  let (
+    geometryContainers,
+    (instanceBufferArrayBuffer, instanceBuffer),
+    instanceContainer,
+  ) =
     ManageAccelerationContainer.buildContainers(device, queue, state);
+
+  let state =
+    state
+    |> OperateAccelerationContainer.setData(
+         geometryContainers,
+         instanceContainer,
+         instanceBufferArrayBuffer,
+         instanceBuffer,
+       );
 
   let (pixelBufferSize, pixelBuffer) =
     Pass.unsafeGetStorageBufferData("pixelBuffer", state);
@@ -316,5 +329,5 @@ let execute = (device, window, queue, state) => {
 
   queue |> Queue.submit([|commandEncoder |> CommandEncoder.finish|]);
 
-  state
+  state;
 };

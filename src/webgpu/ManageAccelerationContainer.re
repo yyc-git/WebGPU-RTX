@@ -248,7 +248,7 @@ let _createInstanceContainer = (geometryContainers, device, state) => {
     |> Device.createRayTracingAccelerationContainer(
          {
            AccelerationContainer.descriptor(
-             ~flags=AccelerationContainerFlag.prefer_fast_trace,
+             ~flags=AccelerationContainerFlag.allow_update,
              ~level="top",
              ~instanceBuffer,
              (),
@@ -277,5 +277,40 @@ let buildContainers = (device, queue, state) => {
   |> CommandEncoder.buildRayTracingAccelerationContainer(instanceContainer);
   queue |> Queue.submit([|commandEncoder |> CommandEncoder.finish|]);
 
-  ((instanceBufferArrayBuffer, instanceBuffer), instanceContainer);
+  (
+    geometryContainers,
+    (instanceBufferArrayBuffer, instanceBuffer),
+    instanceContainer,
+  );
+};
+
+let updateInstanceContainer = (device, queue, state) => {
+  let (
+    geometryContainers,
+    instanceContainer,
+    instanceBufferArrayBuffer,
+    instanceBuffer,
+  ) =
+    OperateAccelerationContainer.unsafeGetData(state);
+
+  let (instanceBufferArrayBuffer, instanceBuffer) =
+    _updateInstanceBuffer(
+      geometryContainers,
+      state,
+      (instanceBufferArrayBuffer, instanceBuffer),
+    );
+
+  let commandEncoder =
+    device |> Device.createCommandEncoder(CommandEncoder.descriptor());
+  commandEncoder
+  |> CommandEncoder.updateRayTracingAccelerationContainer(instanceContainer);
+  queue |> Queue.submit([|commandEncoder |> CommandEncoder.finish|]);
+
+  state
+  |> OperateAccelerationContainer.setData(
+       geometryContainers,
+       instanceContainer,
+       instanceBufferArrayBuffer,
+       instanceBuffer,
+     );
 };

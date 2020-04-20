@@ -94,6 +94,14 @@ let create = () => {
     storageBufferDataMap: ImmutableHashMap.createEmpty(),
     textureViewMap: ImmutableHashMap.createEmpty(),
   },
+  rayTracing: {
+    accelerationContainer: {
+      geometryContainers: None,
+      instanceContainer: None,
+      instanceBufferArrayBuffer: None,
+      instanceBuffer: None,
+    },
+  },
   director: {
     initFuncArr: [||],
     updateFuncArr: [||],

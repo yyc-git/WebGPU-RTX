@@ -22,3 +22,9 @@ let setDynamicTransform = (transformAnimation, transform, state) => {
       |> ImmutableSparseMap.set(transformAnimation, transform),
   },
 };
+
+let getAllDynamicTransforms = state => {
+  state.transformAnimation.dynamicTransformMap
+  |> ImmutableSparseMap.getValidValues
+  |> ArrayUtils2.removeDuplicateItems;
+};

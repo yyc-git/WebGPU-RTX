@@ -93,13 +93,16 @@ let start = (window, swapChain, state) => {
   state |> StateData.setState |> ignore;
 
   let startTime = Performance.now();
+  let lastTime = ref(startTime);
+
   let rec _onFrame = () => {
     !(window |> Window.shouldClose)
       ? {
         Global.setTimeout(_onFrame, 1e3 /. 60.0) |> ignore;
       }
       : ();
-    let time = Performance.now() -. startTime;
+    let time = Performance.now() -. lastTime^;
+    lastTime := Performance.now();
 
     let state = StateData.getState();
 
