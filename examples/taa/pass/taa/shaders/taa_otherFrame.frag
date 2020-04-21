@@ -1,6 +1,11 @@
 #version 450
 #pragma shader_stage(fragment)
 
+#define USE_TONEMAP
+
+#define USE_MIXED_TONE_MAP
+#define MIXED_TONE_MAP_LINEAR_UPPER_BOUND 0.5f
+
 #include "../../shaders/definition.glsl"
 #include "../../shaders/jitter.glsl"
 #include "../../shaders/utils.glsl"
@@ -47,6 +52,48 @@ vec3 yCoCgR2RGB(vec3 yCoCgRColor) {
   return rgbColor;
 }
 
+float luminance(in vec3 color) {
+#ifdef USE_TONEMAP
+  return color.r;
+#else
+  return dot(color, vec3(0.25f, 0.50f, 0.25f));
+#endif
+}
+
+vec3 toneMap(vec3 color) {
+#ifdef USE_MIXED_TONE_MAP
+  float luma = luminance(color);
+  if (luma <= MIXED_TONE_MAP_LINEAR_UPPER_BOUND) {
+    return color;
+  } else {
+    return color *
+           (MIXED_TONE_MAP_LINEAR_UPPER_BOUND *
+                MIXED_TONE_MAP_LINEAR_UPPER_BOUND -
+            luma) /
+           (luma * (2 * MIXED_TONE_MAP_LINEAR_UPPER_BOUND - 1 - luma));
+  }
+#else
+  return color / (1 + luminance(color));
+#endif
+}
+
+vec3 unToneMap(vec3 color) {
+#ifdef USE_MIXED_TONE_MAP
+  float luma = luminance(color);
+  if (luma <= MIXED_TONE_MAP_LINEAR_UPPER_BOUND) {
+    return color;
+  } else {
+    return color *
+           (MIXED_TONE_MAP_LINEAR_UPPER_BOUND *
+                MIXED_TONE_MAP_LINEAR_UPPER_BOUND -
+            (2 * MIXED_TONE_MAP_LINEAR_UPPER_BOUND - 1) * luma) /
+           (luma * (1 - luma));
+  }
+#else
+  return color / (1 - luminance(color));
+#endif
+}
+
 void sampleNeighborhoods(in vec2 unjitteredUV, in vec2 resolution, out vec3 m1,
                          out vec3 m2, out vec3 minNeighbor,
                          out vec3 maxNeighbor) {
@@ -60,8 +107,14 @@ void sampleNeighborhoods(in vec2 unjitteredUV, in vec2 resolution, out vec3 m1,
       vec2 neighborUv =
           saturateVec2(unjitteredUV +
                        vec2(float(x) / resolution.x, float(y) / resolution.y));
-      vec3 neighborTexel =
-          rgb2YCoCgR(getCurrentColor(neighborUv, resolution).xyz);
+
+      vec3 neighborTexel = getCurrentColor(neighborUv, resolution).xyz;
+
+#ifdef USE_TONEMAP
+      neighborTexel = toneMap(neighborTexel);
+#endif
+
+      neighborTexel = rgb2YCoCgR(neighborTexel);
 
       maxNeighbor = max(maxNeighbor, neighborTexel);
       minNeighbor = min(minNeighbor, neighborTexel);
@@ -116,12 +169,24 @@ void main() {
   float depth = LinearDepth(motionVectorDepth.z);
 
   vec3 currentColor =
-      rgb2YCoCgR(getCurrentColor(unjitteredUV, screenDimension.resolution).xyz);
+      getCurrentColor(unjitteredUV, screenDimension.resolution).xyz;
+
+#ifdef USE_TONEMAP
+  currentColor = toneMap(currentColor);
+#endif
+
+  currentColor = rgb2YCoCgR(currentColor);
 
   vec3 prevColor =
-      rgb2YCoCgR(getPrevColor(uv - convertMotionVectorRangeTo0To1(motionVector),
-                              screenDimension.resolution)
-                     .xyz);
+      getPrevColor(uv - convertMotionVectorRangeTo0To1(motionVector),
+                   screenDimension.resolution)
+          .xyz;
+
+#ifdef USE_TONEMAP
+  prevColor = toneMap(prevColor);
+#endif
+
+  prevColor = rgb2YCoCgR(prevColor);
 
   vec3 m1;
   vec3 m2;
@@ -136,9 +201,15 @@ void main() {
 
   prevColor = clipAABB(aabbMin, aabbMax, prevColor);
 
-  outColor = vec4(
-      yCoCgR2RGB(accumulateByExponentMovingAverage(currentColor, prevColor)),
-      1.0);
+  vec3 color = accumulateByExponentMovingAverage(currentColor, prevColor);
+
+#ifdef USE_TONEMAP
+  color = unToneMap(color);
+#endif
+
+  color = yCoCgR2RGB(color);
+
+  outColor = vec4(color, 1.0);
 
   setPrevColor(uv, screenDimension.resolution, outColor);
 }
