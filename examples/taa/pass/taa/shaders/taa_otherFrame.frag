@@ -1,6 +1,8 @@
 #version 450
 #pragma shader_stage(fragment)
 
+#define USE_CLOSEST_VELOCITY
+
 #define USE_TONEMAP
 
 #define USE_MIXED_TONE_MAP
@@ -22,12 +24,45 @@ screenDimension;
 layout(set = 1, binding = 3) uniform Taa { vec2 jitter; }
 uTaa;
 
-float LinearDepth(float depth) {
+float linearDepth(float depth) {
   return (2.0 * NEAR_Z) / (FAR_Z + NEAR_Z - depth * (FAR_Z - NEAR_Z));
 }
 
 vec2 convertMotionVectorRangeTo0To1(vec2 motionVector) {
   return motionVector * 2.0 - 1.0;
+}
+
+vec2 getClosestMotionVector(vec2 jitteredUV, vec2 resolution) {
+  vec2 closestOffset = vec2(0.0f, 0.0f);
+  float closestDepth = FAR_Z;
+
+  for (int y = -1; y <= 1; ++y) {
+    for (int x = -1; x <= 1; ++x) {
+      vec2 sampleOffset =
+          vec2(float(x) / resolution.x, float(y) / resolution.y);
+      vec2 sampleUV = jitteredUV + sampleOffset;
+      sampleUV = saturateVec2(sampleUV);
+
+      float NeighborhoodDepthSamp =
+          texture(gMotionVectorDepthShininessTexture, sampleUV).z;
+
+      NeighborhoodDepthSamp = linearDepth(NeighborhoodDepthSamp);
+
+      // #if USE_REVERSE_Z
+      // if (NeighborhoodDepthSamp > closestDepth)
+      // #else
+      if (NeighborhoodDepthSamp < closestDepth)
+      // #endif
+      {
+        closestDepth = NeighborhoodDepthSamp;
+        closestOffset = vec2(x, y);
+      }
+    }
+  }
+  closestOffset /= resolution;
+
+  return texture(gMotionVectorDepthShininessTexture, jitteredUV + closestOffset)
+      .xy;
 }
 
 vec3 rgb2YCoCgR(vec3 rgbColor) {
@@ -160,13 +195,10 @@ vec3 accumulateByExponentMovingAverage(vec3 currentColor, vec3 prevColor) {
 void main() {
   vec2 unjitteredUV = getUnjitterdUV(uv, uTaa.jitter);
 
-  vec3 motionVectorDepth = texture(gMotionVectorDepthShininessTexture, uv).xyz;
-  vec2 motionVector = motionVectorDepth.xy;
+  vec2 motionVector = getClosestMotionVector(uv, screenDimension.resolution);
 
   // outColor = vec4(convertMotionVectorRangeTo0To1(motionVector), 1.0,1.0);
   // return;
-
-  float depth = LinearDepth(motionVectorDepth.z);
 
   vec3 currentColor =
       getCurrentColor(unjitteredUV, screenDimension.resolution).xyz;
