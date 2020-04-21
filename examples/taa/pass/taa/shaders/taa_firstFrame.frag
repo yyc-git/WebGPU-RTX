@@ -16,7 +16,8 @@ layout(std140, set = 1, binding = 1) buffer HistoryPixelBuffer {
 }
 historyPixelBuffer;
 
-layout(set = 1, binding = 2) uniform ScreenDimension { vec2 resolution; };
+layout(set = 1, binding = 2) uniform ScreenDimension { vec2 resolution; }
+screenDimension;
 
 layout(set = 1, binding = 3) uniform Taa { vec2 jitter; }
 uTaa;
@@ -30,10 +31,12 @@ uint getPixelIndex(vec2 uv, vec2 resolution) {
 void main() {
   vec2 unjitteredUV = getUnjitterdUV(uv, uTaa.jitter);
 
-  uint currentColorPixelIndex = getPixelIndex(unjitteredUV, resolution);
+  uint currentColorPixelIndex =
+      getPixelIndex(unjitteredUV, screenDimension.resolution);
   vec4 currentColor = pixelBuffer.pixels[currentColorPixelIndex];
 
   outColor = currentColor;
 
-  historyPixelBuffer.pixels[getPixelIndex(uv, resolution)] = outColor;
+  historyPixelBuffer.pixels[getPixelIndex(uv, screenDimension.resolution)] =
+      outColor;
 }
