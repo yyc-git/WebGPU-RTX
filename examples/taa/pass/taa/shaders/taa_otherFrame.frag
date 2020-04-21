@@ -186,16 +186,24 @@ vec3 clipAABB(vec3 aabbMin, vec3 aabbMax, vec3 prevColor) {
     return prevColor; // point inside aabb
 }
 
-float buildWeight() { return 0.05; }
+vec3 accumulateByExponentMovingAverage(float lenMotionVector, vec3 currentColor,
+                                       vec3 prevColor) {
+  const float BlendWeightLowerBound = 0.03;
+  const float BlendWeightUpperBound = 0.12;
+  const float BlendWeightVelocityScale = 100.0 * 60.0;
 
-vec3 accumulateByExponentMovingAverage(vec3 currentColor, vec3 prevColor) {
-  return mix(currentColor, prevColor, buildWeight());
+  float weight = mix(BlendWeightLowerBound, BlendWeightUpperBound,
+                     saturateFloat(lenMotionVector * BlendWeightVelocityScale));
+
+  return mix(prevColor, currentColor, weight);
 }
 
 void main() {
   vec2 unjitteredUV = getUnjitterdUV(uv, uTaa.jitter);
 
   vec2 motionVector = getClosestMotionVector(uv, screenDimension.resolution);
+
+  float lenMotionVector = length(motionVector);
 
   // outColor = vec4(convertMotionVectorRangeTo0To1(motionVector), 1.0,1.0);
   // return;
@@ -233,7 +241,8 @@ void main() {
 
   prevColor = clipAABB(aabbMin, aabbMax, prevColor);
 
-  vec3 color = accumulateByExponentMovingAverage(currentColor, prevColor);
+  vec3 color = accumulateByExponentMovingAverage(lenMotionVector, currentColor,
+                                                 prevColor);
 
 #ifdef USE_TONEMAP
   color = unToneMap(color);
