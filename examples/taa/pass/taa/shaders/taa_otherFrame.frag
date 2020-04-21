@@ -4,18 +4,12 @@
 #include "../../shaders/definition.glsl"
 #include "../../shaders/jitter.glsl"
 #include "../../shaders/utils.glsl"
+#include "./taa_utils.glsl"
 
 layout(location = 0) in vec2 uv;
 layout(location = 0) out vec4 outColor;
 
 layout(binding = 0) uniform sampler2D gMotionVectorDepthShininessTexture;
-
-layout(std140, set = 1, binding = 0) buffer PixelBuffer { vec4 pixels[]; }
-pixelBuffer;
-layout(std140, set = 1, binding = 1) buffer HistoryPixelBuffer {
-  vec4 pixels[];
-}
-historyPixelBuffer;
 
 layout(set = 1, binding = 2) uniform ScreenDimension { vec2 resolution; }
 screenDimension;
@@ -23,18 +17,34 @@ screenDimension;
 layout(set = 1, binding = 3) uniform Taa { vec2 jitter; }
 uTaa;
 
-uint getPixelIndex(vec2 uv, vec2 resolution) {
-  const ivec2 bufferCoord = ivec2(floor(uv * resolution));
-
-  return bufferCoord.y * uint(resolution.x) + bufferCoord.x;
-}
-
 float LinearDepth(float depth) {
   return (2.0 * NEAR_Z) / (FAR_Z + NEAR_Z - depth * (FAR_Z - NEAR_Z));
 }
 
 vec2 convertMotionVectorRangeTo0To1(vec2 motionVector) {
   return motionVector * 2.0 - 1.0;
+}
+
+vec3 rgb2YCoCgR(vec3 rgbColor) {
+  vec3 yCoCgRColor;
+
+  yCoCgRColor.y = rgbColor.r - rgbColor.b;
+  float temp = rgbColor.b + yCoCgRColor.y / 2;
+  yCoCgRColor.z = rgbColor.g - temp;
+  yCoCgRColor.x = temp + yCoCgRColor.z / 2;
+
+  return yCoCgRColor;
+}
+
+vec3 yCoCgR2RGB(vec3 yCoCgRColor) {
+  vec3 rgbColor;
+
+  float temp = yCoCgRColor.x - yCoCgRColor.z / 2;
+  rgbColor.g = yCoCgRColor.z + temp;
+  rgbColor.b = temp - yCoCgRColor.y / 2;
+  rgbColor.r = rgbColor.b + yCoCgRColor.y;
+
+  return rgbColor;
 }
 
 void sampleNeighborhoods(in vec2 unjitteredUV, in vec2 resolution, out vec3 m1,
@@ -51,7 +61,7 @@ void sampleNeighborhoods(in vec2 unjitteredUV, in vec2 resolution, out vec3 m1,
           saturateVec2(unjitteredUV +
                        vec2(float(x) / resolution.x, float(y) / resolution.y));
       vec3 neighborTexel =
-          pixelBuffer.pixels[getPixelIndex(neighborUv, resolution)].xyz;
+          rgb2YCoCgR(getCurrentColor(neighborUv, resolution).xyz);
 
       maxNeighbor = max(maxNeighbor, neighborTexel);
       minNeighbor = min(minNeighbor, neighborTexel);
@@ -105,13 +115,13 @@ void main() {
 
   float depth = LinearDepth(motionVectorDepth.z);
 
-  uint currentColorPixelIndex =
-      getPixelIndex(unjitteredUV, screenDimension.resolution);
-  vec4 currentColor = pixelBuffer.pixels[currentColorPixelIndex];
+  vec3 currentColor =
+      rgb2YCoCgR(getCurrentColor(unjitteredUV, screenDimension.resolution).xyz);
 
-  vec4 prevColor = historyPixelBuffer.pixels[getPixelIndex(
-      uv - convertMotionVectorRangeTo0To1(motionVector),
-      screenDimension.resolution)];
+  vec3 prevColor =
+      rgb2YCoCgR(getPrevColor(uv - convertMotionVectorRangeTo0To1(motionVector),
+                              screenDimension.resolution)
+                     .xyz);
 
   vec3 m1;
   vec3 m2;
@@ -124,10 +134,11 @@ void main() {
   vec3 aabbMax;
   varianceClip(m1, m2, aabbMin, aabbMax);
 
-  prevColor.xyz = clipAABB(aabbMin, aabbMax, prevColor.xyz);
+  prevColor = clipAABB(aabbMin, aabbMax, prevColor);
 
-  outColor = vec4(accumulateByExponentMovingAverage(currentColor.xyz, prevColor.xyz), 1.0);
+  outColor = vec4(
+      yCoCgR2RGB(accumulateByExponentMovingAverage(currentColor, prevColor)),
+      1.0);
 
-  historyPixelBuffer.pixels[getPixelIndex(uv, screenDimension.resolution)] =
-      outColor;
+  setPrevColor(uv, screenDimension.resolution, outColor);
 }
