@@ -4,6 +4,7 @@
 #include "../../shaders/definition.glsl"
 #include "../../shaders/jitter.glsl"
 #include "./taa_utils.glsl"
+#include "./taa_definition.glsl"
 
 layout(location = 0) in vec2 uv;
 layout(location = 0) out vec4 outColor;

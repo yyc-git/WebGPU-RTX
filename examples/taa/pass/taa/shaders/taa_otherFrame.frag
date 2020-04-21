@@ -1,17 +1,11 @@
 #version 450
 #pragma shader_stage(fragment)
 
-#define USE_CLOSEST_VELOCITY
-
-#define USE_TONEMAP
-
-#define USE_MIXED_TONE_MAP
-#define MIXED_TONE_MAP_LINEAR_UPPER_BOUND 0.5f
-
 #include "../../shaders/definition.glsl"
 #include "../../shaders/jitter.glsl"
 #include "../../shaders/utils.glsl"
 #include "./taa_utils.glsl"
+#include "./taa_definition.glsl"
 
 layout(location = 0) in vec2 uv;
 layout(location = 0) out vec4 outColor;
