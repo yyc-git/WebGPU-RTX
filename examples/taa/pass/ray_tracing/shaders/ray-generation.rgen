@@ -38,6 +38,7 @@ void main() {
   vec3 materialDiffuse = texture(gDiffuseTexture, lanuchIndex).rgb;
   // vec3 materialSpecular = texture(gSpecularTexture, lanuchIndex).rgb;
   vec3 materialSpecular = vec3(0.5, 0.0, 0.5);
+  // vec3 materialSpecular = vec3(0.0, 0.0, 0.5);
   vec4 motionVectorDepthShininess =
       texture(gMotionVectorDepthShininessTexture, lanuchIndex);
   float shininess = motionVectorDepthShininess.w;

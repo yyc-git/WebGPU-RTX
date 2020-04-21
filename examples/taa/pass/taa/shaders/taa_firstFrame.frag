@@ -21,6 +21,12 @@ void main() {
 
   vec4 currentColor = getCurrentColor(unjitteredUV, screenDimension.resolution);
 
+#ifdef USE_TONEMAP
+  currentColor.xyz = toneMap(currentColor.xyz);
+#endif
+
+  currentColor.xyz = rgb2YCoCgR(currentColor.xyz);
+
   outColor = currentColor;
 
   setPrevColor(uv, screenDimension.resolution, outColor);
