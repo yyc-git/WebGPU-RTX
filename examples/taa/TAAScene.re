@@ -89,6 +89,46 @@ let buildScene = state => {
     |> GameObject.addShader(triangle1, shader1)
     |> GameObject.addTransformAnimation(triangle1, transformAnim1);
 
+
+
+  let (triangle2, state) = GameObject.create(state);
+
+  let (tran2, state) = Transform.create(state);
+  let state =
+    state
+    |> Transform.setTranslation(tran2, (3., 0., 5.))
+    |> Transform.setRotation(tran2, (0., 70., 0.))
+    |> Transform.setScale(tran2, (5., 5., 5.));
+
+  let (geo2, state) = Geometry.create(state);
+  let state =
+    state
+    |> Geometry.setVertexData(geo2, Geometry.buildTriangleVertexData())
+    |> Geometry.setIndexData(geo2, Geometry.buildTriangleIndexData());
+
+  let (mat2, state) = PhongMaterial.create(state);
+  let state =
+    state
+    |> PhongMaterial.setDiffuse(mat2, (0.0, 1., 0.))
+    |> PhongMaterial.setShininess(mat2, 36.);
+
+  let (shader2, state) = Shader.create(state);
+  let state = state |> Shader.setHitGroupIndex(shader2, 0);
+
+  // let (transformAnim2, state) = TransformAnimation.create(state);
+  // let state =
+  //   state |> TransformAnimation.setDynamicTransform(transformAnim2, 0);
+
+  let state =
+    state
+    |> GameObject.addTransform(triangle2, tran2)
+    |> GameObject.addGeometry(triangle2, geo2)
+    |> GameObject.addPhongMaterial(triangle2, mat2)
+    |> GameObject.addShader(triangle2, shader2);
+    // |> GameObject.addTransformAnimation(triangle2, transformAnim2);
+
+
+
   let (plane1, state) = GameObject.create(state);
 
   let (tran2, state) = Transform.create(state);
