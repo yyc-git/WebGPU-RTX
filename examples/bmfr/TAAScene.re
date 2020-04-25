@@ -11,6 +11,16 @@ let buildScene = state => {
 
   let state = state |> GameObject.addDirectionLight(light1, directionLight1);
 
+  let (light2, state) = GameObject.create(state);
+
+  let (directionLight2, state) = DirectionLight.create(state);
+  let state =
+    state
+    |> DirectionLight.setIntensity(directionLight2, 0.5)
+    |> DirectionLight.setPosition(directionLight2, (1., 2., 1.));
+
+  let state = state |> GameObject.addDirectionLight(light2, directionLight2);
+
   let (camera1, state) = GameObject.create(state);
 
   let (cameraView1, state) = CameraView.create(state);
@@ -89,8 +99,6 @@ let buildScene = state => {
     |> GameObject.addShader(triangle1, shader1)
     |> GameObject.addTransformAnimation(triangle1, transformAnim1);
 
-
-
   let (triangle2, state) = GameObject.create(state);
 
   let (tran2, state) = Transform.create(state);
@@ -125,9 +133,7 @@ let buildScene = state => {
     |> GameObject.addGeometry(triangle2, geo2)
     |> GameObject.addPhongMaterial(triangle2, mat2)
     |> GameObject.addShader(triangle2, shader2);
-    // |> GameObject.addTransformAnimation(triangle2, transformAnim2);
-
-
+  // |> GameObject.addTransformAnimation(triangle2, transformAnim2);
 
   let (plane1, state) = GameObject.create(state);
 
@@ -183,6 +189,8 @@ let init = (device, window, state) => {
     ManageBuffer.StorageBuffer.buildPixelBufferData(window, device);
   let (taaBufferData, taaBufferSize, taaBuffer) =
     TAABuffer.TAABuffer.buildData(device, state);
+  let (commonDataBufferData, commonDataBufferSize, commonDataBuffer) =
+    TAABuffer.CommonDataBuffer.buildData(device, state);
 
   state
   |> Pass.setAccumulatedFrameIndex(0)
@@ -200,6 +208,10 @@ let init = (device, window, state) => {
        (cameraBufferData, cameraBuffer),
      )
   |> Pass.setUniformBufferData("taaBuffer", (taaBufferData, taaBuffer))
+  |> Pass.setUniformBufferData(
+       "commonDataBuffer",
+       (commonDataBufferData, commonDataBuffer),
+     )
   |> Pass.setStorageBufferData(
        "pixelBuffer",
        (pixelBufferSize, pixelBuffer),
@@ -207,6 +219,14 @@ let init = (device, window, state) => {
   |> Pass.setStorageBufferData(
        "historyPixelBuffer",
        (historyPixelBufferSize, historyPixelBuffer),
+     );
+};
+
+let _updateRayTracingData = state => {
+  state
+  |> TAABuffer.CommonDataBuffer.update(
+       Director.getFrameIndex(state),
+       DirectionLight.getLightCount(state),
      );
 };
 
@@ -340,9 +360,10 @@ let _updateTransformData = (time, device, queue, state) => {
   state;
 };
 
-let update = (device, queue, window, time, state) => {
+let update = (device, queue, window, state) => {
   state
+  |> _updateRayTracingData
   |> _updateCameraData(window)
-  |> _updateTransformData(time, device, queue)
+  |> _updateTransformData(Director.getTime(state), device, queue)
   |> _updateJitterData;
 };

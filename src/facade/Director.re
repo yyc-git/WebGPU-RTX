@@ -4,6 +4,26 @@ open WonderBsMost.Most;
 
 open StateType;
 
+let getTime = state => state.director.time;
+
+let setTime = (time, state) => {
+  ...state,
+  director: {
+    ...state.director,
+    time,
+  },
+};
+
+let getFrameIndex = state => state.director.frameIndex;
+
+let setFrameIndex = (frameIndex, state) => {
+  ...state,
+  director: {
+    ...state.director,
+    frameIndex,
+  },
+};
+
 let load = window => {
   fromPromise(
     GPU.requestAdapter(
@@ -94,6 +114,7 @@ let start = (window, swapChain, state) => {
 
   let startTime = Performance.now();
   let lastTime = ref(startTime);
+  let frameIndex = ref(0);
 
   let rec _onFrame = () => {
     !(window |> Window.shouldClose)
@@ -106,10 +127,14 @@ let start = (window, swapChain, state) => {
 
     let state = StateData.getState();
 
+    let state = state |> setTime(time) |> setFrameIndex(frameIndex^);
+
+    frameIndex := frameIndex^ |> succ;
+
     let state =
       _getUpdateFuncArr(state)
       |> ArrayUtils.reduceOneParam(
-           (. state, updateFunc) => {updateFunc(time, state)},
+           (. state, updateFunc) => {updateFunc(state)},
            state,
          );
 

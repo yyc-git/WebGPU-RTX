@@ -300,15 +300,15 @@ type accelerationContainer = {
 
 type rayTracing = {accelerationContainer};
 
-type time = float;
-
 type passFuncData = {
   init: state => state,
   execute: state => state,
 }
 and director = {
+  time: float,
+  frameIndex: int,
   initFuncArr: array(state => state),
-  updateFuncArr: array((time, state) => state),
+  updateFuncArr: array(state => state),
   passFuncDataArr: array(passFuncData),
 }
 and state = {

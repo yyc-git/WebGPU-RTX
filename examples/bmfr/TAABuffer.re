@@ -164,16 +164,14 @@ module ModelBuffer = {
              let modelMatrix = Transform.buildModelMatrix(transform, state);
              let normalMatrix = Transform.buildNormalMatrix(modelMatrix);
 
-
-            //  Log.printComplete(
-            //    "(lastModelMatrix, modelMatrix):",
-            //    (lastModelMatrix, modelMatrix),
-            //  );
+             //  Log.printComplete(
+             //    "(lastModelMatrix, modelMatrix):",
+             //    (lastModelMatrix, modelMatrix),
+             //  );
 
              let (modelBufferData, newOffset) =
                (modelBufferData, offset)
                |> ManageBuffer.setMat3DataToBufferData(normalMatrix);
-
 
              let (modelBufferData, newOffset) =
                modelBufferData
@@ -182,10 +180,10 @@ module ModelBuffer = {
                     modelMatrix,
                   );
 
-            //  Log.printComplete(
-            //    "(modelBufferData, newOffset):",
-            //    (modelBufferData, newOffset),
-            //  );
+             //  Log.printComplete(
+             //    "(modelBufferData, newOffset):",
+             //    (modelBufferData, newOffset),
+             //  );
 
              let (modelBufferData, _) =
                modelBufferData
@@ -211,15 +209,40 @@ module ModelBuffer = {
 
 module DirectionLightBuffer = {
   let buildData = (device, state) => {
-    let directionLightData =
-      Float32Array.make([|1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0|]);
+    let length = DirectionLight.getLightCount(state);
+
+    let (directionLightData, _) =
+      DirectionLight.getAllLights(state)
+      |> ArrayUtils.reduceOneParam(
+           (. (directionLightData, offset), light) => {
+             let (directionLightData, offset) =
+               directionLightData
+               |> TypeArray.Float32Array.setFloat(
+                    offset,
+                    DirectionLight.unsafeGetIntensity(light, state),
+                  );
+
+             let (directionLightData, offset) =
+               directionLightData
+               |> TypeArray.Float32Array.setFloatTuple3(
+                    offset + 3,
+                    DirectionLight.unsafeGetPosition(light, state),
+                  );
+
+             (directionLightData, offset + 1);
+           },
+           (Float32Array.fromLength(length * (4 + 4)), 0),
+         );
+
+    Log.printComplete("direlightdata:", directionLightData);
+
     let directionLightBufferSize =
       directionLightData |> Float32Array.byteLength;
     let directionLightBuffer =
       device
       |> Device.createBuffer({
            "size": directionLightBufferSize,
-           "usage": BufferUsage.copy_dst lor BufferUsage.uniform,
+           "usage": BufferUsage.copy_dst lor BufferUsage.storage,
          });
     directionLightBuffer |> Buffer.setSubFloat32Data(0, directionLightData);
 
@@ -245,8 +268,8 @@ module TAABuffer = {
     Pass.unsafeGetUniformBufferData("taaBuffer", state);
   };
 
-  let getTAABufferSize = (bufferData) =>{
-bufferData |> Float32Array.byteLength
+  let getTAABufferSize = bufferData => {
+    bufferData |> Float32Array.byteLength;
   };
 
   let _setTAABufferData = ((bufferData, buffer), state) => {
@@ -263,6 +286,58 @@ bufferData |> Float32Array.byteLength
 
     taaBuffer |> Buffer.setSubFloat32Data(0, taaBufferData);
     let state = state |> _setTAABufferData((taaBufferData, taaBuffer));
+
+    state;
+  };
+};
+
+module CommonDataBuffer = {
+  let buildData = (device, state) => {
+    let bufferData = Float32Array.fromLength(2);
+    let bufferSize = bufferData |> Float32Array.byteLength;
+    let buffer =
+      device
+      |> Device.createBuffer({
+           "size": bufferSize,
+           "usage": BufferUsage.copy_dst lor BufferUsage.uniform,
+         });
+
+    (bufferData, bufferSize, buffer);
+  };
+
+  let unsafeGetCommonDataBufferData = state => {
+    Pass.unsafeGetUniformBufferData("commonDataBuffer", state);
+  };
+
+  let getCommonDataBufferSize = bufferData => {
+    bufferData |> Float32Array.byteLength;
+  };
+
+  let _setCommonDataBufferData = ((bufferData, buffer), state) => {
+    Pass.setUniformBufferData(
+      "commonDataBuffer",
+      (bufferData, buffer),
+      state,
+    );
+  };
+
+  let update = (frame, lightCount, state) => {
+    let (commonDataBufferData, commonDataBuffer) =
+      unsafeGetCommonDataBufferData(state);
+
+    let (commonDataBufferData, offset) =
+      commonDataBufferData
+      |> TypeArray.Float32Array.setFloat(0, frame |> float_of_int);
+    let (commonDataBufferData, offset) =
+      commonDataBufferData
+      |> TypeArray.Float32Array.setFloat(offset, lightCount |> float_of_int);
+
+    Log.printComplete("commonDataBufferData:", commonDataBufferData);
+
+    commonDataBuffer |> Buffer.setSubFloat32Data(0, commonDataBufferData);
+    let state =
+      state
+      |> _setCommonDataBufferData((commonDataBufferData, commonDataBuffer));
 
     state;
   };

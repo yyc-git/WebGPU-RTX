@@ -13,6 +13,11 @@ let create = state => {
   );
 };
 
+let unsafeGetIntensity = (directionLight, state) => {
+  state.directionLight.intensityMap
+  |> ImmutableSparseMap.unsafeGet(directionLight);
+};
+
 let setIntensity = (directionLight, intensity, state) => {
   ...state,
   directionLight: {
@@ -23,6 +28,11 @@ let setIntensity = (directionLight, intensity, state) => {
   },
 };
 
+let unsafeGetPosition = (directionLight, state) => {
+  state.directionLight.positionMap
+  |> ImmutableSparseMap.unsafeGet(directionLight);
+};
+
 let setPosition = (directionLight, position, state) => {
   ...state,
   directionLight: {
@@ -31,4 +41,12 @@ let setPosition = (directionLight, position, state) => {
       state.directionLight.positionMap
       |> ImmutableSparseMap.set(directionLight, position),
   },
+};
+
+let getAllLights = state => {
+  ArrayUtils.range(0, state.directionLight.index);
+};
+
+let getLightCount = state => {
+  getAllLights(state) |> Js.Array.length;
 };

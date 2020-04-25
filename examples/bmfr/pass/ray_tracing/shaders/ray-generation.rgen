@@ -1,10 +1,14 @@
 #version 460
 #extension GL_NV_ray_tracing : require
+#extension GL_EXT_nonuniform_qualifier : enable
+#extension GL_EXT_scalar_block_layout : enable
 #pragma shader_stage(raygen)
 
 #include "../../shaders/camera.glsl"
+#include "common_data.glsl"
 #include "light.glsl"
 #include "phong_compute.glsl"
+#include "random.glsl"
 
 layout(location = 0) rayPayloadNV vec3 hitValue;
 layout(location = 1) rayPayloadNV bool isShadowed;
@@ -20,6 +24,9 @@ layout(set = 1, binding = 0) uniform accelerationStructureNV topLevelAS;
 layout(std140, set = 1, binding = 1) buffer PixelBuffer { vec4 pixels[]; }
 pixelBuffer;
 
+layout(std140, set = 1, binding = 2) uniform CommonData { vec4 compressedData; }
+pushC;
+
 vec2 getLanuchIndex(uvec3 launchIDNV, uvec3 launchSizeNV) {
   const vec2 pixelCenter = vec2(launchIDNV.xy) + vec2(0.5);
   const vec2 inUV = pixelCenter / vec2(launchSizeNV.xy);
@@ -31,6 +38,12 @@ vec2 getLanuchIndex(uvec3 launchIDNV, uvec3 launchSizeNV) {
 bool isNotBackground(vec4 worldPosition) { return worldPosition.w == 0.0; }
 
 void main() {
+  vec4 commonDataCompressedData = pushC.compressedData;
+  uint frame = getFrame(commonDataCompressedData);
+  uint lightCount = getLightCount(commonDataCompressedData);
+
+  uint seed = tea(gl_LaunchIDNV.y * gl_LaunchSizeNV.x + gl_LaunchIDNV.x, frame);
+
   vec2 lanuchIndex = getLanuchIndex(gl_LaunchIDNV, gl_LaunchSizeNV);
 
   vec4 worldPosition = texture(gPositionTexture, lanuchIndex);
@@ -48,12 +61,13 @@ void main() {
   vec3 specular = vec3(0.0);
 
   if (isNotBackground(worldPosition)) {
+    uint lightIndexToSample = min(uint(rnd(seed) * lightCount), lightCount - 1);
 
     vec3 lightDir;
     float lightIntensity;
     float lightDistance;
 
-    getLightData(lightIntensity, lightDistance, lightDir);
+    getLightData(lightIndexToSample, lightIntensity, lightDistance, lightDir);
 
     // Diffuse
     vec3 diffuse = computeDiffuse(materialDiffuse, lightDir, worldNormal);
@@ -80,6 +94,8 @@ void main() {
                                    worldNormal);
       }
     }
+
+    attenuation *= float(lightCount);
 
     hitValue = computeColor(lightIntensity, attenuation, diffuse, specular);
   }

@@ -103,6 +103,8 @@ let create = () => {
     },
   },
   director: {
+    time: 0.0,
+    frameIndex: 0,
     initFuncArr: [||],
     updateFuncArr: [||],
     passFuncDataArr: [||],

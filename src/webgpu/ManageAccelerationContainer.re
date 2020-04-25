@@ -107,7 +107,7 @@ module InstanceBuffer = {
   };
 
   let convertHitGroupIndexToInstanceOffset = hitGroupIndex => {
-    Log.print(("groupIndex:", hitGroupIndex)) |> ignore;
+    // Log.print(("groupIndex:", hitGroupIndex)) |> ignore;
 
     MathUtils.convertDecimalToHex(hitGroupIndex, 16);
   };

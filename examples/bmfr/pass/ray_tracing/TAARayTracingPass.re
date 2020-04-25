@@ -114,6 +114,12 @@ let init = (device, queue, state) => {
              ~type_="storage-buffer",
              (),
            ),
+           BindGroupLayout.layoutBinding(
+             ~binding=2,
+             ~visibility=ShaderStage.ray_generation,
+             ~type_="uniform-buffer",
+             (),
+           ),
          |],
        });
 
@@ -137,7 +143,7 @@ let init = (device, queue, state) => {
            BindGroupLayout.layoutBinding(
              ~binding=0,
              ~visibility=ShaderStage.ray_generation,
-             ~type_="uniform-buffer",
+             ~type_="storage-buffer",
              (),
            ),
          |],
@@ -201,6 +207,9 @@ let init = (device, queue, state) => {
   let (pixelBufferSize, pixelBuffer) =
     Pass.unsafeGetStorageBufferData("pixelBuffer", state);
 
+  let (commonDataBufferData, commonDataBuffer) =
+    Pass.unsafeGetUniformBufferData("commonDataBuffer", state);
+
   let rtBindGroup =
     device
     |> Device.createBindGroup({
@@ -218,6 +227,16 @@ let init = (device, queue, state) => {
              ~buffer=pixelBuffer,
              ~offset=0,
              ~size=pixelBufferSize,
+             (),
+           ),
+           BindGroup.binding(
+             ~binding=2,
+             ~buffer=commonDataBuffer,
+             ~offset=0,
+             ~size=
+               TAABuffer.CommonDataBuffer.getCommonDataBufferSize(
+                 commonDataBufferData,
+               ),
              (),
            ),
          |],
