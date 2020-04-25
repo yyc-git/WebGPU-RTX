@@ -380,7 +380,7 @@ let init = (device, window, state) => {
     |> Pass.GBufferPass.setVertexAndIndexBufferMap(vertexAndIndexBufferMap)
     |> Pass.GBufferPass.setIndexCountMap(indexCountMap);
 
-  let baseShaderPath = "examples/taa/pass/gbuffer/shaders";
+  let baseShaderPath = "examples/bmfr/pass/gbuffer/shaders";
 
   let vertexShaderModule =
     device

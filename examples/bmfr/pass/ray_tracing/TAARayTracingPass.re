@@ -284,7 +284,7 @@ let init = (device, queue, state) => {
              Pipeline.RayTracing.rayTracingState(
                ~shaderBindingTable=
                  _createShaderBindingTable(
-                   "examples/taa/pass/ray_tracing/shaders",
+                   "examples/bmfr/pass/ray_tracing/shaders",
                    device,
                  ),
                ~maxRecursionDepth=1,
