@@ -256,7 +256,7 @@ let init = (device, window, swapChainFormat, state) => {
          (resolutionBufferSize, resolutionBuffer),
          (pixelBufferSize, pixelBuffer),
          (historyPixelBufferSize, historyPixelBuffer),
-         (TAABuffer.TAABuffer.getTAABufferSize(taaBufferData), taaBuffer),
+         (BMFRBuffer.TAABuffer.getTAABufferSize(taaBufferData), taaBuffer),
        ),
      )
   |> _initOtherFrameData(
@@ -266,7 +266,7 @@ let init = (device, window, swapChainFormat, state) => {
          (resolutionBufferSize, resolutionBuffer),
          (pixelBufferSize, pixelBuffer),
          (historyPixelBufferSize, historyPixelBuffer),
-         (TAABuffer.TAABuffer.getTAABufferSize(taaBufferData), taaBuffer),
+         (BMFRBuffer.TAABuffer.getTAABufferSize(taaBufferData), taaBuffer),
        ),
      );
 };

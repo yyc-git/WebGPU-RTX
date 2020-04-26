@@ -234,7 +234,7 @@ let init = (device, queue, state) => {
              ~buffer=commonDataBuffer,
              ~offset=0,
              ~size=
-               TAABuffer.CommonDataBuffer.getCommonDataBufferSize(
+               BMFRBuffer.CommonDataBuffer.getCommonDataBufferSize(
                  commonDataBufferData,
                ),
              (),
@@ -243,7 +243,7 @@ let init = (device, queue, state) => {
        });
 
   let (cameraBufferData, cameraBuffer) =
-    TAABuffer.CameraBuffer.unsafeGetCameraBufferData(state);
+    BMFRBuffer.CameraBuffer.unsafeGetCameraBufferData(state);
 
   let cameraBindGroup =
     device
@@ -261,7 +261,7 @@ let init = (device, queue, state) => {
        });
 
   let (directionLightBufferSize, directionLightBuffer) =
-    TAABuffer.DirectionLightBuffer.buildData(device, state);
+    BMFRBuffer.DirectionLightBuffer.buildData(device, state);
 
   let directionLightBindGroup =
     device

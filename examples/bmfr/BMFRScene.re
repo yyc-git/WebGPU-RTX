@@ -182,15 +182,15 @@ let _getAccumulatedFrameCount = () => 16;
 
 let init = (device, window, state) => {
   let (cameraBufferData, cameraBufferSize, cameraBuffer) =
-    TAABuffer.CameraBuffer.buildData(device, state);
+    BMFRBuffer.CameraBuffer.buildData(device, state);
   let (pixelBufferSize, pixelBuffer) =
     ManageBuffer.StorageBuffer.buildPixelBufferData(window, device);
   let (historyPixelBufferSize, historyPixelBuffer) =
     ManageBuffer.StorageBuffer.buildPixelBufferData(window, device);
   let (taaBufferData, taaBufferSize, taaBuffer) =
-    TAABuffer.TAABuffer.buildData(device, state);
+    BMFRBuffer.TAABuffer.buildData(device, state);
   let (commonDataBufferData, commonDataBufferSize, commonDataBuffer) =
-    TAABuffer.CommonDataBuffer.buildData(device, state);
+    BMFRBuffer.CommonDataBuffer.buildData(device, state);
 
   state
   |> Pass.setAccumulatedFrameIndex(0)
@@ -224,7 +224,7 @@ let init = (device, window, state) => {
 
 let _updateRayTracingData = state => {
   state
-  |> TAABuffer.CommonDataBuffer.update(
+  |> BMFRBuffer.CommonDataBuffer.update(
        Director.getFrameIndex(state),
        DirectionLight.getLightCount(state),
      );
@@ -284,7 +284,7 @@ let _updateCameraData = (window, state) => {
 
   let state =
     state
-    |> TAABuffer.CameraBuffer.update(
+    |> BMFRBuffer.CameraBuffer.update(
          CameraView.unsafeGetCameraPosition(currentCameraView, state),
          viewMatrix,
          jitterdProjectionMatrix,
@@ -297,7 +297,7 @@ let _updateCameraData = (window, state) => {
 let _updateJitterData = state => {
   let state =
     state
-    |> TAABuffer.TAABuffer.update(
+    |> BMFRBuffer.TAABuffer.update(
          Pass.getJitter(
            Pass.getAccumulatedFrameIndex(state),
            //  |> Log.printComplete("getAccumulatedFrameCount")
@@ -355,7 +355,7 @@ let _updateTransformData = (time, device, queue, state) => {
     state
     |> ManageAccelerationContainer.updateInstanceContainer(device, queue);
 
-  let state = state |> TAABuffer.ModelBuffer.update(allRenderGameObjects);
+  let state = state |> BMFRBuffer.ModelBuffer.update(allRenderGameObjects);
 
   state;
 };

@@ -15,20 +15,20 @@ Director.load(window)
             });
 
        StateData.getState()
-       |> TAAScene.buildScene
-       |> Director.addInitFunc(TAAScene.init(device, window))
-       |> Director.addUpdateFunc(TAAScene.update(device, queue, window))
+       |> BMFRScene.buildScene
+       |> Director.addInitFunc(BMFRScene.init(device, window))
+       |> Director.addUpdateFunc(BMFRScene.update(device, queue, window))
        |> Director.addPassFuncs(
-            TAAGBufferPass.init(device, window),
-            TAAGBufferPass.execute(device, queue),
+            BMFRGBufferPass.init(device, window),
+            BMFRGBufferPass.execute(device, queue),
           )
        |> Director.addPassFuncs(
-            TAARayTracingPass.init(device, queue),
-            TAARayTracingPass.execute(device, window, queue),
+            BMFRRayTracingPass.init(device, queue),
+            BMFRRayTracingPass.execute(device, window, queue),
           )
        |> Director.addPassFuncs(
-            TAATAAPass.init(device, window, swapChainFormat),
-            TAATAAPass.execute(device, queue, swapChain),
+            BMFRTAAPass.init(device, window, swapChainFormat),
+            BMFRTAAPass.execute(device, queue, swapChain),
           )
        |> Director.start(window, swapChain);
      },

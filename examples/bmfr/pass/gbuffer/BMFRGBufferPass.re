@@ -196,7 +196,7 @@ let init = (device, window, state) => {
          |],
        });
 
-  let allRenderGameObjects = TAAScene.getAllRenderGameObjects(state);
+  let allRenderGameObjects = BMFRScene.getAllRenderGameObjects(state);
 
   let state =
     state |> Pass.GBufferPass.setRenderGameObjectArr(allRenderGameObjects);
@@ -207,7 +207,7 @@ let init = (device, window, state) => {
     singleRenderGameObjectModelBufferSize,
     modelBuffer,
   ) =
-    TAABuffer.ModelBuffer.buildData(device, allRenderGameObjects, state);
+    BMFRBuffer.ModelBuffer.buildData(device, allRenderGameObjects, state);
 
   let state =
     state
@@ -350,7 +350,7 @@ let init = (device, window, state) => {
        );
 
   let (cameraBufferData, cameraBuffer) =
-    TAABuffer.CameraBuffer.unsafeGetCameraBufferData(state);
+    BMFRBuffer.CameraBuffer.unsafeGetCameraBufferData(state);
 
   let cameraBindGroup =
     device
