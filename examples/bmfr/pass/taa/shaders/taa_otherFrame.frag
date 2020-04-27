@@ -4,8 +4,8 @@
 #include "../../shaders/definition.glsl"
 #include "../../shaders/jitter.glsl"
 #include "../../shaders/utils.glsl"
-#include "./taa_utils.glsl"
 #include "./taa_definition.glsl"
+#include "./taa_utils.glsl"
 
 layout(location = 0) in vec2 uv;
 layout(location = 0) out vec4 outColor;
@@ -20,10 +20,6 @@ uTaa;
 
 float linearDepth(float depth) {
   return (2.0 * NEAR_Z) / (FAR_Z + NEAR_Z - depth * (FAR_Z - NEAR_Z));
-}
-
-vec2 convertMotionVectorRangeTo0To1(vec2 motionVector) {
-  return motionVector * 2.0 - 1.0;
 }
 
 vec2 getClosestMotionVector(vec2 jitteredUV, vec2 resolution) {
@@ -62,13 +58,13 @@ vec2 getClosestMotionVector(vec2 jitteredUV, vec2 resolution) {
 void sampleNeighborhoods(in vec2 unjitteredUV, in vec2 resolution, out vec3 m1,
                          out vec3 m2, out vec3 minNeighbor,
                          out vec3 maxNeighbor) {
-  maxNeighbor = vec3(0.0, 0.0, 0.0);
-  minNeighbor = vec3(1.0);
+  maxNeighbor = vec3(-99999999.0f, -99999999.0f, -99999999.0f);
+  minNeighbor = vec3(9999999.0f, 9999999.0f, 9999999.0f);
   m1 = vec3(0.0);
   m2 = vec3(0.0);
 
-  for (int x = -1; x <= 1; x++) {
-    for (int y = -1; y <= 1; y++) {
+  for (int y = -1; y <= 1; y++) {
+    for (int x = -1; x <= 1; x++) {
       vec2 neighborUv =
           saturateVec2(unjitteredUV +
                        vec2(float(x) / resolution.x, float(y) / resolution.y));
@@ -81,8 +77,8 @@ void sampleNeighborhoods(in vec2 unjitteredUV, in vec2 resolution, out vec3 m1,
 
       neighborTexel = rgb2YCoCgR(neighborTexel);
 
-      maxNeighbor = max(maxNeighbor, neighborTexel);
       minNeighbor = min(minNeighbor, neighborTexel);
+      maxNeighbor = max(maxNeighbor, neighborTexel);
       m1 += neighborTexel;
       m2 += neighborTexel * neighborTexel;
     }
@@ -135,9 +131,6 @@ void main() {
 
   float lenMotionVector = length(motionVector);
 
-  // outColor = vec4(convertMotionVectorRangeTo0To1(motionVector), 1.0,1.0);
-  // return;
-
   vec3 currentColor =
       getCurrentColor(unjitteredUV, screenDimension.resolution).xyz;
 
@@ -148,9 +141,7 @@ void main() {
   currentColor = rgb2YCoCgR(currentColor);
 
   vec3 prevColor =
-      getPrevColor(uv - convertMotionVectorRangeTo0To1(motionVector),
-                   screenDimension.resolution)
-          .xyz;
+      getPrevColor(uv - motionVector, screenDimension.resolution).xyz;
 
 #ifdef USE_TONEMAP
   prevColor = toneMap(prevColor);
@@ -179,27 +170,7 @@ void main() {
   color = unToneMap(color);
 #endif
 
-  // currentColor = yCoCgR2RGB(currentColor);
-  // prevColor = yCoCgR2RGB(prevColor);
-
-  // #ifdef USE_TONEMAP
-  //   currentColor = unToneMap(currentColor);
-  //   prevColor = unToneMap(prevColor);
-  // #endif
-
-  // #ifdef USE_TONEMAP
-  //   currentColor = unToneMap(currentColor);
-  //   prevColor = unToneMap(prevColor);
-  // #endif
-
-  //   currentColor = yCoCgR2RGB(currentColor);
-  //   prevColor = yCoCgR2RGB(prevColor);
-
-  // vec3 color = accumulateByExponentMovingAverage(lenMotionVector,
-  // currentColor,
-  //                                                prevColor);
-
   outColor = vec4(color, 1.0);
 
-  setPrevColor(uv, screenDimension.resolution, outColor);
+  setPrevColor(uv, screenDimension.resolution, vec4(color, 1.0));
 }
