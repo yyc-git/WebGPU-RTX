@@ -17,6 +17,7 @@ void main() {
   gPosition = vec4(vPosition, 0.0);
   gNormal = normalize(vNormal);
   gDiffuse = getMaterialDiffuse();
+
   gMotionVectorDepthShininess =
       vec4(((vClipPosition.xy / vClipPosition.w) -
             (vLastClipPosition.xy / vLastClipPosition.w)),

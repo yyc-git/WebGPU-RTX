@@ -181,12 +181,27 @@ let getAllRenderGameObjects = state => {
 let _getAccumulatedFrameCount = () => 16;
 
 let init = (device, window, state) => {
+  let (resolutionBufferSize, resolutionBuffer) =
+    BMFRBuffer.ResolutionBuffer.buildData(window, device);
   let (cameraBufferData, cameraBufferSize, cameraBuffer) =
     BMFRBuffer.CameraBuffer.buildData(device, state);
+
   let (pixelBufferSize, pixelBuffer) =
-    ManageBuffer.StorageBuffer.buildPixelBufferData(window, device);
+    BMFRBuffer.PixelBuffer.buildData(window, device);
+
+  let (prevNoisyPixelBufferSize, prevNoisyPixelBuffer) =
+    BMFRBuffer.PrevNoisyPixelBuffer.buildData(window, device);
+  let (prevPositionBufferSize, prevPositionBuffer) =
+    BMFRBuffer.PrevPositionBuffer.buildData(window, device);
+  let (prevNormalBufferSize, prevNormalBuffer) =
+    BMFRBuffer.PrevNormalBuffer.buildData(window, device);
+  let (acceptBoolBufferSize, acceptBoolBuffer) =
+    BMFRBuffer.AcceptBoolBuffer.buildData(window, device);
+  let (prevFramePixelIndicesBufferSize, prevFramePixelIndicesBuffer) =
+    BMFRBuffer.PrevFramePixelIndicesBuffer.buildData(window, device);
+
   let (historyPixelBufferSize, historyPixelBuffer) =
-    ManageBuffer.StorageBuffer.buildPixelBufferData(window, device);
+    BMFRBuffer.HistoryPixelBuffer.buildData(window, device);
   let (taaBufferData, taaBufferSize, taaBuffer) =
     BMFRBuffer.TAABuffer.buildData(device, state);
   let (commonDataBufferData, commonDataBufferSize, commonDataBuffer) =
@@ -203,23 +218,44 @@ let init = (device, window, state) => {
        ),
        //  |> Log.printComplete("HaltonJiters")
      )
+  |> BMFRBuffer.ResolutionBuffer.setBufferData((
+       resolutionBufferSize,
+       resolutionBuffer,
+     ))
   |> Pass.setUniformBufferData(
        "cameraBuffer",
        (cameraBufferData, cameraBuffer),
      )
-  |> Pass.setUniformBufferData("taaBuffer", (taaBufferData, taaBuffer))
-  |> Pass.setUniformBufferData(
-       "commonDataBuffer",
-       (commonDataBufferData, commonDataBuffer),
-     )
-  |> Pass.setStorageBufferData(
-       "pixelBuffer",
-       (pixelBufferSize, pixelBuffer),
-     )
-  |> Pass.setStorageBufferData(
-       "historyPixelBuffer",
-       (historyPixelBufferSize, historyPixelBuffer),
-     );
+  |> BMFRBuffer.TAABuffer.setBufferData((taaBufferData, taaBuffer))
+  |> BMFRBuffer.CommonDataBuffer.setBufferData((
+       commonDataBufferData,
+       commonDataBuffer,
+     ))
+  |> BMFRBuffer.PixelBuffer.setBufferData((pixelBufferSize, pixelBuffer))
+  |> BMFRBuffer.PrevNoisyPixelBuffer.setBufferData((
+       prevNoisyPixelBufferSize,
+       prevNoisyPixelBuffer,
+     ))
+  |> BMFRBuffer.PrevPositionBuffer.setBufferData((
+       prevPositionBufferSize,
+       prevPositionBuffer,
+     ))
+  |> BMFRBuffer.PrevNormalBuffer.setBufferData((
+       prevNormalBufferSize,
+       prevNormalBuffer,
+     ))
+  |> BMFRBuffer.AcceptBoolBuffer.setBufferData((
+       acceptBoolBufferSize,
+       acceptBoolBuffer,
+     ))
+  |> BMFRBuffer.PrevFramePixelIndicesBuffer.setBufferData((
+       prevFramePixelIndicesBufferSize,
+       prevFramePixelIndicesBuffer,
+     ))
+  |> BMFRBuffer.HistoryPixelBuffer.setBufferData((
+       historyPixelBufferSize,
+       historyPixelBuffer,
+     ));
 };
 
 let _updateRayTracingData = state => {
@@ -233,16 +269,8 @@ let _updateRayTracingData = state => {
 let _updateCameraData = (window, state) => {
   let currentCameraView = state |> CameraView.unsafeGetCurrentCameraView;
 
-  let lastViewJitterdProjectionMatrixOpt =
-    Pass.GBufferPass.getLastViewJitterdProjectionMatrix(state);
-  //     Matrix4.createIdentityMatrix4()
-  //     |> Matrix4.multiply(
-  //          CameraView.unsafeGetViewMatrix(currentCameraView, state),
-  //          TAAJitter.jitterProjectionMatrix(
-  //   CameraView.unsafeGetProjectionMatrix(currentCameraView, state),
-  // ),
-  //   state,
-  //        );
+  let lastViewProjectionMatrixOpt =
+    Pass.GBufferPass.getLastViewProjectionMatrix(state);
 
   let currentArcballCameraController =
     state |> ArcballCameraController.unsafeGetCurrentArcballCameraController;
@@ -270,16 +298,13 @@ let _updateCameraData = (window, state) => {
        );
 
   let viewMatrix = CameraView.unsafeGetViewMatrix(currentCameraView, state);
-  let jitterdProjectionMatrix =
-    TAAJitter.jitterProjectionMatrix(
-      CameraView.unsafeGetProjectionMatrix(currentCameraView, state),
-      state,
-    );
+  let projectionMatrix =
+    CameraView.unsafeGetProjectionMatrix(currentCameraView, state);
   let state =
     state
-    |> Pass.GBufferPass.setLastViewJitterdProjectionMatrix(
+    |> Pass.GBufferPass.setLastViewProjectionMatrix(
          Matrix4.createIdentityMatrix4()
-         |> Matrix4.multiply(jitterdProjectionMatrix, viewMatrix),
+         |> Matrix4.multiply(projectionMatrix, viewMatrix),
        );
 
   let state =
@@ -287,8 +312,8 @@ let _updateCameraData = (window, state) => {
     |> BMFRBuffer.CameraBuffer.update(
          CameraView.unsafeGetCameraPosition(currentCameraView, state),
          viewMatrix,
-         jitterdProjectionMatrix,
-         lastViewJitterdProjectionMatrixOpt,
+         projectionMatrix,
+         lastViewProjectionMatrixOpt,
        );
 
   state;

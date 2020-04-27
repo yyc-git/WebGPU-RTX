@@ -211,7 +211,7 @@ type dynamicBindGroupData = {
 type gbufferPassData = {
   lastModelMatrixMap:
     ImmutableSparseMap.t(TransformType.transform, Float32Array.t),
-  lastViewJitterdProjectionMatrix: option(Float32Array.t),
+  lastViewProjectionMatrix: option(Float32Array.t),
   // jitteredProjectionMatrix: option(Float32Array.t),
   pipeline: option(Pipeline.Render.t),
   depthTextureView: option(TextureView.t),
@@ -225,6 +225,11 @@ type gbufferPassData = {
 
 type rayTracingPassData = {
   pipeline: option(Pipeline.RayTracing.t),
+  staticBindGroupDataArr: array(staticBindGroupData),
+};
+
+type preprocessPassData = {
+  pipeline: option(Pipeline.Render.t),
   staticBindGroupDataArr: array(staticBindGroupData),
 };
 
@@ -281,6 +286,7 @@ type jitter = (jitterX, jitterY);
 type pass = {
   gbufferPassData,
   rayTracingPassData,
+  preprocessPassData,
   taaPassData,
   accumulatedFrameIndex: int,
   jitterArr: array(jitter),

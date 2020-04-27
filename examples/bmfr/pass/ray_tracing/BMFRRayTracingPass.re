@@ -205,10 +205,10 @@ let init = (device, queue, state) => {
        );
 
   let (pixelBufferSize, pixelBuffer) =
-    Pass.unsafeGetStorageBufferData("pixelBuffer", state);
+    BMFRBuffer.PixelBuffer.unsafeGetBufferData(state);
 
   let (commonDataBufferData, commonDataBuffer) =
-    Pass.unsafeGetUniformBufferData("commonDataBuffer", state);
+    BMFRBuffer.CommonDataBuffer.unsafeGetBufferData(state);
 
   let rtBindGroup =
     device
@@ -234,7 +234,7 @@ let init = (device, queue, state) => {
              ~buffer=commonDataBuffer,
              ~offset=0,
              ~size=
-               BMFRBuffer.CommonDataBuffer.getCommonDataBufferSize(
+               BMFRBuffer.CommonDataBuffer.getBufferSize(
                  commonDataBufferData,
                ),
              (),

@@ -27,6 +27,10 @@ Director.load(window)
             BMFRRayTracingPass.execute(device, window, queue),
           )
        |> Director.addPassFuncs(
+            BMFRPreprocessPass.init(device, window, swapChainFormat),
+            BMFRPreprocessPass.execute(device, queue, swapChain),
+          )
+       |> Director.addPassFuncs(
             BMFRTAAPass.init(device, window, swapChainFormat),
             BMFRTAAPass.execute(device, queue, swapChain),
           )

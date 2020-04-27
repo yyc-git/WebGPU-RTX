@@ -2,25 +2,42 @@ open WebGPU;
 
 open StateType;
 
-let _initFrameData =
-    (
-      device,
-      swapChainFormat,
-      (
-        (resolutionBufferSize, resolutionBuffer),
-        (pixelBufferSize, pixelBuffer),
-        (historyPixelBufferSize, historyPixelBuffer),
-        (taaBufferSize, taaBuffer),
-      ),
-      (fragmentShaderName, addStaticBindGroupDataFunc, setPipelineFunc),
-      state,
-    ) => {
+let init = (device, window, swapChainFormat, state) => {
+  let (resolutionBufferData, resolutionBuffer) =
+    BMFRBuffer.ResolutionBuffer.unsafeGetBufferData(state);
+  let (pixelBufferSize, pixelBuffer) =
+    BMFRBuffer.PixelBuffer.unsafeGetBufferData(state);
+  let (prevNoisyPixelBufferSize, prevNoisyPixelBuffer) =
+    BMFRBuffer.PrevNoisyPixelBuffer.unsafeGetBufferData(state);
+  let (prevPositionBufferSize, prevPositionBuffer) =
+    BMFRBuffer.PrevPositionBuffer.unsafeGetBufferData(state);
+  let (prevNormalBufferSize, prevNormalBuffer) =
+    BMFRBuffer.PrevNormalBuffer.unsafeGetBufferData(state);
+  let (acceptBoolBufferSize, acceptBoolBuffer) =
+    BMFRBuffer.AcceptBoolBuffer.unsafeGetBufferData(state);
+  let (prevFramePixelIndicesBufferSize, prevFramePixelIndicesBuffer) =
+    BMFRBuffer.PrevFramePixelIndicesBuffer.unsafeGetBufferData(state);
+  let (commonDataBufferData, commonDataBuffer) =
+    BMFRBuffer.CommonDataBuffer.unsafeGetBufferData(state);
+
   let gbufferBindGroupLayout =
     device
     |> Device.createBindGroupLayout({
          "bindings": [|
            BindGroupLayout.layoutBinding(
              ~binding=0,
+             ~visibility=ShaderStage.fragment,
+             ~type_="sampled-texture",
+             (),
+           ),
+           BindGroupLayout.layoutBinding(
+             ~binding=1,
+             ~visibility=ShaderStage.fragment,
+             ~type_="sampled-texture",
+             (),
+           ),
+           BindGroupLayout.layoutBinding(
+             ~binding=2,
              ~visibility=ShaderStage.fragment,
              ~type_="sampled-texture",
              (),
@@ -47,11 +64,35 @@ let _initFrameData =
            BindGroupLayout.layoutBinding(
              ~binding=2,
              ~visibility=ShaderStage.fragment,
-             ~type_="uniform-buffer",
+             ~type_="storage-buffer",
              (),
            ),
            BindGroupLayout.layoutBinding(
              ~binding=3,
+             ~visibility=ShaderStage.fragment,
+             ~type_="storage-buffer",
+             (),
+           ),
+           BindGroupLayout.layoutBinding(
+             ~binding=4,
+             ~visibility=ShaderStage.fragment,
+             ~type_="storage-buffer",
+             (),
+           ),
+           BindGroupLayout.layoutBinding(
+             ~binding=5,
+             ~visibility=ShaderStage.fragment,
+             ~type_="storage-buffer",
+             (),
+           ),
+           BindGroupLayout.layoutBinding(
+             ~binding=6,
+             ~visibility=ShaderStage.fragment,
+             ~type_="uniform-buffer",
+             (),
+           ),
+           BindGroupLayout.layoutBinding(
+             ~binding=7,
              ~visibility=ShaderStage.fragment,
              ~type_="uniform-buffer",
              (),
@@ -66,6 +107,20 @@ let _initFrameData =
          "bindings": [|
            BindGroup.binding(
              ~binding=0,
+             ~textureView=
+               Pass.unsafeGetTextureView("positionRenderTargetView", state),
+             ~size=0,
+             (),
+           ),
+           BindGroup.binding(
+             ~binding=1,
+             ~textureView=
+               Pass.unsafeGetTextureView("normalRenderTargetView", state),
+             ~size=0,
+             (),
+           ),
+           BindGroup.binding(
+             ~binding=2,
              ~textureView=
                Pass.unsafeGetTextureView(
                  "motionVectorDepthShininessRenderTargetView",
@@ -91,23 +146,57 @@ let _initFrameData =
            ),
            BindGroup.binding(
              ~binding=1,
-             ~buffer=historyPixelBuffer,
+             ~buffer=prevNoisyPixelBuffer,
              ~offset=0,
-             ~size=historyPixelBufferSize,
+             ~size=prevNoisyPixelBufferSize,
              (),
            ),
            BindGroup.binding(
              ~binding=2,
-             ~buffer=resolutionBuffer,
+             ~buffer=prevPositionBuffer,
              ~offset=0,
-             ~size=resolutionBufferSize,
+             ~size=prevPositionBufferSize,
              (),
            ),
            BindGroup.binding(
              ~binding=3,
-             ~buffer=taaBuffer,
+             ~buffer=prevNormalBuffer,
              ~offset=0,
-             ~size=taaBufferSize,
+             ~size=prevNormalBufferSize,
+             (),
+           ),
+           BindGroup.binding(
+             ~binding=4,
+             ~buffer=acceptBoolBuffer,
+             ~offset=0,
+             ~size=acceptBoolBufferSize,
+             (),
+           ),
+           BindGroup.binding(
+             ~binding=5,
+             ~buffer=prevFramePixelIndicesBuffer,
+             ~offset=0,
+             ~size=prevFramePixelIndicesBufferSize,
+             (),
+           ),
+           BindGroup.binding(
+             ~binding=6,
+             ~buffer=resolutionBuffer,
+             ~offset=0,
+             ~size=
+               BMFRBuffer.ResolutionBuffer.getBufferSize(
+                 resolutionBufferData,
+               ),
+             (),
+           ),
+           BindGroup.binding(
+             ~binding=7,
+             ~buffer=commonDataBuffer,
+             ~offset=0,
+             ~size=
+               BMFRBuffer.CommonDataBuffer.getBufferSize(
+                 commonDataBufferData,
+               ),
              (),
            ),
          |],
@@ -115,22 +204,25 @@ let _initFrameData =
 
   let state =
     state
-    |> addStaticBindGroupDataFunc(0, gbufferBindGroup)
-    |> addStaticBindGroupDataFunc(1, otherBindGroup);
+    |> Pass.PreprocessPass.addStaticBindGroupData(0, gbufferBindGroup)
+    |> Pass.PreprocessPass.addStaticBindGroupData(1, otherBindGroup);
 
-  let baseShaderPath = "examples/bmfr/pass/taa/shaders";
+  let baseShaderPath = "examples/bmfr/pass/bmfr/preprocess/shaders";
 
   let vertexShaderModule =
     device
     |> Device.createShaderModule({
-         "code": WebGPUUtils.loadShaderFile({j|$(baseShaderPath)/taa.vert|j}),
+         "code":
+           WebGPUUtils.loadShaderFile(
+             {j|$(baseShaderPath)/preprocess.vert|j},
+           ),
        });
   let fragmentShaderModule =
     device
     |> Device.createShaderModule({
          "code":
            WebGPUUtils.loadShaderFile(
-             {j|$(baseShaderPath)/$(fragmentShaderName).frag|j},
+             {j|$(baseShaderPath)/preprocess.frag|j},
            ),
        });
 
@@ -173,107 +265,7 @@ let _initFrameData =
          ),
        );
 
-  state |> setPipelineFunc(pipeline);
-};
-
-let _initFirstFrameData =
-    (
-      device,
-      swapChainFormat,
-      (
-        (resolutionBufferSize, resolutionBuffer),
-        (pixelBufferSize, pixelBuffer),
-        (historyPixelBufferSize, historyPixelBuffer),
-        (taaBufferSize, taaBuffer),
-      ),
-      state,
-    ) => {
-  _initFrameData(
-    device,
-    swapChainFormat,
-    (
-      (resolutionBufferSize, resolutionBuffer),
-      (pixelBufferSize, pixelBuffer),
-      (historyPixelBufferSize, historyPixelBuffer),
-      (taaBufferSize, taaBuffer),
-    ),
-    (
-      "taa_firstFrame",
-      Pass.TAAPass.addFirstFrameStaticBindGroupData,
-      Pass.TAAPass.setFirstFramePipeline,
-    ),
-    state,
-  );
-};
-
-let _initOtherFrameData =
-    (
-      device,
-      swapChainFormat,
-      (
-        (resolutionBufferSize, resolutionBuffer),
-        (pixelBufferSize, pixelBuffer),
-        (historyPixelBufferSize, historyPixelBuffer),
-        (taaBufferSize, taaBuffer),
-      ),
-      state,
-    ) => {
-  _initFrameData(
-    device,
-    swapChainFormat,
-    (
-      (resolutionBufferSize, resolutionBuffer),
-      (pixelBufferSize, pixelBuffer),
-      (historyPixelBufferSize, historyPixelBuffer),
-      (taaBufferSize, taaBuffer),
-    ),
-    (
-      "taa_otherFrame",
-      Pass.TAAPass.addOtherFrameStaticBindGroupData,
-      Pass.TAAPass.setOtherFramePipeline,
-    ),
-    state,
-  );
-};
-
-let init = (device, window, swapChainFormat, state) => {
-  let (resolutionBufferData, resolutionBuffer) =
-    BMFRBuffer.ResolutionBuffer.unsafeGetBufferData(state);
-  let (pixelBufferSize, pixelBuffer) =
-    BMFRBuffer.PixelBuffer.unsafeGetBufferData(state);
-  let (historyPixelBufferSize, historyPixelBuffer) =
-    BMFRBuffer.HistoryPixelBuffer.unsafeGetBufferData(state);
-  let (taaBufferData, taaBuffer) =
-    BMFRBuffer.TAABuffer.unsafeGetBufferData(state);
-
-  state
-  |> Pass.TAAPass.markFirstFrame
-  |> _initFirstFrameData(
-       device,
-       swapChainFormat,
-       (
-         (
-           BMFRBuffer.ResolutionBuffer.getBufferSize(resolutionBufferData),
-           resolutionBuffer,
-         ),
-         (pixelBufferSize, pixelBuffer),
-         (historyPixelBufferSize, historyPixelBuffer),
-         (BMFRBuffer.TAABuffer.getBufferSize(taaBufferData), taaBuffer),
-       ),
-     )
-  |> _initOtherFrameData(
-       device,
-       swapChainFormat,
-       (
-         (
-           BMFRBuffer.ResolutionBuffer.getBufferSize(resolutionBufferData),
-           resolutionBuffer,
-         ),
-         (pixelBufferSize, pixelBuffer),
-         (historyPixelBufferSize, historyPixelBuffer),
-         (BMFRBuffer.TAABuffer.getBufferSize(taaBufferData), taaBuffer),
-       ),
-     );
+  state |> Pass.PreprocessPass.setPipeline(pipeline);
 };
 
 let execute = (device, queue, swapChain, state) => {
@@ -304,16 +296,10 @@ let execute = (device, queue, swapChain, state) => {
          },
        );
 
-  let (staticBindGroupDataArr, pipeline) =
-    Pass.TAAPass.isFirstFrame(state)
-      ? (
-        Pass.TAAPass.getFirstFrameStaticBindGroupDataArr(state),
-        Pass.TAAPass.unsafeGetFirstFramePipeline(state),
-      )
-      : (
-        Pass.TAAPass.getOtherFrameStaticBindGroupDataArr(state),
-        Pass.TAAPass.unsafeGetOtherFramePipeline(state),
-      );
+  let (staticBindGroupDataArr, pipeline) = (
+    Pass.PreprocessPass.getStaticBindGroupDataArr(state),
+    Pass.PreprocessPass.unsafeGetPipeline(state),
+  );
 
   renderPass |> PassEncoder.Render.setPipeline(pipeline);
 
@@ -327,5 +313,5 @@ let execute = (device, queue, swapChain, state) => {
 
   queue |> Queue.submit([|commandEncoder |> CommandEncoder.finish|]);
 
-  state |> Pass.TAAPass.markNotFirstFrame;
+  state;
 };

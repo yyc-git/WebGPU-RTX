@@ -70,7 +70,7 @@ let create = () => {
     jitterArr: [||],
     gbufferPassData: {
       lastModelMatrixMap: ImmutableSparseMap.createEmpty(),
-      lastViewJitterdProjectionMatrix: None,
+      lastViewProjectionMatrix: None,
       pipeline: None,
       depthTextureView: None,
       staticBindGroupDataArr: [||],
@@ -80,6 +80,10 @@ let create = () => {
       indexCountMap: ImmutableSparseMap.createEmpty(),
     },
     rayTracingPassData: {
+      pipeline: None,
+      staticBindGroupDataArr: [||],
+    },
+    preprocessPassData: {
       pipeline: None,
       staticBindGroupDataArr: [||],
     },

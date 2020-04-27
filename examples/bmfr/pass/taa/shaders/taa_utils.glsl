@@ -6,11 +6,6 @@ layout(std140, set = 1, binding = 1) buffer HistoryPixelBuffer {
 }
 historyPixelBuffer;
 
-uint getPixelIndex(vec2 jitteredUV, vec2 resolution) {
-  const ivec2 bufferCoord = ivec2(floor(jitteredUV * resolution));
-
-  return bufferCoord.y * uint(resolution.x) + bufferCoord.x;
-}
 
 vec4 getCurrentColor(vec2 unjitteredUV, vec2 resolution) {
   uint currentColorPixelIndex = getPixelIndex(unjitteredUV, resolution);

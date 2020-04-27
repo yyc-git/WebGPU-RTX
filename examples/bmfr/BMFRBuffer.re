@@ -31,7 +31,7 @@ module CameraBuffer = {
         lookFrom,
         viewMatrix,
         jitterdProjectionMatrix,
-        lastViewJitterdProjectionMatrixOpt,
+        lastViewProjectionMatrixOpt,
         state,
       ) => {
     let (cameraBufferData, cameraBuffer) = unsafeGetCameraBufferData(state);
@@ -48,7 +48,7 @@ module CameraBuffer = {
            jitterdProjectionMatrix,
          );
     let (cameraBufferData, offset) =
-      switch (lastViewJitterdProjectionMatrixOpt) {
+      switch (lastViewProjectionMatrixOpt) {
       | None => (cameraBufferData, offset)
       | Some(lastViewJitterdProjectionMatrix) =>
         cameraBufferData
@@ -234,7 +234,7 @@ module DirectionLightBuffer = {
            (Float32Array.fromLength(length * (4 + 4)), 0),
          );
 
-    Log.printComplete("direlightdata:", directionLightData);
+    // Log.printComplete("direlightdata:", directionLightData);
 
     let directionLightBufferSize =
       directionLightData |> Float32Array.byteLength;
@@ -247,6 +247,211 @@ module DirectionLightBuffer = {
     directionLightBuffer |> Buffer.setSubFloat32Data(0, directionLightData);
 
     (directionLightBufferSize, directionLightBuffer);
+  };
+};
+
+module ResolutionBuffer = {
+  let buildData = (window, device) => {
+    let resolutionData =
+      Float32Array.make([|
+        Window.getWidth(window) |> float_of_int,
+        Window.getHeight(window) |> float_of_int,
+      |]);
+    let resolutionBufferSize = resolutionData |> Float32Array.byteLength;
+    let resolutionUniformBuffer =
+      device
+      |> Device.createBuffer({
+           "size": resolutionBufferSize,
+           "usage": BufferUsage.copy_dst lor BufferUsage.uniform,
+         });
+    resolutionUniformBuffer |> Buffer.setSubFloat32Data(0, resolutionData);
+    (resolutionData, resolutionUniformBuffer);
+  };
+
+  let unsafeGetBufferData = state => {
+    Pass.unsafeGetUniformBufferData("resolutionBuffer", state);
+  };
+
+  let setBufferData = ((bufferData, buffer), state) => {
+    Pass.setUniformBufferData(
+      "resolutionBuffer",
+      (bufferData, buffer),
+      state,
+    );
+  };
+
+  let getBufferSize = bufferData => {
+    bufferData |> Float32Array.byteLength;
+  };
+};
+
+module PixelBuffer = {
+  let buildData = (window, device) => {
+    ManageBuffer.StorageBuffer.buildPixelBufferData(window, device);
+  };
+
+  let unsafeGetBufferData = state => {
+    Pass.unsafeGetStorageBufferData("pixelBuffer", state);
+  };
+
+  let setBufferData = ((bufferSize, buffer), state) => {
+    Pass.setStorageBufferData("pixelBuffer", (bufferSize, buffer), state);
+  };
+};
+
+module PrevNoisyPixelBuffer = {
+  let buildData = (window, device) => {
+    ManageBuffer.StorageBuffer.buildPixelBufferData(window, device);
+  };
+
+  let unsafeGetBufferData = state => {
+    Pass.unsafeGetStorageBufferData("prevNoisyPixelBuffer", state);
+  };
+
+  let setBufferData = ((bufferSize, buffer), state) => {
+    Pass.setStorageBufferData(
+      "prevNoisyPixelBuffer",
+      (bufferSize, buffer),
+      state,
+    );
+  };
+};
+
+module PrevPositionBuffer = {
+  let buildData = (window, device) => {
+    let bufferSize =
+      Window.getWidth(window)
+      * Window.getHeight(window)
+      * 4
+      * Float32Array._BYTES_PER_ELEMENT;
+    let buffer =
+      device
+      |> Device.createBuffer({
+           "size": bufferSize,
+           "usage": BufferUsage.storage,
+         });
+
+    (bufferSize, buffer);
+  };
+
+  let unsafeGetBufferData = state => {
+    Pass.unsafeGetStorageBufferData("prevPositionBuffer", state);
+  };
+
+  let setBufferData = ((bufferSize, buffer), state) => {
+    Pass.setStorageBufferData(
+      "prevPositionBuffer",
+      (bufferSize, buffer),
+      state,
+    );
+  };
+};
+
+module PrevNormalBuffer = {
+  let buildData = (window, device) => {
+    let bufferSize =
+      Window.getWidth(window)
+      * Window.getHeight(window)
+      * 4
+      * Float32Array._BYTES_PER_ELEMENT;
+    let buffer =
+      device
+      |> Device.createBuffer({
+           "size": bufferSize,
+           "usage": BufferUsage.storage,
+         });
+
+    (bufferSize, buffer);
+  };
+
+  let unsafeGetBufferData = state => {
+    Pass.unsafeGetStorageBufferData("prevNormalBuffer", state);
+  };
+
+  let setBufferData = ((bufferSize, buffer), state) => {
+    Pass.setStorageBufferData(
+      "prevNormalBuffer",
+      (bufferSize, buffer),
+      state,
+    );
+  };
+};
+
+module AcceptBoolBuffer = {
+  let buildData = (window, device) => {
+    let bufferSize =
+      Window.getWidth(window)
+      * Window.getHeight(window)
+      * 1
+      * Uint32Array._BYTES_PER_ELEMENT;
+    let buffer =
+      device
+      |> Device.createBuffer({
+           "size": bufferSize,
+           "usage": BufferUsage.storage,
+         });
+
+    (bufferSize, buffer);
+  };
+
+  let unsafeGetBufferData = state => {
+    Pass.unsafeGetStorageBufferData("acceptBoolBuffer", state);
+  };
+
+  let setBufferData = ((bufferSize, buffer), state) => {
+    Pass.setStorageBufferData(
+      "acceptBoolBuffer",
+      (bufferSize, buffer),
+      state,
+    );
+  };
+};
+
+module PrevFramePixelIndicesBuffer = {
+  let buildData = (window, device) => {
+    let bufferSize =
+      Window.getWidth(window)
+      * Window.getHeight(window)
+      * 2
+      * Float32Array._BYTES_PER_ELEMENT;
+    let buffer =
+      device
+      |> Device.createBuffer({
+           "size": bufferSize,
+           "usage": BufferUsage.storage,
+         });
+
+    (bufferSize, buffer);
+  };
+
+  let unsafeGetBufferData = state => {
+    Pass.unsafeGetStorageBufferData("prevFramePixelIndicesBuffer", state);
+  };
+
+  let setBufferData = ((bufferSize, buffer), state) => {
+    Pass.setStorageBufferData(
+      "prevFramePixelIndicesBuffer",
+      (bufferSize, buffer),
+      state,
+    );
+  };
+};
+
+module HistoryPixelBuffer = {
+  let buildData = (window, device) => {
+    ManageBuffer.StorageBuffer.buildPixelBufferData(window, device);
+  };
+
+  let unsafeGetBufferData = state => {
+    Pass.unsafeGetStorageBufferData("historyPixelBuffer", state);
+  };
+
+  let setBufferData = ((bufferSize, buffer), state) => {
+    Pass.setStorageBufferData(
+      "historyPixelBuffer",
+      (bufferSize, buffer),
+      state,
+    );
   };
 };
 
@@ -264,20 +469,20 @@ module TAABuffer = {
     (bufferData, bufferSize, buffer);
   };
 
-  let unsafeGetTAABufferData = state => {
+  let unsafeGetBufferData = state => {
     Pass.unsafeGetUniformBufferData("taaBuffer", state);
   };
 
-  let getTAABufferSize = bufferData => {
+  let getBufferSize = bufferData => {
     bufferData |> Float32Array.byteLength;
   };
 
-  let _setTAABufferData = ((bufferData, buffer), state) => {
+  let setBufferData = ((bufferData, buffer), state) => {
     Pass.setUniformBufferData("taaBuffer", (bufferData, buffer), state);
   };
 
   let update = (jitter, state) => {
-    let (taaBufferData, taaBuffer) = unsafeGetTAABufferData(state);
+    let (taaBufferData, taaBuffer) = unsafeGetBufferData(state);
 
     let (taaBufferData, offset) =
       taaBufferData |> TypeArray.Float32Array.setFloatTuple2(0, jitter);
@@ -285,7 +490,7 @@ module TAABuffer = {
     // Log.printComplete("taaBufferData:", taaBufferData);
 
     taaBuffer |> Buffer.setSubFloat32Data(0, taaBufferData);
-    let state = state |> _setTAABufferData((taaBufferData, taaBuffer));
+    let state = state |> setBufferData((taaBufferData, taaBuffer));
 
     state;
   };
@@ -305,15 +510,15 @@ module CommonDataBuffer = {
     (bufferData, bufferSize, buffer);
   };
 
-  let unsafeGetCommonDataBufferData = state => {
+  let unsafeGetBufferData = state => {
     Pass.unsafeGetUniformBufferData("commonDataBuffer", state);
   };
 
-  let getCommonDataBufferSize = bufferData => {
+  let getBufferSize = bufferData => {
     bufferData |> Float32Array.byteLength;
   };
 
-  let _setCommonDataBufferData = ((bufferData, buffer), state) => {
+  let setBufferData = ((bufferData, buffer), state) => {
     Pass.setUniformBufferData(
       "commonDataBuffer",
       (bufferData, buffer),
@@ -323,7 +528,7 @@ module CommonDataBuffer = {
 
   let update = (frame, lightCount, state) => {
     let (commonDataBufferData, commonDataBuffer) =
-      unsafeGetCommonDataBufferData(state);
+      unsafeGetBufferData(state);
 
     let (commonDataBufferData, offset) =
       commonDataBufferData
@@ -332,12 +537,11 @@ module CommonDataBuffer = {
       commonDataBufferData
       |> TypeArray.Float32Array.setFloat(offset, lightCount |> float_of_int);
 
-    Log.printComplete("commonDataBufferData:", commonDataBufferData);
+    // Log.printComplete("commonDataBufferData:", commonDataBufferData);
 
     commonDataBuffer |> Buffer.setSubFloat32Data(0, commonDataBufferData);
     let state =
-      state
-      |> _setCommonDataBufferData((commonDataBufferData, commonDataBuffer));
+      state |> setBufferData((commonDataBufferData, commonDataBuffer));
 
     state;
   };

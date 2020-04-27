@@ -3,8 +3,10 @@
 
 #include "../../shaders/definition.glsl"
 #include "../../shaders/jitter.glsl"
-#include "./taa_utils.glsl"
+#include "../../shaders/utils.glsl"
 #include "./taa_definition.glsl"
+#include "./taa_utils.glsl"
+
 
 layout(location = 0) in vec2 uv;
 layout(location = 0) out vec4 outColor;
@@ -18,7 +20,7 @@ layout(set = 1, binding = 3) uniform Taa { vec2 jitter; }
 uTaa;
 
 void main() {
-  vec2 unjitteredUV = getUnjitterdUV(uv, uTaa.jitter);
+  vec2 unjitteredUV = getUnJitterdUV(uv, uTaa.jitter);
 
   vec4 currentColor = getCurrentColor(unjitteredUV, screenDimension.resolution);
 

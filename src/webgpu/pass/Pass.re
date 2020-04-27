@@ -89,37 +89,20 @@ module GBufferPass = {
     },
   };
 
-  let getLastViewJitterdProjectionMatrix = state => {
-    _getPassData(state).lastViewJitterdProjectionMatrix ;
+  let getLastViewProjectionMatrix = state => {
+    _getPassData(state).lastViewProjectionMatrix;
   };
 
-  let setLastViewJitterdProjectionMatrix =
-      (lastViewJitterdProjectionMatrix, state) => {
+  let setLastViewProjectionMatrix = (lastViewProjectionMatrix, state) => {
     ...state,
     pass: {
       ...state.pass,
       gbufferPassData: {
         ..._getPassData(state),
-        lastViewJitterdProjectionMatrix:
-          Some(lastViewJitterdProjectionMatrix),
+        lastViewProjectionMatrix: Some(lastViewProjectionMatrix),
       },
     },
   };
-
-  // let getJitterdProjectionMatrix = state => {
-  //   _getPassData(state).jitteredProjectionMatrix;
-  // };
-
-  // let setJitterdProjectionMatrix = (jitteredProjectionMatrix, state) => {
-  //   ...state,
-  //   pass: {
-  //     ...state.pass,
-  //     gbufferPassData: {
-  //       ..._getPassData(state),
-  //       jitteredProjectionMatrix: Some(jitteredProjectionMatrix),
-  //     },
-  //   },
-  // };
 
   let unsafeGetDepthTextureView = state => {
     _getPassData(state).depthTextureView |> Js.Option.getExn;
@@ -335,6 +318,44 @@ module RayTracingPass = {
           |> ArrayUtils.push({setSlot, bindGroup}),
       },
     },
+  };
+};
+
+module PreprocessPass = {
+  let _getPassData = state => {
+    state.pass.preprocessPassData;
+  };
+
+  let unsafeGetPipeline = state => {
+    _getPassData(state).pipeline |> Js.Option.getExn;
+  };
+
+  let setPipeline = (pipeline, state) => {
+    ...state,
+    pass: {
+      ...state.pass,
+      preprocessPassData: {
+        ..._getPassData(state),
+        pipeline: Some(pipeline),
+      },
+    },
+  };
+
+  let addStaticBindGroupData = (setSlot, bindGroup, state) => {
+    ...state,
+    pass: {
+      ...state.pass,
+      preprocessPassData: {
+        ..._getPassData(state),
+        staticBindGroupDataArr:
+          _getPassData(state).staticBindGroupDataArr
+          |> ArrayUtils.push({setSlot, bindGroup}),
+      },
+    },
+  };
+
+  let getStaticBindGroupDataArr = state => {
+    _getPassData(state).staticBindGroupDataArr;
   };
 };
 

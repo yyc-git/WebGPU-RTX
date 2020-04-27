@@ -45,34 +45,34 @@ return _generateHaltonJiters(frameCount).map(([ jitterX, jitterY ]) =>{
   |}
 ];
 
-let jitterProjectionMatrix = (projectionMatrix, state) => {
-  let (jitterX, jitterY) =
-    Pass.getJitter(Pass.getAccumulatedFrameIndex(state), state);
+// let jitterProjectionMatrix = (projectionMatrix, state) => {
+//   let (jitterX, jitterY) =
+//     Pass.getJitter(Pass.getAccumulatedFrameIndex(state), state);
 
-  let result = projectionMatrix |> Matrix4.copy;
+//   let result = projectionMatrix |> Matrix4.copy;
 
-  // Float32Array.unsafe_set(result, 8, jitterX);
-  // Float32Array.unsafe_set(result, 9, jitterY);
+//   // Float32Array.unsafe_set(result, 8, jitterX);
+//   // Float32Array.unsafe_set(result, 9, jitterY);
 
-  // Log.printComplete(
-  // "pro jitter:",
-  // ( Float32Array.unsafe_get(result, 8), Float32Array.unsafe_get(result, 9) )
-  // );
-  // Log.printComplete(
-  // "jitter camera:",
-  // (jitterX, jitterY)
-  // );
+//   // Log.printComplete(
+//   // "pro jitter:",
+//   // ( Float32Array.unsafe_get(result, 8), Float32Array.unsafe_get(result, 9) )
+//   // );
+//   // Log.printComplete(
+//   // "jitter camera:",
+//   // (jitterX, jitterY)
+//   // );
 
-  Float32Array.unsafe_set(
-    result,
-    8,
-    Float32Array.unsafe_get(result, 8) +. jitterX,
-  );
-  Float32Array.unsafe_set(
-    result,
-    9,
-    Float32Array.unsafe_get(result, 9) +. jitterY,
-  );
+//   // Float32Array.unsafe_set(
+//   //   result,
+//   //   8,
+//   //   Float32Array.unsafe_get(result, 8) +. jitterX,
+//   // );
+//   // Float32Array.unsafe_set(
+//   //   result,
+//   //   9,
+//   //   Float32Array.unsafe_get(result, 9) +. jitterY,
+//   // );
 
-  result;
-};
+//   result;
+// };

@@ -91,22 +91,6 @@ module UniformBuffer = {
   //   },
 
   // };
-  let buildResolutionBufferData = (window, device ) => {
-    let resolutionData =
-      Float32Array.make([|
-        Window.getWidth(window) |> float_of_int,
-        Window.getHeight(window) |> float_of_int,
-      |]);
-    let resolutionBufferSize = resolutionData |> Float32Array.byteLength;
-    let resolutionUniformBuffer =
-      device
-      |> Device.createBuffer({
-           "size": resolutionBufferSize,
-           "usage": BufferUsage.copy_dst lor BufferUsage.uniform,
-         });
-    resolutionUniformBuffer |> Buffer.setSubFloat32Data(0, resolutionData);
-    (resolutionBufferSize, resolutionUniformBuffer);
-  };
 };
 
 module StorageBuffer = {

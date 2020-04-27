@@ -125,9 +125,11 @@ vec3 accumulateByExponentMovingAverage(float lenMotionVector, vec3 currentColor,
 }
 
 void main() {
-  vec2 unjitteredUV = getUnjitterdUV(uv, uTaa.jitter);
+  vec2 jitterdUV = getJitterdUV(uv, uTaa.jitter);
+  vec2 unjitteredUV = getUnJitterdUV(uv, uTaa.jitter);
 
-  vec2 motionVector = getClosestMotionVector(uv, screenDimension.resolution);
+  vec2 motionVector =
+      getClosestMotionVector(jitterdUV, screenDimension.resolution);
 
   float lenMotionVector = length(motionVector);
 
@@ -141,7 +143,7 @@ void main() {
   currentColor = rgb2YCoCgR(currentColor);
 
   vec3 prevColor =
-      getPrevColor(uv - motionVector, screenDimension.resolution).xyz;
+      getPrevColor(jitterdUV - motionVector, screenDimension.resolution).xyz;
 
 #ifdef USE_TONEMAP
   prevColor = toneMap(prevColor);
