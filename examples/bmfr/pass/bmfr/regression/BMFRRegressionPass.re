@@ -30,6 +30,12 @@ let init = (device, state) => {
              ~type_="sampled-texture",
              (),
            ),
+           BindGroupLayout.layoutBinding(
+             ~binding=2,
+             ~visibility=ShaderStage.compute,
+             ~type_="sampled-texture",
+             (),
+           ),
          |],
        });
 
@@ -86,6 +92,13 @@ let init = (device, state) => {
              ~binding=1,
              ~textureView=
                Pass.unsafeGetTextureView("normalRenderTargetView", state),
+             ~size=0,
+             (),
+           ),
+           BindGroup.binding(
+             ~binding=2,
+             ~textureView=
+               Pass.unsafeGetTextureView("diffuseRenderTargetView", state),
              ~size=0,
              (),
            ),

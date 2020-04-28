@@ -34,7 +34,7 @@ shared float vecLength;
 
 layout(binding = 0) uniform sampler2D gPositionTexture;
 layout(binding = 1) uniform sampler2D gNormalTexture;
-// layout(binding = 2) uniform sampler2D gDiffuseTexture;
+layout(binding = 2) uniform sampler2D gDiffuseTexture;
 
 layout(std140, set = 1, binding = 0) buffer CurNoisyPixelBuffer {
   vec4 pixels[];
@@ -278,7 +278,6 @@ void householderQRDecomposition(uint groupThreadId, uvec3 groupId) {
   }
 }
 
-
 void calculateFilteredColor(uint groupThreadId, uvec3 groupId,
                             uint horizentalBlocksCount,
 
@@ -324,8 +323,8 @@ void calculateFilteredColor(uint groupThreadId, uvec3 groupId,
                              gchannel[index] < 0.0 ? 0.0 : gchannel[index],
                              bchannel[index] < 0.0 ? 0.0 : bchannel[index]);
 
-    // vec3 diffuse = texture(gDiffuseTexture, uv).xyz;
-    // currentColor = modulateAlbedo(currentColor, diffuse);
+    vec3 diffuse = texture(gDiffuseTexture, uv).xyz;
+    currentColor = modulateAlbedo(currentColor, diffuse);
 
     curNoisyPixelBuffer.pixels[pixelIndex] =
         vec4(currentColor, curNoisyPixelBuffer.pixels[pixelIndex].w);
@@ -364,9 +363,6 @@ void main() {
 
     vec3 currentColor = curNoisyPixelBuffer.pixels[pixelIndex].rgb;
 
-    // vec3 diffuse = texture(gDiffuseTexture, uv).xyz;
-    // currentColor = demodulateAlbedo(currentColor, diffuse);
-
     tmpDataBuffer
         .data[convertDataBufferTwoDIndexToOneDIndex(index, 0 + BLOCK_OFFSET)] =
         1.0;
@@ -397,6 +393,10 @@ void main() {
     tmpDataBuffer
         .data[convertDataBufferTwoDIndexToOneDIndex(index, 9 + BLOCK_OFFSET)] =
         worldPosition.z * worldPosition.z;
+
+    vec3 diffuse = texture(gDiffuseTexture, uv).xyz;
+    currentColor = demodulateAlbedo(currentColor, diffuse);
+
     tmpDataBuffer
         .data[convertDataBufferTwoDIndexToOneDIndex(index, 10 + BLOCK_OFFSET)] =
         currentColor.x;

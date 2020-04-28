@@ -18,7 +18,6 @@ layout(location = 0) in vec2 uv;
 layout(binding = 0) uniform sampler2D gPositionTexture;
 layout(binding = 1) uniform sampler2D gNormalTexture;
 layout(binding = 2) uniform sampler2D gMotionVectorDepthShininessTexture;
-layout(binding = 3) uniform sampler2D gDiffuseTexture;
 
 layout(std140, set = 1, binding = 0) buffer CurNoisyPixelBuffer {
   vec4 pixels[];
@@ -77,10 +76,6 @@ void main() {
   uint pixelIndex = getPixelIndex(uv, screenDimension.resolution);
 
   vec3 currentColor = curNoisyPixelBuffer.pixels[pixelIndex].rgb;
-
-  vec3 diffuse = texture(gDiffuseTexture, uv).xyz;
-
-  currentColor = demodulateAlbedo(currentColor, diffuse);
 
   // Default previous frame pixel is the same pixel
   vec2 prevFramePixelIndicesFloat =

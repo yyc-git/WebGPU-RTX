@@ -38,12 +38,6 @@ let init = (device, swapChainFormat, state) => {
              ~type_="sampled-texture",
              (),
            ),
-           BindGroupLayout.layoutBinding(
-             ~binding=3,
-             ~visibility=ShaderStage.fragment,
-             ~type_="sampled-texture",
-             (),
-           ),
          |],
        });
 
@@ -114,16 +108,6 @@ let init = (device, swapChainFormat, state) => {
              ~textureView=
                Pass.unsafeGetTextureView(
                  "motionVectorDepthShininessRenderTargetView",
-                 state,
-               ),
-             ~size=0,
-             (),
-           ),
-           BindGroup.binding(
-             ~binding=3,
-             ~textureView=
-               Pass.unsafeGetTextureView(
-                 "diffuseRenderTargetView",
                  state,
                ),
              ~size=0,
