@@ -11,29 +11,31 @@
 
 layout(location = 0) in vec2 uv;
 
-layout(std140, set = 0, binding = 0) buffer CurNoisyPixelBuffer {
+layout(binding = 0) uniform sampler2D gDiffuseTexture;
+
+layout(std140, set = 1, binding = 0) buffer CurNoisyPixelBuffer {
   vec4 pixels[];
 }
 curNoisyPixelBuffer;
-layout(std140, set = 0, binding = 1) buffer PccumulatedPrevFramePixelBuffer {
+layout(std140, set = 1, binding = 1) buffer PccumulatedPrevFramePixelBuffer {
   vec4 pixels[];
 }
 accumulatedPrevFramePixelBuffer;
 
-layout(scalar, set = 0, binding = 2) buffer AcceptBoolBuffer {
+layout(scalar, set = 1, binding = 2) buffer AcceptBoolBuffer {
   uint acceptBools[];
 }
 acceptBoolBuffer;
 
-layout(scalar, set = 0, binding = 3) buffer PrevFramePixelIndicesBuffer {
+layout(scalar, set = 1, binding = 3) buffer PrevFramePixelIndicesBuffer {
   vec2 prevFramePixelIndices[];
 }
 prevFramePixelIndicesBuffer;
 
-layout(set = 0, binding = 4) uniform ScreenDimension { vec2 resolution; }
+layout(set = 1, binding = 4) uniform ScreenDimension { vec2 resolution; }
 screenDimension;
 
-layout(std140, set = 0, binding = 5) uniform CommonData { vec4 compressedData; }
+layout(std140, set = 1, binding = 5) uniform CommonData { vec4 compressedData; }
 pushC;
 
 uint convertPixelIndicesToPixelIndex(ivec2 pixelIndices, vec2 resolution) {
@@ -129,6 +131,10 @@ void main() {
   }
 
   vec3 accumulatedColor = mix(prevColor, filteredColor, blendAlpha);
+
+  vec3 diffuse = texture(gDiffuseTexture, uv).xyz;
+  accumulatedColor = modulateAlbedo(accumulatedColor, diffuse);
+
   curNoisyPixelBuffer.pixels[pixelIndex] = vec4(accumulatedColor, 1.0);
 
   accumulatedPrevFramePixelBuffer.pixels[pixelIndex] =

@@ -16,7 +16,20 @@ let init = (device, swapChainFormat, state) => {
   let (commonDataBufferData, commonDataBuffer) =
     BMFRBuffer.CommonDataBuffer.unsafeGetBufferData(state);
 
-  let bindGroupLayout =
+  let gbufferBindGroupLayout =
+    device
+    |> Device.createBindGroupLayout({
+         "bindings": [|
+           BindGroupLayout.layoutBinding(
+             ~binding=0,
+             ~visibility=ShaderStage.fragment,
+             ~type_="sampled-texture",
+             (),
+           ),
+         |],
+       });
+
+  let otherBindGroupLayout =
     device
     |> Device.createBindGroupLayout({
          "bindings": [|
@@ -59,10 +72,25 @@ let init = (device, swapChainFormat, state) => {
          |],
        });
 
-  let bindGroup =
+  let gbufferBindGroup =
     device
     |> Device.createBindGroup({
-         "layout": bindGroupLayout,
+         "layout": gbufferBindGroupLayout,
+         "bindings": [|
+           BindGroup.binding(
+             ~binding=0,
+             ~textureView=
+               Pass.unsafeGetTextureView("diffuseRenderTargetView", state),
+             ~size=0,
+             (),
+           ),
+         |],
+       });
+
+  let otherBindGroup =
+    device
+    |> Device.createBindGroup({
+         "layout": otherBindGroupLayout,
          "bindings": [|
            BindGroup.binding(
              ~binding=0,
@@ -116,7 +144,9 @@ let init = (device, swapChainFormat, state) => {
        });
 
   let state =
-    state |> Pass.PostprocessPass.addStaticBindGroupData(0, bindGroup);
+    state
+    |> Pass.PostprocessPass.addStaticBindGroupData(0, gbufferBindGroup)
+    |> Pass.PostprocessPass.addStaticBindGroupData(1, otherBindGroup);
 
   let baseShaderPath = "examples/bmfr/pass/bmfr/postprocess/shaders";
 
@@ -144,7 +174,10 @@ let init = (device, swapChainFormat, state) => {
            ~layout=
              device
              |> Device.createPipelineLayout({
-                  "bindGroupLayouts": [|bindGroupLayout|],
+                  "bindGroupLayouts": [|
+                    gbufferBindGroupLayout,
+                    otherBindGroupLayout,
+                  |],
                 }),
            ~vertexStage={
              Pipeline.Render.vertexStage(

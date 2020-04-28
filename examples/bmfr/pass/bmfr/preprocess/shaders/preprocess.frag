@@ -18,6 +18,7 @@ layout(location = 0) in vec2 uv;
 layout(binding = 0) uniform sampler2D gPositionTexture;
 layout(binding = 1) uniform sampler2D gNormalTexture;
 layout(binding = 2) uniform sampler2D gMotionVectorDepthShininessTexture;
+layout(binding = 3) uniform sampler2D gDiffuseTexture;
 
 layout(std140, set = 1, binding = 0) buffer CurNoisyPixelBuffer {
   vec4 pixels[];
@@ -56,7 +57,9 @@ screenDimension;
 layout(std140, set = 1, binding = 7) uniform CommonData { vec4 compressedData; }
 pushC;
 
-vec2 convertUVToPixelIndices(vec2 uv, vec2 resolution) { return uv * resolution; }
+vec2 convertUVToPixelIndices(vec2 uv, vec2 resolution) {
+  return uv * resolution;
+}
 
 uint convertPixelIndicesToPixelIndex(ivec2 pixelIndices, vec2 resolution) {
   return convertBufferTwoDIndexToOneDIndex(pixelIndices.x, pixelIndices.y,
@@ -74,6 +77,10 @@ void main() {
   uint pixelIndex = getPixelIndex(uv, screenDimension.resolution);
 
   vec3 currentColor = curNoisyPixelBuffer.pixels[pixelIndex].rgb;
+
+  vec3 diffuse = texture(gDiffuseTexture, uv).xyz;
+
+  currentColor = demodulateAlbedo(currentColor, diffuse);
 
   // Default previous frame pixel is the same pixel
   vec2 prevFramePixelIndicesFloat =
@@ -129,8 +136,8 @@ void main() {
       return;
     }
 
-    prevFramePixelIndicesFloat =
-        convertUVToPixelIndices(prevFrameUnJitteredUV, screenDimension.resolution);
+    prevFramePixelIndicesFloat = convertUVToPixelIndices(
+        prevFrameUnJitteredUV, screenDimension.resolution);
 
     prevFramePixelIndicesFloat -= vec2(PIXEL_OFFSET, PIXEL_OFFSET);
 
