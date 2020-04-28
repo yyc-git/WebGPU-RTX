@@ -278,6 +278,26 @@ void householderQRDecomposition(uint groupThreadId, uvec3 groupId) {
   }
 }
 
+float getAlbedoMinLimit() { return 0.01; }
+
+vec3 demodulateAlbedo(vec3 currentColor, vec3 diffuse) {
+  float minLimit = getAlbedoMinLimit();
+
+  return vec3(
+      diffuse.x < minLimit ? currentColor.x : currentColor.x / diffuse.x,
+      diffuse.y < minLimit ? currentColor.y : currentColor.y / diffuse.y,
+      diffuse.z < minLimit ? currentColor.z : currentColor.z / diffuse.z);
+}
+
+vec3 modulateAlbedo(vec3 currentColor, vec3 diffuse) {
+  float minLimit = getAlbedoMinLimit();
+
+  return vec3(
+      diffuse.x < minLimit ? currentColor.x : currentColor.x * diffuse.x,
+      diffuse.y < minLimit ? currentColor.y : currentColor.y * diffuse.y,
+      diffuse.z < minLimit ? currentColor.z : currentColor.z * diffuse.z);
+}
+
 void calculateFilteredColor(uint groupThreadId, uvec3 groupId,
                             uint horizentalBlocksCount,
 
@@ -315,17 +335,19 @@ void calculateFilteredColor(uint groupThreadId, uvec3 groupId,
     }
 
     vec2 uv = convertPixelIndicesToUV(pixelIndices, screenDimension.resolution);
-    vec3 diffuse = texture(gDiffuseTexture, uv).xyz;
 
     uint pixelIndex = convertPixelIndicesToPixelIndex(
         pixelIndices, screenDimension.resolution);
 
-    // modulate albedo
+    vec3 currentColor = vec3(uVec[index] < 0.0 ? 0.0 : uVec[index],
+                             gchannel[index] < 0.0 ? 0.0 : gchannel[index],
+                             bchannel[index] < 0.0 ? 0.0 : bchannel[index]);
+
+    vec3 diffuse = texture(gDiffuseTexture, uv).xyz;
+    currentColor = modulateAlbedo(currentColor, diffuse);
+
     curNoisyPixelBuffer.pixels[pixelIndex] =
-        vec4(diffuse * vec3(uVec[index] < 0.0 ? 0.0 : uVec[index],
-                            gchannel[index] < 0.0 ? 0.0 : gchannel[index],
-                            bchannel[index] < 0.0 ? 0.0 : bchannel[index]),
-             curNoisyPixelBuffer.pixels[pixelIndex].w);
+        vec4(currentColor, curNoisyPixelBuffer.pixels[pixelIndex].w);
   }
 }
 
@@ -355,12 +377,14 @@ void main() {
 
     vec3 worldPosition = texture(gPositionTexture, uv).xyz;
     vec3 worldNormal = texture(gNormalTexture, uv).xyz;
-    vec3 diffuse = texture(gDiffuseTexture, uv).xyz;
 
     uint pixelIndex = convertPixelIndicesToPixelIndex(
         pixelIndices, screenDimension.resolution);
 
     vec3 currentColor = curNoisyPixelBuffer.pixels[pixelIndex].rgb;
+
+    vec3 diffuse = texture(gDiffuseTexture, uv).xyz;
+    currentColor = demodulateAlbedo(currentColor, diffuse);
 
     tmpDataBuffer
         .data[convertDataBufferTwoDIndexToOneDIndex(index, 0 + BLOCK_OFFSET)] =
@@ -392,17 +416,15 @@ void main() {
     tmpDataBuffer
         .data[convertDataBufferTwoDIndexToOneDIndex(index, 9 + BLOCK_OFFSET)] =
         worldPosition.z * worldPosition.z;
-
-    // demodulate albedo
     tmpDataBuffer
         .data[convertDataBufferTwoDIndexToOneDIndex(index, 10 + BLOCK_OFFSET)] =
-        diffuse.x < 0.01 ? 0.0 : currentColor.x / diffuse.x;
+        currentColor.x;
     tmpDataBuffer
         .data[convertDataBufferTwoDIndexToOneDIndex(index, 11 + BLOCK_OFFSET)] =
-        diffuse.y < 0.01 ? 0.0 : currentColor.y / diffuse.y;
+        currentColor.y;
     tmpDataBuffer
         .data[convertDataBufferTwoDIndexToOneDIndex(index, 12 + BLOCK_OFFSET)] =
-        diffuse.z < 0.01 ? 0.0 : currentColor.z / diffuse.z;
+        currentColor.z;
   }
   groupMemoryBarrierWithGroupSync();
 
