@@ -15,6 +15,7 @@
 #define INBLOCK_ID subVector *LOCAL_SIZE + groupThreadId
 #define BLOCK_OFFSET groupId.x *BUFFER_COUNT
 
+#include "../../../shaders/utils.glsl"
 #include "../../shaders/utils.glsl"
 #include "./barrier.glsl"
 
@@ -51,17 +52,12 @@ outDataBuffer;
 layout(set = 1, binding = 3) uniform ScreenDimension { vec2 resolution; }
 screenDimension;
 
-layout(std140, set = 1, binding = 4) uniform CommonData {
-  uint frameIndex;
-  uint horizentalBlocksCount;
+layout(std140, set = 1,
+       binding = 4) uniform CommonData { // uint frameIndex;
+  // uint horizentalBlocksCount;
+  vec4 compressedData;
 }
 pushC;
-
-// uint computeInBlockId(uint subVector, uint groupThreadId) {
-//   return subVector * LOCAL_SIZE + groupThreadId;
-// }
-
-// uint buildBlockOffset(uvec3 groupId) { return groupId.x * BUFFER_COUNT; }
 
 int mirror(int index, int size) {
   if (index < 0)
@@ -85,8 +81,8 @@ ivec2 getPixelIndices(uint inblockId, uint groupIdX, uint horizentalBlocksCount,
   // go to group indices
   ivec2 uv =
       ivec2(groupIdX % horizentalBlocksCount, groupIdX / horizentalBlocksCount);
-  uv *= BLOCK_EDGE_LENGTH;
   // go to thread indices(32 * 32 in one group)
+  uv *= BLOCK_EDGE_LENGTH;
   uv += ivec2(inblockId % BLOCK_EDGE_LENGTH, inblockId / BLOCK_EDGE_LENGTH);
   // offset
   uv += blockOffsets[frameIndex % BLOCK_OFFSETS_COUNT];
@@ -105,13 +101,12 @@ uint convertPixelIndicesToPixelIndex(ivec2 pixelIndices, vec2 resolution) {
 }
 
 vec2 convertPixelIndicesToUV(vec2 pixelIndices, vec2 resolution) {
-  return pixelIndices / resolution;
+  return saturateVec2(pixelIndices / resolution);
 }
 
 void householderQRDecomposition(uint groupThreadId, uvec3 groupId) {
-  // TODO not use IGNORE_LD_fEATURES
-
   // use IGNORE_LD_fEATURES
+  // TODO not use IGNORE_LD_fEATURES
 
   int limit = 0;
   for (uint col = 0; col < FEATURES_COUNT; col++) {
@@ -170,24 +165,25 @@ void householderQRDecomposition(uint groupThreadId, uvec3 groupId) {
     }
 
     groupMemoryBarrierWithGroupSync();
-    if (vecLength > 0.01f) {
+
+    if (vecLength > 0.01) {
       limit++;
       if (groupThreadId < FEATURES_COUNT)
         rmat[groupThreadId][col] = rValue;
     } else {
       if (groupThreadId < FEATURES_COUNT)
-        rmat[groupThreadId][col] = 0.0f;
+        rmat[groupThreadId][col] = 0.0;
       continue;
     }
 
-    if (uLengthSquared < 0.001f) {
+    if (uLengthSquared < 0.001) {
       continue;
     }
 
     for (uint feature_buffer = col + 1; feature_buffer < BUFFER_COUNT;
          feature_buffer++) {
       float tmp_data_private_cache[BLOCK_PIXELS / LOCAL_SIZE];
-      float tmpSumValue = 0.0f;
+      float tmpSumValue = 0.0;
       for (uint subVector = 0; subVector < BLOCK_PIXELS / LOCAL_SIZE;
            ++subVector) {
         uint index = INBLOCK_ID;
@@ -201,6 +197,7 @@ void householderQRDecomposition(uint groupThreadId, uvec3 groupId) {
 
       sumVec[groupThreadId] = tmpSumValue;
       groupMemoryBarrierWithGroupSync();
+
       // parallel reduction sum
       if (groupThreadId < 128)
         sumVec[groupThreadId] += sumVec[groupThreadId + 128];
@@ -234,7 +231,7 @@ void householderQRDecomposition(uint groupThreadId, uvec3 groupId) {
           outDataBuffer.data[convertDataBufferTwoDIndexToOneDIndex(
               index, feature_buffer + BLOCK_OFFSET)] =
               tmp_data_private_cache[subVector] -
-              2.0f * uVec[index] * dotV / uLengthSquared;
+              2.0 * uVec[index] * dotV / uLengthSquared;
         }
       }
       groupMemoryBarrierWithGroupSync();
@@ -260,7 +257,7 @@ void householderQRDecomposition(uint groupThreadId, uvec3 groupId) {
   // Back substitution
   limit--;
   for (int i = BUFFER_COUNT - 4; i >= 0; i--) {
-    if (rmat[limit][i] != 0.0f) {
+    if (rmat[limit][i] != 0.0) {
       if (groupThreadId < 3) {
         rmat[i][BUFFER_COUNT - groupThreadId - 1] =
             rmat[limit][BUFFER_COUNT - groupThreadId - 1] / rmat[limit][i];
@@ -288,9 +285,9 @@ void calculateFilteredColor(uint groupThreadId, uvec3 groupId,
                             ivec2 blockOffsets[BLOCK_OFFSETS_COUNT]) {
   for (uint subVector = 0; subVector < BLOCK_PIXELS / LOCAL_SIZE; ++subVector) {
     uint index = INBLOCK_ID;
-    uVec[index] = 0.0f;
-    gchannel[index] = 0.0f;
-    bchannel[index] = 0.0f;
+    uVec[index] = 0.0;
+    gchannel[index] = 0.0;
+    bchannel[index] = 0.0;
   }
 
   for (int col = 0; col < FEATURES_COUNT; col++) {
@@ -336,8 +333,8 @@ void main() {
   uint groupThreadId = gl_LocalInvocationIndex;
   uvec3 groupId = gl_WorkGroupID;
 
-  uint frame = pushC.frameIndex;
-  uint horizentalBlocksCount = pushC.horizentalBlocksCount;
+  uint frame = uint(pushC.compressedData.x);
+  uint horizentalBlocksCount = uint(pushC.compressedData.y);
 
   const ivec2 BLOCK_OFFSETS[BLOCK_OFFSETS_COUNT] = {
       ivec2(-30, -30), ivec2(-12, -22), ivec2(-24, -2),  ivec2(-8, -16),
@@ -358,13 +355,12 @@ void main() {
 
     vec3 worldPosition = texture(gPositionTexture, uv).xyz;
     vec3 worldNormal = texture(gNormalTexture, uv).xyz;
+    vec3 diffuse = texture(gDiffuseTexture, uv).xyz;
 
     uint pixelIndex = convertPixelIndicesToPixelIndex(
         pixelIndices, screenDimension.resolution);
 
     vec3 currentColor = curNoisyPixelBuffer.pixels[pixelIndex].rgb;
-
-    vec3 diffuse = texture(gDiffuseTexture, uv).xyz;
 
     tmpDataBuffer
         .data[convertDataBufferTwoDIndexToOneDIndex(index, 0 + BLOCK_OFFSET)] =
@@ -497,7 +493,7 @@ void main() {
     groupMemoryBarrierWithGroupSync();
 
     // normalize feature
-    if (blockMax - blockMin > 1.0f) {
+    if (blockMax - blockMin > 1.0) {
       for (uint subVector = 0; subVector < BLOCK_PIXELS / LOCAL_SIZE;
            ++subVector) {
         uint oneDIndex = convertDataBufferTwoDIndexToOneDIndex(
@@ -511,7 +507,6 @@ void main() {
     } else {
       for (uint subVector = 0; subVector < BLOCK_PIXELS / LOCAL_SIZE;
            ++subVector) {
-
         uint oneDIndex = convertDataBufferTwoDIndexToOneDIndex(
             INBLOCK_ID, feature_buffer + BLOCK_OFFSET);
         float tmpData = tmpDataBuffer.data[oneDIndex] - blockMin;

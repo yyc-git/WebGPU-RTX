@@ -1,6 +1,12 @@
 open Js.Typed_array;
 
 module Uint32Array = {
+  let setUint = (offset, target: int, source) => {
+    Uint32Array.unsafe_set(source, offset, target);
+
+    (source, offset + 1);
+  };
+
   let setArray = (offset, target: array(int), source) => {
     source |> Uint32Array.setArrayOffset(target, offset);
 

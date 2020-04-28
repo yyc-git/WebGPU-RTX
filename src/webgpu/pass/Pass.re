@@ -359,6 +359,45 @@ module PreprocessPass = {
   };
 };
 
+
+module RegressionPass = {
+  let _getPassData = state => {
+    state.pass.regressionPassData;
+  };
+
+  let unsafeGetPipeline = state => {
+    _getPassData(state).pipeline |> Js.Option.getExn;
+  };
+
+  let setPipeline = (pipeline, state) => {
+    ...state,
+    pass: {
+      ...state.pass,
+      regressionPassData: {
+        ..._getPassData(state),
+        pipeline: Some(pipeline),
+      },
+    },
+  };
+
+  let addStaticBindGroupData = (setSlot, bindGroup, state) => {
+    ...state,
+    pass: {
+      ...state.pass,
+      regressionPassData: {
+        ..._getPassData(state),
+        staticBindGroupDataArr:
+          _getPassData(state).staticBindGroupDataArr
+          |> ArrayUtils.push({setSlot, bindGroup}),
+      },
+    },
+  };
+
+  let getStaticBindGroupDataArr = state => {
+    _getPassData(state).staticBindGroupDataArr;
+  };
+};
+
 module TAAPass = {
   let _getPassData = state => {
     state.pass.taaPassData;

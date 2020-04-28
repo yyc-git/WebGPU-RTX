@@ -251,7 +251,7 @@ module DirectionLightBuffer = {
 };
 
 module ResolutionBuffer = {
-  let buildData = (window, device) => {
+  let buildData = (device, window) => {
     let resolutionData =
       Float32Array.make([|
         Window.getWidth(window) |> float_of_int,
@@ -286,7 +286,7 @@ module ResolutionBuffer = {
 };
 
 module PixelBuffer = {
-  let buildData = (window, device) => {
+  let buildData = (device, window) => {
     ManageBuffer.StorageBuffer.buildPixelBufferData(window, device);
   };
 
@@ -300,7 +300,7 @@ module PixelBuffer = {
 };
 
 module PrevNoisyPixelBuffer = {
-  let buildData = (window, device) => {
+  let buildData = (device, window) => {
     ManageBuffer.StorageBuffer.buildPixelBufferData(window, device);
   };
 
@@ -318,7 +318,7 @@ module PrevNoisyPixelBuffer = {
 };
 
 module PrevPositionBuffer = {
-  let buildData = (window, device) => {
+  let buildData = (device, window) => {
     let bufferSize =
       Window.getWidth(window)
       * Window.getHeight(window)
@@ -348,7 +348,7 @@ module PrevPositionBuffer = {
 };
 
 module PrevNormalBuffer = {
-  let buildData = (window, device) => {
+  let buildData = (device, window) => {
     let bufferSize =
       Window.getWidth(window)
       * Window.getHeight(window)
@@ -378,7 +378,7 @@ module PrevNormalBuffer = {
 };
 
 module AcceptBoolBuffer = {
-  let buildData = (window, device) => {
+  let buildData = (device, window) => {
     let bufferSize =
       Window.getWidth(window)
       * Window.getHeight(window)
@@ -408,7 +408,7 @@ module AcceptBoolBuffer = {
 };
 
 module PrevFramePixelIndicesBuffer = {
-  let buildData = (window, device) => {
+  let buildData = (device, window) => {
     let bufferSize =
       Window.getWidth(window)
       * Window.getHeight(window)
@@ -437,8 +437,140 @@ module PrevFramePixelIndicesBuffer = {
   };
 };
 
+module Regression = {
+  let _getBlockEdgeLength = () => 32;
+  let _getBlockPixels = () => 1024;
+
+  let computeHorizentalBlocksCount = window => {
+    let blockEdgeLength = _getBlockEdgeLength();
+
+    let blockWidth = (Window.getWidth(window) + 31) / blockEdgeLength;
+
+    blockWidth + 1;
+  };
+
+  let computeVerticalBlocksCount = window => {
+    let blockEdgeLength = _getBlockEdgeLength();
+
+    let blockHeight = (Window.getHeight(window) + 31) / blockEdgeLength;
+
+    blockHeight + 1;
+  };
+
+  let buildData = (device, window) => {
+    let blockPixels = _getBlockPixels();
+
+    let w = computeHorizentalBlocksCount(window);
+    let h = computeVerticalBlocksCount(window);
+
+    let bufferSize =
+      blockPixels * w * h * 13 * Float32Array._BYTES_PER_ELEMENT;
+    let buffer =
+      device
+      |> Device.createBuffer({
+           "size": bufferSize,
+           "usage": BufferUsage.storage,
+         });
+
+    (bufferSize, buffer);
+  };
+
+  module TmpDataBuffer = {
+    let buildData = (device, window) => {
+      buildData(device, window);
+    };
+
+    let unsafeGetBufferData = state => {
+      Pass.unsafeGetStorageBufferData("tmpDataBuffer", state);
+    };
+
+    let setBufferData = ((bufferSize, buffer), state) => {
+      Pass.setStorageBufferData(
+        "tmpDataBuffer",
+        (bufferSize, buffer),
+        state,
+      );
+    };
+  };
+
+  module OutDataBuffer = {
+    let buildData = (device, window) => {
+      buildData(device, window);
+    };
+
+    let unsafeGetBufferData = state => {
+      Pass.unsafeGetStorageBufferData("outDataBuffer", state);
+    };
+
+    let setBufferData = ((bufferSize, buffer), state) => {
+      Pass.setStorageBufferData(
+        "outDataBuffer",
+        (bufferSize, buffer),
+        state,
+      );
+    };
+  };
+
+  module CommonDataBuffer = {
+    let buildData = (device, window) => {
+      let bufferData = Float32Array.fromLength(2);
+
+      let (bufferData, _) =
+        bufferData
+        |> TypeArray.Float32Array.setFloat(
+             1,
+             computeHorizentalBlocksCount(window) |> float_of_int,
+           );
+
+      let bufferSize = bufferData |> Float32Array.byteLength;
+      let buffer =
+        device
+        |> Device.createBuffer({
+             "size": bufferSize,
+             "usage": BufferUsage.copy_dst lor BufferUsage.uniform,
+           });
+
+      buffer |> Buffer.setSubFloat32Data(0, bufferData);
+
+      (bufferData, bufferSize, buffer);
+    };
+
+    let unsafeGetBufferData = state => {
+      Pass.unsafeGetUniformBufferData("regressionCommonDataBuffer", state);
+    };
+
+    let getBufferSize = bufferData => {
+      bufferData |> Float32Array.byteLength;
+    };
+
+    let setBufferData = ((bufferData, buffer), state) => {
+      Pass.setUniformBufferData(
+        "regressionCommonDataBuffer",
+        (bufferData, buffer),
+        state,
+      );
+    };
+
+    let update = (frame, state) => {
+      let (commonDataBufferData, commonDataBuffer) =
+        unsafeGetBufferData(state);
+
+      let (commonDataBufferData, offset) =
+        commonDataBufferData
+        |> TypeArray.Float32Array.setFloat(0, frame |> float_of_int);
+
+      commonDataBuffer |> Buffer.setSubFloat32Data(0, commonDataBufferData);
+
+      let state =
+        state |> setBufferData((commonDataBufferData, commonDataBuffer));
+
+      state;
+    };
+  };
+};
+
 module HistoryPixelBuffer = {
-  let buildData = (window, device) => {
+  let buildData = (device, window) => {
     ManageBuffer.StorageBuffer.buildPixelBufferData(window, device);
   };
 

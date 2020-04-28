@@ -182,26 +182,37 @@ let _getAccumulatedFrameCount = () => 16;
 
 let init = (device, window, state) => {
   let (resolutionBufferSize, resolutionBuffer) =
-    BMFRBuffer.ResolutionBuffer.buildData(window, device);
+    BMFRBuffer.ResolutionBuffer.buildData(device, window);
   let (cameraBufferData, cameraBufferSize, cameraBuffer) =
     BMFRBuffer.CameraBuffer.buildData(device, state);
 
   let (pixelBufferSize, pixelBuffer) =
-    BMFRBuffer.PixelBuffer.buildData(window, device);
+    BMFRBuffer.PixelBuffer.buildData(device, window);
 
   let (prevNoisyPixelBufferSize, prevNoisyPixelBuffer) =
-    BMFRBuffer.PrevNoisyPixelBuffer.buildData(window, device);
+    BMFRBuffer.PrevNoisyPixelBuffer.buildData(device, window);
   let (prevPositionBufferSize, prevPositionBuffer) =
-    BMFRBuffer.PrevPositionBuffer.buildData(window, device);
+    BMFRBuffer.PrevPositionBuffer.buildData(device, window);
   let (prevNormalBufferSize, prevNormalBuffer) =
-    BMFRBuffer.PrevNormalBuffer.buildData(window, device);
+    BMFRBuffer.PrevNormalBuffer.buildData(device, window);
   let (acceptBoolBufferSize, acceptBoolBuffer) =
-    BMFRBuffer.AcceptBoolBuffer.buildData(window, device);
+    BMFRBuffer.AcceptBoolBuffer.buildData(device, window);
   let (prevFramePixelIndicesBufferSize, prevFramePixelIndicesBuffer) =
-    BMFRBuffer.PrevFramePixelIndicesBuffer.buildData(window, device);
+    BMFRBuffer.PrevFramePixelIndicesBuffer.buildData(device, window);
+
+  let (tmpDataBufferSize, tmpDataBuffer) =
+    BMFRBuffer.Regression.TmpDataBuffer.buildData(device, window);
+  let (outDataBufferSize, outDataBuffer) =
+    BMFRBuffer.Regression.OutDataBuffer.buildData(device, window);
+  let (
+    regressionCommonDataBufferData,
+    regressionCommonDataBufferSize,
+    regressionCommonDataBuffer,
+  ) =
+    BMFRBuffer.Regression.CommonDataBuffer.buildData(device, window);
 
   let (historyPixelBufferSize, historyPixelBuffer) =
-    BMFRBuffer.HistoryPixelBuffer.buildData(window, device);
+    BMFRBuffer.HistoryPixelBuffer.buildData(device, window);
   let (taaBufferData, taaBufferSize, taaBuffer) =
     BMFRBuffer.TAABuffer.buildData(device, state);
   let (commonDataBufferData, commonDataBufferSize, commonDataBuffer) =
@@ -252,6 +263,18 @@ let init = (device, window, state) => {
        prevFramePixelIndicesBufferSize,
        prevFramePixelIndicesBuffer,
      ))
+  |> BMFRBuffer.Regression.TmpDataBuffer.setBufferData((
+       tmpDataBufferSize,
+       tmpDataBuffer,
+     ))
+  |> BMFRBuffer.Regression.OutDataBuffer.setBufferData((
+       outDataBufferSize,
+       outDataBuffer,
+     ))
+  |> BMFRBuffer.Regression.CommonDataBuffer.setBufferData((
+       regressionCommonDataBufferData,
+       regressionCommonDataBuffer,
+     ))
   |> BMFRBuffer.HistoryPixelBuffer.setBufferData((
        historyPixelBufferSize,
        historyPixelBuffer,
@@ -263,6 +286,13 @@ let _updateRayTracingData = state => {
   |> BMFRBuffer.CommonDataBuffer.update(
        Director.getFrameIndex(state),
        DirectionLight.getLightCount(state),
+     );
+};
+
+let _updateRegressionData = state => {
+  state
+  |> BMFRBuffer.Regression.CommonDataBuffer.update(
+       Director.getFrameIndex(state),
      );
 };
 
@@ -388,6 +418,7 @@ let _updateTransformData = (time, device, queue, state) => {
 let update = (device, queue, window, state) => {
   state
   |> _updateRayTracingData
+  |> _updateRegressionData
   |> _updateCameraData(window)
   |> _updateTransformData(Director.getTime(state), device, queue)
   |> _updateJitterData;

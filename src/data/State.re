@@ -87,6 +87,10 @@ let create = () => {
       pipeline: None,
       staticBindGroupDataArr: [||],
     },
+    regressionPassData: {
+      pipeline: None,
+      staticBindGroupDataArr: [||],
+    },
     taaPassData: {
       isFirstFrame: true,
       firstFramePipeline: None,

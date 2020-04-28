@@ -2,7 +2,7 @@ open WebGPU;
 
 open StateType;
 
-let init = (device, window, swapChainFormat, state) => {
+let init = (device, swapChainFormat, state) => {
   let (resolutionBufferData, resolutionBuffer) =
     BMFRBuffer.ResolutionBuffer.unsafeGetBufferData(state);
   let (pixelBufferSize, pixelBuffer) =
