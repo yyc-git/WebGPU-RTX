@@ -3,40 +3,63 @@
 #extension GL_EXT_scalar_block_layout : enable
 #pragma shader_stage(fragment)
 
-#define SECOND_BLEND_ALPHA 0.1f
+#define POSITION_LIMIT_SQUARED 0.01f
+#define NORMAL_LIMIT_SQUARED 1.0f
+#define BLEND_ALPHA 0.2f
+#define PIXEL_OFFSET 0.5f
 
 #include "../../../ray_tracing/shaders/common_data.glsl"
 #include "../../../shaders/utils.glsl"
 #include "../../shaders/utils.glsl"
 
 layout(location = 0) in vec2 uv;
+// layout(location = 0) out vec4 outColor;
 
-layout(binding = 0) uniform sampler2D gDiffuseTexture;
+layout(binding = 0) uniform sampler2D gPositionTexture;
+layout(binding = 1) uniform sampler2D gNormalTexture;
+layout(binding = 2) uniform sampler2D gMotionVectorDepthShininessTexture;
+layout(binding = 3) uniform sampler2D gDiffuseTexture;
 
 layout(std140, set = 1, binding = 0) buffer CurNoisyPixelBuffer {
   vec4 pixels[];
 }
 curNoisyPixelBuffer;
-layout(std140, set = 1, binding = 1) buffer PccumulatedPrevFramePixelBuffer {
+layout(std140, set = 1, binding = 1) buffer PrevNoisyPixelBuffer {
   vec4 pixels[];
 }
-accumulatedPrevFramePixelBuffer;
+prevNoisyPixelBuffer;
 
-layout(scalar, set = 1, binding = 2) buffer AcceptBoolBuffer {
-  uint acceptBools[];
+layout(std140, set = 1, binding = 2) buffer PrevPositionBuffer {
+  //   vec3 positions[];
+  vec4 positions[];
 }
-acceptBoolBuffer;
+prevPositionBuffer;
 
-layout(scalar, set = 1, binding = 3) buffer PrevFramePixelIndicesBuffer {
-  vec2 prevFramePixelIndices[];
+layout(std140, set = 1, binding = 3) buffer PrevNormalBuffer {
+  //  vec3 normals[];
+  vec4 normals[];
 }
-prevFramePixelIndicesBuffer;
+prevNormalBuffer;
+
+// layout(scalar, set = 1, binding = 4) buffer AcceptBoolBuffer {
+//   uint acceptBools[];
+// }
+// acceptBoolBuffer;
+
+// layout(scalar, set = 1, binding = 5) buffer PrevFramePixelIndicesBuffer {
+//   vec2 prevFramePixelIndices[];
+// }
+// prevFramePixelIndicesBuffer;
 
 layout(set = 1, binding = 4) uniform ScreenDimension { vec2 resolution; }
 screenDimension;
 
 layout(std140, set = 1, binding = 5) uniform CommonData { vec4 compressedData; }
 pushC;
+
+vec2 convertUVToPixelIndices(vec2 uv, vec2 resolution) {
+  return uv * resolution;
+}
 
 uint convertPixelIndicesToPixelIndex(ivec2 pixelIndices, vec2 resolution) {
   return convertBufferTwoDIndexToOneDIndex(pixelIndices.x, pixelIndices.y,
@@ -48,95 +71,171 @@ void main() {
   vec4 commonDataCompressedData = pushC.compressedData;
   uint frame = getFrame(commonDataCompressedData);
 
+  vec3 worldPosition = texture(gPositionTexture, uv).xyz;
+  vec3 worldNormal = texture(gNormalTexture, uv).xyz;
+
   uint pixelIndex = getPixelIndex(uv, screenDimension.resolution);
 
-  const vec4 filterData = curNoisyPixelBuffer.pixels[pixelIndex];
-  const vec3 filteredColor = filterData.xyz;
-  const float cusSpp = filterData.w;
+  vec3 currentColor = curNoisyPixelBuffer.pixels[pixelIndex].rgb;
 
-  vec3 prevColor = vec3(0.0, 0.0, 0.0);
+  vec3 diffuse = texture(gDiffuseTexture, uv).xyz;
+
+  currentColor = demodulateAlbedo(currentColor, diffuse);
+
+  // Default previous frame pixel is the same pixel
+  vec2 prevFramePixelIndicesFloat =
+      convertUVToPixelIndices(uv, screenDimension.resolution);
+
+  // // Change this to non zero if previous frame is not discarded completely
+  // uint storeAccept = 0x00;
+
+  // blendAlpha 1.f means that only current frame color is used
+  // The value is changed if sample from previous frame can be used
   float blendAlpha = 1.0;
-  const uint accept = acceptBoolBuffer.acceptBools[pixelIndex];
+  vec3 previousColor = vec3(0.0, 0.0, 0.0);
+
+  float sampleSpp = 0.0;
+  float totalWeight = 0.0;
 
   if (frame > 0) {
-    // If any prev frame sample is accepted
-    if (accept > 0) {
+    //   TODO getClosestMotionVector?
+    vec2 motionVector = texture(gMotionVectorDepthShininessTexture, uv).xy;
 
-      // Bilinear sampling
+    float positionLimitSquared = POSITION_LIMIT_SQUARED;
+    float normalLimitSquared = NORMAL_LIMIT_SQUARED;
 
-      vec2 prevFramePixelIndicesFloat =
-          prevFramePixelIndicesBuffer.prevFramePixelIndices[pixelIndex];
+    /* TODO optimize: reduce noise when move camera/gameObject and avoid ghost
+    too!
 
-      ivec2 prevFramePixelIndicesInt = ivec2(prevFramePixelIndicesFloat);
+    solution:
+    1.change limit when move
+    2.add more check
+    e.g.
+     所以我们在做Sample
+     Reprojection的时候需要check当前帧的纹理颜色，世界坐标位置，法线，模型索引，屏幕空间深度等，去尽可能的丢弃无效的历史样本。
+         float positionLimitSquared = POSITION_LIMIT_SQUARED;
+         float normalLimitSquared = NORMAL_LIMIT_SQUARED;
+         float lenMotionVector = length(motionVector);
+         const float b1 = 0.01;
+         const float b2 = 1.00;
+         const float velocityScale = 100.0 * 60.0;
+         float positionLimitSquared =
+             mix(b1, b2, saturateFloat(lenMotionVector * velocityScale));
+             */
 
-      vec2 prevPixelFract =
-          prevFramePixelIndicesFloat - vec2(prevFramePixelIndicesInt);
+    vec2 prevFrameUnJitteredUV = uv - motionVector;
 
-      vec2 oneMinusPrevPixelFract = 1.0 - prevPixelFract;
+    if (prevFrameUnJitteredUV.x > 1.0 || prevFrameUnJitteredUV.x < 0.0 ||
+        prevFrameUnJitteredUV.y > 1.0 || prevFrameUnJitteredUV.y < 0.0) {
+      // change spp to 1
+      curNoisyPixelBuffer.pixels[pixelIndex] = vec4(currentColor, 1.0);
+      // acceptBoolBuffer.acceptBools[pixelIndex] = 0;
 
-      float totalWeight = 0.0;
+      // outColor = vec4(currentColor, 1.0);
 
-      // Accept tells if the sample is acceptable based on world position and
-      // normal
-      if ((accept & 0x01) != 0) {
-        float weight = oneMinusPrevPixelFract.x * oneMinusPrevPixelFract.y;
-        totalWeight += weight;
-        prevColor +=
-            weight *
-            accumulatedPrevFramePixelBuffer
-                .pixels[convertPixelIndicesToPixelIndex(
-                    prevFramePixelIndicesInt, screenDimension.resolution)]
-                .xyz;
+      return;
+    }
+
+    prevFramePixelIndicesFloat = convertUVToPixelIndices(
+        prevFrameUnJitteredUV, screenDimension.resolution);
+
+    prevFramePixelIndicesFloat -= vec2(PIXEL_OFFSET, PIXEL_OFFSET);
+
+    ivec2 prevFramePixelIndicesInt = ivec2(prevFramePixelIndicesFloat);
+
+    // These are needed for the bilinear sampling
+    ivec2 offsets[4] = {
+        ivec2(0, 0),
+        ivec2(1, 0),
+        ivec2(0, 1),
+        ivec2(1, 1),
+    };
+
+    vec2 prevPixelFract =
+        prevFramePixelIndicesFloat - vec2(prevFramePixelIndicesInt);
+
+    vec2 oneMinusPrevPixelFract = 1.0 - prevPixelFract;
+    float weights[4];
+
+    weights[0] = oneMinusPrevPixelFract.x * oneMinusPrevPixelFract.y;
+    weights[1] = prevPixelFract.x * oneMinusPrevPixelFract.y;
+    weights[2] = oneMinusPrevPixelFract.x * prevPixelFract.y;
+    weights[3] = prevPixelFract.x * prevPixelFract.y;
+    totalWeight = 0.0;
+
+    // Bilinear sampling
+    for (int i = 0; i < 4; ++i) {
+      ivec2 sampleLocation = prevFramePixelIndicesInt + offsets[i];
+
+      uint samplePixelIndex = convertPixelIndicesToPixelIndex(
+          sampleLocation, screenDimension.resolution);
+
+      // Check if previous frame color can be used based on its screen location
+      if (sampleLocation.x >= 0 && sampleLocation.y >= 0 &&
+          sampleLocation.x < screenDimension.resolution.x &&
+          sampleLocation.y < screenDimension.resolution.y) {
+        vec3 prevWorldPosition =
+            vec3(prevPositionBuffer.positions[samplePixelIndex]);
+
+        // Compute world distance squared
+        vec3 positionDifference = prevWorldPosition - worldPosition;
+        float positionDistanceSquared =
+            dot(positionDifference, positionDifference);
+
+        // World position distance discard
+        if (positionDistanceSquared < positionLimitSquared) {
+
+          vec3 prevWorldNormal =
+              vec3(prevNormalBuffer.normals[samplePixelIndex]);
+
+          // Distance of the normals
+          // NOTE: could use some other distance metric (e.g. angle), but we use
+          // hard experimentally found threshold -> means that the metric
+          // doesn't matter.
+          vec3 normalDifference = prevWorldNormal - worldNormal;
+          float normalDistanceSquared = dot(normalDifference, normalDifference);
+
+          // Normal distance discard
+          if (normalDistanceSquared < normalLimitSquared) {
+            // Pixel passes all tests so store it to accept bools
+            // storeAccept |= 1 << i;
+            vec4 prevData = prevNoisyPixelBuffer.pixels[samplePixelIndex];
+
+            sampleSpp += weights[i] * prevData.w;
+
+            previousColor += weights[i] * prevData.xyz;
+            totalWeight += weights[i];
+          }
+        }
       }
+    }
 
-      if ((accept & 0x02) != 0) {
-        float weight = prevPixelFract.x * oneMinusPrevPixelFract.y;
-        totalWeight += weight;
-        prevColor += weight * accumulatedPrevFramePixelBuffer
-                                  .pixels[convertPixelIndicesToPixelIndex(
-                                      prevFramePixelIndicesInt + ivec2(1, 0),
-                                      screenDimension.resolution)]
-                                  .xyz;
-      }
+    if (totalWeight > 0.0) {
 
-      if ((accept & 0x04) != 0) {
-        float weight = oneMinusPrevPixelFract.x * prevPixelFract.y;
-        totalWeight += weight;
-        prevColor += weight * accumulatedPrevFramePixelBuffer
-                                  .pixels[convertPixelIndicesToPixelIndex(
-                                      prevFramePixelIndicesInt + ivec2(0, 1),
-                                      screenDimension.resolution)]
-                                  .xyz;
-      }
-
-      if ((accept & 0x08) != 0) {
-        float weight = prevPixelFract.x * prevPixelFract.y;
-        totalWeight += weight;
-        prevColor += weight * accumulatedPrevFramePixelBuffer
-                                  .pixels[convertPixelIndicesToPixelIndex(
-                                      prevFramePixelIndicesInt + ivec2(1, 1),
-                                      screenDimension.resolution)]
-                                  .xyz;
-      }
-
-      if (totalWeight > 0.0) {
-        // Blend_alpha is dymically decided so that the result is average
-        // of all samples until the cap defined by SECOND_BLEND_ALPHA is reached
-        blendAlpha = 1.0 / cusSpp;
-        blendAlpha = max(blendAlpha, SECOND_BLEND_ALPHA);
-
-        prevColor /= totalWeight;
-      }
+      previousColor /= totalWeight;
+      sampleSpp /= totalWeight;
+      // Blend_alpha is dymically decided so that the result is average of all
+      // samples until the cap defined by BLEND_ALPHA is reached
+      blendAlpha = 1.0 / (sampleSpp + 1.f);
+      blendAlpha = max(blendAlpha, BLEND_ALPHA);
     }
   }
 
-  vec3 accumulatedColor = mix(prevColor, filteredColor, blendAlpha);
+  float newSpp = 1.0;
+  if (blendAlpha < 1.0) {
+    newSpp += sampleSpp;
+  }
 
-  vec3 diffuse = texture(gDiffuseTexture, uv).xyz;
-  accumulatedColor = modulateAlbedo(accumulatedColor, diffuse);
+  vec3 newColor = mix(previousColor, currentColor, blendAlpha);
 
-  curNoisyPixelBuffer.pixels[pixelIndex] = vec4(accumulatedColor, 1.0);
+  curNoisyPixelBuffer.pixels[pixelIndex] = vec4(newColor, newSpp);
+  // acceptBoolBuffer.acceptBools[pixelIndex] = storeAccept;
+  // prevFramePixelIndicesBuffer.prevFramePixelIndices[pixelIndex] =
+  //     prevFramePixelIndicesFloat;
 
-  accumulatedPrevFramePixelBuffer.pixels[pixelIndex] =
-      vec4(accumulatedColor, 1.0);
+  prevNoisyPixelBuffer.pixels[pixelIndex] = vec4(newColor, newSpp);
+  prevPositionBuffer.positions[pixelIndex] = vec4(worldPosition, 0.0);
+  prevNormalBuffer.normals[pixelIndex] = vec4(worldNormal, 0.0);
+
+  // outColor = vec4(newColor, 1.0);
 }

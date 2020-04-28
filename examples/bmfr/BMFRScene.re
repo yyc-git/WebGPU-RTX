@@ -195,10 +195,10 @@ let init = (device, window, state) => {
     BMFRBuffer.PrevPositionBuffer.buildData(device, window);
   let (prevNormalBufferSize, prevNormalBuffer) =
     BMFRBuffer.PrevNormalBuffer.buildData(device, window);
-  let (acceptBoolBufferSize, acceptBoolBuffer) =
-    BMFRBuffer.AcceptBoolBuffer.buildData(device, window);
-  let (prevFramePixelIndicesBufferSize, prevFramePixelIndicesBuffer) =
-    BMFRBuffer.PrevFramePixelIndicesBuffer.buildData(device, window);
+  // let (acceptBoolBufferSize, acceptBoolBuffer) =
+  //   BMFRBuffer.AcceptBoolBuffer.buildData(device, window);
+  // let (prevFramePixelIndicesBufferSize, prevFramePixelIndicesBuffer) =
+  //   BMFRBuffer.PrevFramePixelIndicesBuffer.buildData(device, window);
 
   let (tmpDataBufferSize, tmpDataBuffer) =
     BMFRBuffer.Regression.TmpDataBuffer.buildData(device, window);
@@ -211,8 +211,8 @@ let init = (device, window, state) => {
   ) =
     BMFRBuffer.Regression.CommonDataBuffer.buildData(device, window);
 
-  let (accumulatedPrevFramePixelBufferSize, accumulatedPrevFramePixelBuffer) =
-    BMFRBuffer.AccumulatedPrevFramePixelBuffer.buildData(device, window);
+  // let (accumulatedPrevFramePixelBufferSize, accumulatedPrevFramePixelBuffer) =
+  //   BMFRBuffer.AccumulatedPrevFramePixelBuffer.buildData(device, window);
 
   let (historyPixelBufferSize, historyPixelBuffer) =
     BMFRBuffer.HistoryPixelBuffer.buildData(device, window);
@@ -258,14 +258,14 @@ let init = (device, window, state) => {
        prevNormalBufferSize,
        prevNormalBuffer,
      ))
-  |> BMFRBuffer.AcceptBoolBuffer.setBufferData((
-       acceptBoolBufferSize,
-       acceptBoolBuffer,
-     ))
-  |> BMFRBuffer.PrevFramePixelIndicesBuffer.setBufferData((
-       prevFramePixelIndicesBufferSize,
-       prevFramePixelIndicesBuffer,
-     ))
+  // |> BMFRBuffer.AcceptBoolBuffer.setBufferData((
+  //      acceptBoolBufferSize,
+  //      acceptBoolBuffer,
+  //    ))
+  // |> BMFRBuffer.PrevFramePixelIndicesBuffer.setBufferData((
+  //      prevFramePixelIndicesBufferSize,
+  //      prevFramePixelIndicesBuffer,
+  //    ))
   |> BMFRBuffer.Regression.TmpDataBuffer.setBufferData((
        tmpDataBufferSize,
        tmpDataBuffer,
@@ -278,10 +278,10 @@ let init = (device, window, state) => {
        regressionCommonDataBufferData,
        regressionCommonDataBuffer,
      ))
-  |> BMFRBuffer.AccumulatedPrevFramePixelBuffer.setBufferData((
-       accumulatedPrevFramePixelBufferSize,
-       accumulatedPrevFramePixelBuffer,
-     ))
+  // |> BMFRBuffer.AccumulatedPrevFramePixelBuffer.setBufferData((
+  //      accumulatedPrevFramePixelBufferSize,
+  //      accumulatedPrevFramePixelBuffer,
+  //    ))
   |> BMFRBuffer.HistoryPixelBuffer.setBufferData((
        historyPixelBufferSize,
        historyPixelBuffer,

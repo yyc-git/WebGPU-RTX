@@ -7,12 +7,12 @@ let init = (device, swapChainFormat, state) => {
     BMFRBuffer.ResolutionBuffer.unsafeGetBufferData(state);
   let (pixelBufferSize, pixelBuffer) =
     BMFRBuffer.PixelBuffer.unsafeGetBufferData(state);
-  let (accumulatedPrevFramePixelBufferSize, accumulatedPrevFramePixelBuffer) =
-    BMFRBuffer.AccumulatedPrevFramePixelBuffer.unsafeGetBufferData(state);
-  let (acceptBoolBufferSize, acceptBoolBuffer) =
-    BMFRBuffer.AcceptBoolBuffer.unsafeGetBufferData(state);
-  let (prevFramePixelIndicesBufferSize, prevFramePixelIndicesBuffer) =
-    BMFRBuffer.PrevFramePixelIndicesBuffer.unsafeGetBufferData(state);
+  let (prevNoisyPixelBufferSize, prevNoisyPixelBuffer) =
+    BMFRBuffer.PrevNoisyPixelBuffer.unsafeGetBufferData(state);
+  let (prevPositionBufferSize, prevPositionBuffer) =
+    BMFRBuffer.PrevPositionBuffer.unsafeGetBufferData(state);
+  let (prevNormalBufferSize, prevNormalBuffer) =
+    BMFRBuffer.PrevNormalBuffer.unsafeGetBufferData(state);
   let (commonDataBufferData, commonDataBuffer) =
     BMFRBuffer.CommonDataBuffer.unsafeGetBufferData(state);
 
@@ -22,6 +22,24 @@ let init = (device, swapChainFormat, state) => {
          "bindings": [|
            BindGroupLayout.layoutBinding(
              ~binding=0,
+             ~visibility=ShaderStage.fragment,
+             ~type_="sampled-texture",
+             (),
+           ),
+           BindGroupLayout.layoutBinding(
+             ~binding=1,
+             ~visibility=ShaderStage.fragment,
+             ~type_="sampled-texture",
+             (),
+           ),
+           BindGroupLayout.layoutBinding(
+             ~binding=2,
+             ~visibility=ShaderStage.fragment,
+             ~type_="sampled-texture",
+             (),
+           ),
+           BindGroupLayout.layoutBinding(
+             ~binding=3,
              ~visibility=ShaderStage.fragment,
              ~type_="sampled-texture",
              (),
@@ -80,7 +98,34 @@ let init = (device, swapChainFormat, state) => {
            BindGroup.binding(
              ~binding=0,
              ~textureView=
-               Pass.unsafeGetTextureView("diffuseRenderTargetView", state),
+               Pass.unsafeGetTextureView("positionRenderTargetView", state),
+             ~size=0,
+             (),
+           ),
+           BindGroup.binding(
+             ~binding=1,
+             ~textureView=
+               Pass.unsafeGetTextureView("normalRenderTargetView", state),
+             ~size=0,
+             (),
+           ),
+           BindGroup.binding(
+             ~binding=2,
+             ~textureView=
+               Pass.unsafeGetTextureView(
+                 "motionVectorDepthShininessRenderTargetView",
+                 state,
+               ),
+             ~size=0,
+             (),
+           ),
+           BindGroup.binding(
+             ~binding=3,
+             ~textureView=
+               Pass.unsafeGetTextureView(
+                 "diffuseRenderTargetView",
+                 state,
+               ),
              ~size=0,
              (),
            ),
@@ -101,23 +146,23 @@ let init = (device, swapChainFormat, state) => {
            ),
            BindGroup.binding(
              ~binding=1,
-             ~buffer=accumulatedPrevFramePixelBuffer,
+             ~buffer=prevNoisyPixelBuffer,
              ~offset=0,
-             ~size=accumulatedPrevFramePixelBufferSize,
+             ~size=prevNoisyPixelBufferSize,
              (),
            ),
            BindGroup.binding(
              ~binding=2,
-             ~buffer=acceptBoolBuffer,
+             ~buffer=prevPositionBuffer,
              ~offset=0,
-             ~size=acceptBoolBufferSize,
+             ~size=prevPositionBufferSize,
              (),
            ),
            BindGroup.binding(
              ~binding=3,
-             ~buffer=prevFramePixelIndicesBuffer,
+             ~buffer=prevNormalBuffer,
              ~offset=0,
-             ~size=prevFramePixelIndicesBufferSize,
+             ~size=prevNormalBufferSize,
              (),
            ),
            BindGroup.binding(
