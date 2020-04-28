@@ -5,7 +5,7 @@
 
 #define POSITION_LIMIT_SQUARED 0.01f
 #define NORMAL_LIMIT_SQUARED 1.0f
-#define BLEND_ALPHA 0.2f
+#define BLEND_ALPHA 0.1f
 #define PIXEL_OFFSET 0.5f
 
 #include "../../../ray_tracing/shaders/common_data.glsl"
