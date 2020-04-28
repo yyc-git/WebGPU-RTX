@@ -35,6 +35,10 @@ Director.load(window)
             BMFRRegressionPass.execute(device, queue, window),
           )
        |> Director.addPassFuncs(
+            BMFRPostprocessPass.init(device, swapChainFormat),
+            BMFRPostprocessPass.execute(device, queue, swapChain),
+          )
+       |> Director.addPassFuncs(
             BMFRTAAPass.init(device, window, swapChainFormat),
             BMFRTAAPass.execute(device, queue, swapChain),
           )

@@ -569,6 +569,24 @@ module Regression = {
   };
 };
 
+module AccumulatedPrevFramePixelBuffer = {
+  let buildData = (device, window) => {
+    ManageBuffer.StorageBuffer.buildPixelBufferData(window, device);
+  };
+
+  let unsafeGetBufferData = state => {
+    Pass.unsafeGetStorageBufferData("accumulatedPrevFramePixelBuffer", state);
+  };
+
+  let setBufferData = ((bufferSize, buffer), state) => {
+    Pass.setStorageBufferData(
+      "accumulatedPrevFramePixelBuffer",
+      (bufferSize, buffer),
+      state,
+    );
+  };
+};
+
 module HistoryPixelBuffer = {
   let buildData = (device, window) => {
     ManageBuffer.StorageBuffer.buildPixelBufferData(window, device);

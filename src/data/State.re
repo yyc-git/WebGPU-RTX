@@ -91,6 +91,10 @@ let create = () => {
       pipeline: None,
       staticBindGroupDataArr: [||],
     },
+    postprocessPassData: {
+      pipeline: None,
+      staticBindGroupDataArr: [||],
+    },
     taaPassData: {
       isFirstFrame: true,
       firstFramePipeline: None,

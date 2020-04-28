@@ -238,6 +238,11 @@ type regressionPassData = {
   staticBindGroupDataArr: array(staticBindGroupData),
 };
 
+type postprocessPassData = {
+  pipeline: option(Pipeline.Render.t),
+  staticBindGroupDataArr: array(staticBindGroupData),
+};
+
 type taaPassData = {
   isFirstFrame: bool,
   firstFramePipeline: option(Pipeline.Render.t),
@@ -293,6 +298,7 @@ type pass = {
   rayTracingPassData,
   preprocessPassData,
   regressionPassData,
+  postprocessPassData,
   taaPassData,
   accumulatedFrameIndex: int,
   jitterArr: array(jitter),
