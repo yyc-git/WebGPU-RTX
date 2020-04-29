@@ -3,6 +3,23 @@
 #extension GL_EXT_scalar_block_layout : enable
 #pragma shader_stage(fragment)
 
+/* TODO fix: when move camera, the noise increase!
+
+description
+when move camera, the noise increase;
+when stop moving camera, the noise decrease;
+
+reason
+because when move camera, postprocess pass has many noise!!!
+
+
+solution
+increase POSITION_LIMIT_SQUARED,NORMAL_LIMIT_SQUARED when move can decrease
+noise, but cause more ghost!!!
+
+so need other solutions!!!
+*/
+
 #define POSITION_LIMIT_SQUARED 0.01f
 #define NORMAL_LIMIT_SQUARED 1.0f
 #define BLEND_ALPHA 0.1f
