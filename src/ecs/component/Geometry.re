@@ -162,3 +162,7 @@ let getAllIndexData = state => {
 let getCount = state => {
   state.geometry.index;
 };
+
+let getAllGeometries = state => {
+  ArrayUtils.range(0, state.geometry.index);
+};

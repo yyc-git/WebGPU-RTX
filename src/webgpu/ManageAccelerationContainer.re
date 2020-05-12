@@ -108,8 +108,10 @@ module InstanceBuffer = {
 
   let convertHitGroupIndexToInstanceOffset = hitGroupIndex => {
     // Log.print(("groupIndex:", hitGroupIndex)) |> ignore;
-
-    MathUtils.convertDecimalToHex(hitGroupIndex, 16);
+    MathUtils.convertDecimalToHex(
+      hitGroupIndex,
+      16,
+    );
   };
 };
 
@@ -118,13 +120,22 @@ let _getGeomtryContainerHandle = (geometryContainer: AccelerationContainer.t) =>
 };
 
 let _buildSceneGeometryContainers = (device, state) => {
-  ArrayUtils.zipWith(
-    ((vertices, normals), indices) => {(vertices, indices)},
-    Geometry.getAllVertexData(state),
-    Geometry.getAllIndexData(state),
-  )
+  Geometry.getAllGeometries(state)
   |> ArrayUtils.reduceOneParam(
-       (. geometryContainers, (vertices, indices)) => {
+       (. allData, geometry) => {
+         let (vertices, _) = Geometry.unsafeGetVertexData(geometry, state);
+
+         allData
+         |> ArrayUtils.push((
+              geometry,
+              vertices,
+              Geometry.unsafeGetIndexData(geometry, state),
+            ));
+       },
+       [||],
+     )
+  |> ArrayUtils.reduceOneParam(
+       (. geometryContainerMap, (geometry, vertices, indices)) => {
          let geometryVertices = Float32Array.make(vertices);
          let geometryVertexBuffer =
            device
@@ -146,8 +157,9 @@ let _buildSceneGeometryContainers = (device, state) => {
 
          Log.printComplete("accle:", (geometryVertices, geometryIndices));
 
-         geometryContainers
-         |> ArrayUtils.push(
+         geometryContainerMap
+         |> ImmutableSparseMap.set(
+              geometry,
               device
               |> Device.createRayTracingAccelerationContainer(
                    {
@@ -177,12 +189,16 @@ let _buildSceneGeometryContainers = (device, state) => {
                  ),
             );
        },
-       [||],
+       ImmutableSparseMap.createEmpty(),
      );
 };
 
 let _updateInstanceBuffer =
-    (geometryContainers, state, (instanceBufferArrayBuffer, instanceBuffer)) => {
+    (
+      geometryContainerMap,
+      state,
+      (instanceBufferArrayBuffer, instanceBuffer),
+    ) => {
   let (instanceBufferArrayBuffer, _) =
     GameObject.getAllGeometryGameObjects(state)
     |> ArrayUtils.reduceOneParam(
@@ -190,10 +206,10 @@ let _updateInstanceBuffer =
            let transform = GameObject.unsafeGetTransform(gameObject, state);
 
            let geometryContainer =
-             Array.unsafe_get(
-               geometryContainers,
-               GameObject.unsafeGetGeometry(gameObject, state),
-             );
+             geometryContainerMap
+             |> ImmutableSparseMap.unsafeGet(
+                  GameObject.unsafeGetGeometry(gameObject, state),
+                );
 
            (
              InstanceBuffer.setInstanceData(
@@ -214,10 +230,10 @@ let _updateInstanceBuffer =
                  ),
                  AccelerationInstanceFlag.triangle_cull_disable,
                  _getGeomtryContainerHandle(
-                   Array.unsafe_get(
-                     geometryContainers,
-                     GameObject.unsafeGetGeometry(gameObject, state),
-                   ),
+                   geometryContainerMap
+                   |> ImmutableSparseMap.unsafeGet(
+                        GameObject.unsafeGetGeometry(gameObject, state),
+                      ),
                  ),
                ),
                instanceBufferArrayBuffer,
@@ -237,10 +253,10 @@ let _updateInstanceBuffer =
   (instanceBufferArrayBuffer, instanceBuffer);
 };
 
-let _createInstanceContainer = (geometryContainers, device, state) => {
+let _createInstanceContainer = (geometryContainerMap, device, state) => {
   let (instanceBufferArrayBuffer, instanceBuffer) =
     InstanceBuffer.createInstanceBuffer(Geometry.getCount(state), device)
-    |> _updateInstanceBuffer(geometryContainers, state);
+    |> _updateInstanceBuffer(geometryContainerMap, state);
 
   (
     (instanceBufferArrayBuffer, instanceBuffer),
@@ -259,14 +275,16 @@ let _createInstanceContainer = (geometryContainers, device, state) => {
 };
 
 let buildContainers = (device, queue, state) => {
-  let geometryContainers: array(AccelerationContainer.t) =
+  let geometryContainerMap:
+    ImmutableSparseMap.t(GeometryType.geometry, AccelerationContainer.t) =
     _buildSceneGeometryContainers(device, state);
   let ((instanceBufferArrayBuffer, instanceBuffer), instanceContainer) =
-    _createInstanceContainer(geometryContainers, device, state);
+    _createInstanceContainer(geometryContainerMap, device, state);
 
   let commandEncoder =
     device |> Device.createCommandEncoder(CommandEncoder.descriptor());
-  geometryContainers
+  geometryContainerMap
+  |> ImmutableSparseMap.getValidValues
   |> Js.Array.forEach(geometryContainer => {
        commandEncoder
        |> CommandEncoder.buildRayTracingAccelerationContainer(
@@ -278,7 +296,7 @@ let buildContainers = (device, queue, state) => {
   queue |> Queue.submit([|commandEncoder |> CommandEncoder.finish|]);
 
   (
-    geometryContainers,
+    geometryContainerMap,
     (instanceBufferArrayBuffer, instanceBuffer),
     instanceContainer,
   );
@@ -286,7 +304,7 @@ let buildContainers = (device, queue, state) => {
 
 let updateInstanceContainer = (device, queue, state) => {
   let (
-    geometryContainers,
+    geometryContainerMap,
     instanceContainer,
     instanceBufferArrayBuffer,
     instanceBuffer,
@@ -295,7 +313,7 @@ let updateInstanceContainer = (device, queue, state) => {
 
   let (instanceBufferArrayBuffer, instanceBuffer) =
     _updateInstanceBuffer(
-      geometryContainers,
+      geometryContainerMap,
       state,
       (instanceBufferArrayBuffer, instanceBuffer),
     );
@@ -308,7 +326,7 @@ let updateInstanceContainer = (device, queue, state) => {
 
   state
   |> OperateAccelerationContainer.setData(
-       geometryContainers,
+       geometryContainerMap,
        instanceContainer,
        instanceBufferArrayBuffer,
        instanceBuffer,
