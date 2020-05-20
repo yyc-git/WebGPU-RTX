@@ -104,6 +104,7 @@ let create = () => {
     },
     uniformBufferDataMap: ImmutableHashMap.createEmpty(),
     storageBufferDataMap: ImmutableHashMap.createEmpty(),
+float32StorageBufferTypeArrayDataMap: ImmutableHashMap.createEmpty(),
     textureViewMap: ImmutableHashMap.createEmpty(),
   },
   rayTracing: {

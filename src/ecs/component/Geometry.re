@@ -115,8 +115,16 @@ let buildPlaneIndexData = () => {
   indices;
 };
 
-let computeVertexCount = vertices => {
+let computeVerticesCount = vertices => {
   (vertices |> Js.Array.length) / 3;
+};
+
+let computeNormalsCount = normals => {
+  (normals |> Js.Array.length) / 3;
+};
+
+let computeVertexCount = vertices => {
+  computeVerticesCount(vertices);
 };
 
 let computeIndexCount = indices => {

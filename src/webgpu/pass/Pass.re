@@ -52,6 +52,23 @@ let setStorageBufferData = (bufferName, (bufferSize, buffer), state) => {
   },
 };
 
+
+let unsafeGetFloat32StorageBufferTypeArrayData = (bufferName, state) => {
+  state.pass.float32StorageBufferTypeArrayDataMap |> ImmutableHashMap.unsafeGet(bufferName);
+};
+
+let setFloat32StorageBufferTypeArrayData = (bufferName, bufferData, state) => {
+  ...state,
+  pass: {
+    ...state.pass,
+    float32StorageBufferTypeArrayDataMap:
+      state.pass.float32StorageBufferTypeArrayDataMap
+      |> ImmutableHashMap.set(bufferName, bufferData),
+  },
+};
+
+
+
 let unsafeGetTextureView = (textureViewName, state) => {
   state.pass.textureViewMap |> ImmutableHashMap.unsafeGet(textureViewName);
 };

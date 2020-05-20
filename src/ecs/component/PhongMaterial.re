@@ -87,3 +87,11 @@ let setShininess = (phongMaterial, shininess, state) => {
 //       |> ImmutableSparseMap.set(phongMaterial, dissolve),
 //   },
 // };
+
+let getCount = state => {
+  state.phongMaterial.index;
+};
+
+let getAllPhongMaterials = state => {
+  ArrayUtils.range(0, state.phongMaterial.index);
+};

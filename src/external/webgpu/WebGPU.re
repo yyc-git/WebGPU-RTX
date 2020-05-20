@@ -81,7 +81,7 @@ module Queue = {
 };
 
 module ShaderStage = {
-  type t;
+  type t = int;
 
   [@bs.val] [@bs.scope "GPUShaderStage"] [@bs.module "webgpu"]
   external ray_generation: t = "RAY_GENERATION";

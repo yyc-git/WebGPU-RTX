@@ -138,16 +138,17 @@ module ModelBuffer = {
     );
   };
 
-  let unsafeGetModelBufferData = state => {
+  let unsafeGetBufferData = state => {
     Pass.unsafeGetUniformBufferData("modelBuffer", state);
   };
 
-  let _setModelBufferData = ((bufferData, buffer), state) => {
+  let _setBufferData = ((bufferData, buffer), state) => {
     Pass.setUniformBufferData("modelBuffer", (bufferData, buffer), state);
   };
 
+  // TODO perf: only update dirty ones
   let update = (allRenderGameObjects, state) => {
-    let (modelBufferData, modelBuffer) = unsafeGetModelBufferData(state);
+    let (modelBufferData, modelBuffer) = unsafeGetBufferData(state);
 
     let (_, alignedModelBufferBytes, alignedModelBufferFloats) =
       getModelBufferSize(allRenderGameObjects);
@@ -201,7 +202,7 @@ module ModelBuffer = {
 
     modelBuffer |> Buffer.setSubFloat32Data(0, modelBufferData);
 
-    let state = state |> _setModelBufferData((modelBufferData, modelBuffer));
+    let state = state |> _setBufferData((modelBufferData, modelBuffer));
 
     state;
   };
@@ -694,5 +695,387 @@ module CommonDataBuffer = {
       state |> setBufferData((commonDataBufferData, commonDataBuffer));
 
     state;
+  };
+};
+
+module GetHitShadingData = {
+  module SceneDescBuffer = {
+    let buildData = (device, state) => {
+      let gameObjectCount =
+        GameObject.getAllGeometryGameObjects(state) |> Js.Array.length;
+      let dataCount = 4 + 12 + 16;
+
+      let bufferData = Float32Array.fromLength(gameObjectCount * dataCount);
+      let bufferSize = bufferData |> Float32Array.byteLength;
+      let buffer =
+        device
+        |> Device.createBuffer({
+             "size": bufferSize,
+             "usage": BufferUsage.copy_dst lor BufferUsage.storage,
+           });
+
+      (bufferData, bufferSize, buffer);
+    };
+
+    let unsafeGetBufferData = state => {
+      Pass.unsafeGetStorageBufferData("sceneDescBuffer", state);
+    };
+
+    let unsafeGetBufferTypeArrayData = state => {
+      Pass.unsafeGetFloat32StorageBufferTypeArrayData(
+        "sceneDescBuffer",
+        state,
+      );
+    };
+
+    let getBufferSize = bufferData => {
+      bufferData |> Float32Array.byteLength;
+    };
+
+    let setBufferData = ((bufferSize, bufferData, buffer), state) => {
+      state
+      |> Pass.setFloat32StorageBufferTypeArrayData(
+           "sceneDescBuffer",
+           bufferData,
+         )
+      |> Pass.setStorageBufferData("sceneDescBuffer", (bufferSize, buffer));
+    };
+
+    // TODO perf: only update dirty ones
+    let update = (allRenderGameObjects, state) => {
+      let (bufferSize, buffer) = unsafeGetBufferData(state);
+      let bufferData = unsafeGetBufferTypeArrayData(state);
+
+      let (bufferData, _) =
+        allRenderGameObjects
+        |> ArrayUtils.reduceOneParam(
+             (. (bufferData, offset), renderGameObject) => {
+               let (bufferData, newOffset) =
+                 bufferData
+                 |> TypeArray.Float32Array.setFloatTuple2(
+                      offset,
+                      (
+                        GameObject.unsafeGetGeometry(renderGameObject, state)
+                        |> float_of_int,
+                        GameObject.unsafeGetPhongMaterial(
+                          renderGameObject,
+                          state,
+                        )
+                        |> float_of_int,
+                      ),
+                    );
+
+               let newOffset = newOffset + 2;
+
+               let transform =
+                 GameObject.unsafeGetTransform(renderGameObject, state);
+
+               let modelMatrix = Transform.buildModelMatrix(transform, state);
+               let normalMatrix = Transform.buildNormalMatrix(modelMatrix);
+
+               let (bufferData, newOffset) =
+                 (bufferData, newOffset)
+                 |> ManageBuffer.setMat3DataToBufferData(normalMatrix);
+
+               let (bufferData, newOffset) =
+                 bufferData
+                 |> TypeArray.Float32Array.setFloat32Array(
+                      newOffset,
+                      modelMatrix,
+                    );
+
+               (bufferData, newOffset);
+             },
+             (bufferData, 0),
+           );
+
+      buffer |> Buffer.setSubFloat32Data(0, bufferData);
+
+      let state = state |> setBufferData((bufferSize, bufferData, buffer));
+
+      state;
+    };
+  };
+
+  module GeometryOffsetDataBuffer = {
+    let buildData = (device, state) => {
+      let geometryCount = Geometry.getCount(state);
+      let dataCount = 2;
+
+      let bufferData = Uint32Array.fromLength(geometryCount * dataCount);
+      let bufferSize = bufferData |> Uint32Array.byteLength;
+      let buffer =
+        device
+        |> Device.createBuffer({
+             "size": bufferSize,
+             "usage": BufferUsage.copy_dst lor BufferUsage.storage,
+           });
+
+      let stride = dataCount;
+
+      let bufferData =
+        Geometry.getAllGeometries(state)
+        |> ArrayUtils.reduceOneParam(
+             (. bufferData, geometry) => {
+               let (vertices, _) =
+                 Geometry.unsafeGetVertexData(geometry, state);
+
+               let (bufferData, newOffset) =
+                 bufferData
+                 |> TypeArray.Uint32Array.setUint(
+                      geometry * stride,
+                      Geometry.computeVertexCount(vertices),
+                    );
+
+               let indices = Geometry.unsafeGetIndexData(geometry, state);
+
+               let (bufferData, _) =
+                 bufferData
+                 |> TypeArray.Uint32Array.setUint(
+                      newOffset + 1,
+                      Geometry.computeIndexCount(indices),
+                    );
+
+               bufferData;
+             },
+             bufferData,
+           );
+
+      buffer |> Buffer.setSubUint32Data(0, bufferData);
+
+      (bufferData, bufferSize, buffer);
+    };
+
+    let unsafeGetBufferData = state => {
+      Pass.unsafeGetStorageBufferData("geometryOffsetDataBuffer", state);
+    };
+
+    let getBufferSize = bufferData => {
+      bufferData |> Float32Array.byteLength;
+    };
+
+    let setBufferData = ((bufferData, buffer), state) => {
+      Pass.setStorageBufferData(
+        "geometryOffsetDataBuffer",
+        (bufferData, buffer),
+        state,
+      );
+    };
+
+    // TODO update dirty ones
+    let update = (allRenderGameObjects, state) => {
+      state;
+    };
+  };
+
+  module VertexBuffer = {
+    let _computeSceneVertexBufferDataLength = state => {
+      (
+        Geometry.getAllVertexData(state)
+        |> ArrayUtils.reduceOneParam(
+             (. vertexDataTotalCount, (vertices, normals)) => {
+               vertexDataTotalCount
+               + Geometry.computeVerticesCount(vertices)
+               + Geometry.computeNormalsCount(normals)
+             },
+             0,
+           )
+      )
+      * 4;
+    };
+
+    let buildData = (device, state) => {
+      let bufferData =
+        Float32Array.fromLength(_computeSceneVertexBufferDataLength(state));
+      let bufferSize = bufferData |> Float32Array.byteLength;
+      let buffer =
+        device
+        |> Device.createBuffer({
+             "size": bufferSize,
+             "usage": BufferUsage.copy_dst lor BufferUsage.storage,
+           });
+
+      let (bufferData, _) =
+        Geometry.getAllGeometries(state)
+        |> ArrayUtils.reduceOneParam(
+             (. (bufferData, offset), geometry) => {
+               let (vertices, normals) =
+                 Geometry.unsafeGetVertexData(geometry, state);
+
+               let vertexCount = Geometry.computeVertexCount(vertices);
+
+               ArrayUtils.range(0, vertexCount)
+               |> ArrayUtils.reduceOneParam(
+                    (. (bufferData, offset), index) => {
+                      let (bufferData, newOffset) =
+                        bufferData
+                        |> TypeArray.Float32Array.setFloatTuple3(
+                             offset,
+                             (
+                               Array.unsafe_get(vertices, index * 3),
+                               Array.unsafe_get(vertices, index * 3 + 1),
+                               Array.unsafe_get(vertices, index * 3 + 2),
+                             ),
+                           );
+
+                      let newOffset = newOffset + 1;
+
+                      let (bufferData, newOffset) =
+                        bufferData
+                        |> TypeArray.Float32Array.setFloatTuple3(
+                             newOffset,
+                             (
+                               Array.unsafe_get(normals, index * 3),
+                               Array.unsafe_get(normals, index * 3 + 1),
+                               Array.unsafe_get(normals, index * 3 + 2),
+                             ),
+                           );
+
+                      let newOffset = newOffset + 1;
+
+                      (bufferData, newOffset);
+                    },
+                    (bufferData, offset),
+                  );
+             },
+             (bufferData, 0),
+           );
+
+      buffer |> Buffer.setSubFloat32Data(0, bufferData);
+
+      (bufferData, bufferSize, buffer);
+    };
+
+    let unsafeGetBufferData = state => {
+      Pass.unsafeGetStorageBufferData("vertexBuffer", state);
+    };
+
+    let getBufferSize = bufferData => {
+      bufferData |> Float32Array.byteLength;
+    };
+
+    let setBufferData = ((bufferData, buffer), state) => {
+      Pass.setStorageBufferData("vertexBuffer", (bufferData, buffer), state);
+    };
+
+    // TODO update dirty ones
+    let update = (allRenderGameObjects, state) => {
+      state;
+    };
+  };
+
+  module IndexBuffer = {
+    let buildData = (device, state) => {
+      let geometryCount = Geometry.getCount(state);
+      let dataCount = 3;
+
+      let bufferData = Uint32Array.fromLength(geometryCount * dataCount);
+
+      let bufferSize = bufferData |> Uint32Array.byteLength;
+      let buffer =
+        device
+        |> Device.createBuffer({
+             "size": bufferSize,
+             "usage": BufferUsage.copy_dst lor BufferUsage.storage,
+           });
+
+      let (bufferData, _) =
+        Geometry.getAllGeometries(state)
+        |> ArrayUtils.reduceOneParam(
+             (. (bufferData, offset), geometry) => {
+               let indices = Geometry.unsafeGetIndexData(geometry, state);
+
+               bufferData |> TypeArray.Uint32Array.setArray(offset, indices);
+             },
+             (bufferData, 0),
+           );
+
+      buffer |> Buffer.setSubUint32Data(0, bufferData);
+
+      (bufferData, bufferSize, buffer);
+    };
+
+    let unsafeGetBufferData = state => {
+      Pass.unsafeGetStorageBufferData("indexBuffer", state);
+    };
+
+    let getBufferSize = bufferData => {
+      bufferData |> Uint32Array.byteLength;
+    };
+
+    let setBufferData = ((bufferData, buffer), state) => {
+      Pass.setStorageBufferData("indexBuffer", (bufferData, buffer), state);
+    };
+
+    // TODO update dirty ones
+    let update = (allRenderGameObjects, state) => {
+      state;
+    };
+  };
+
+  module PhongMaterialBuffer = {
+    let buildData = (device, state) => {
+      let phongMaterialCount = PhongMaterial.getCount(state);
+      let dataCount = 4 + 4;
+
+      let bufferData =
+        Float32Array.fromLength(phongMaterialCount * dataCount);
+
+      let bufferSize = bufferData |> Float32Array.byteLength;
+      let buffer =
+        device
+        |> Device.createBuffer({
+             "size": bufferSize,
+             "usage": BufferUsage.copy_dst lor BufferUsage.storage,
+           });
+
+      let (bufferData, _) =
+        PhongMaterial.getAllPhongMaterials(state)
+        |> ArrayUtils.reduceOneParam(
+             (. (bufferData, offset), material) => {
+               let diffuse = PhongMaterial.unsafeGetDiffuse(material, state);
+               let shininess =
+                 PhongMaterial.unsafeGetShininess(material, state);
+
+               let (bufferData, newOffset) =
+                 bufferData
+                 |> TypeArray.Float32Array.setFloatTuple3(offset, diffuse);
+
+               let newOffset = newOffset + 1;
+
+               let (bufferData, newOffset) =
+                 bufferData
+                 |> TypeArray.Float32Array.setFloat(offset, shininess);
+
+               (bufferData, newOffset + 3);
+             },
+             (bufferData, 0),
+           );
+
+      buffer |> Buffer.setSubFloat32Data(0, bufferData);
+
+      (bufferData, bufferSize, buffer);
+    };
+
+    let unsafeGetBufferData = state => {
+      Pass.unsafeGetStorageBufferData("phongMaterialBuffer", state);
+    };
+
+    let getBufferSize = bufferData => {
+      bufferData |> Float32Array.byteLength;
+    };
+
+    let setBufferData = ((bufferData, buffer), state) => {
+      Pass.setStorageBufferData(
+        "phongMaterialBuffer",
+        (bufferData, buffer),
+        state,
+      );
+    };
+
+    // TODO update dirty ones
+    let update = (allRenderGameObjects, state) => {
+      state;
+    };
   };
 };

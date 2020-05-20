@@ -221,6 +221,24 @@ let init = (device, window, state) => {
   let (commonDataBufferData, commonDataBufferSize, commonDataBuffer) =
     BMFRBuffer.CommonDataBuffer.buildData(device, state);
 
+  let (sceneDescBufferData, sceneDescBufferSize, sceneDescBuffer) =
+    BMFRBuffer.GetHitShadingData.SceneDescBuffer.buildData(device, state);
+  let (
+    geometryOffsetDataBufferData,
+    geometryOffsetDataBufferSize,
+    geometryOffsetDataBuffer,
+  ) =
+    BMFRBuffer.GetHitShadingData.GeometryOffsetDataBuffer.buildData(
+      device,
+      state,
+    );
+  let (vertexBufferData, vertexBufferSize, vertexBuffer) =
+    BMFRBuffer.GetHitShadingData.VertexBuffer.buildData(device, state);
+  let (indexBufferData, indexBufferSize, indexBuffer) =
+    BMFRBuffer.GetHitShadingData.IndexBuffer.buildData(device, state);
+  let (phongMaterialBufferData, phongMaterialBufferSize, phongMaterialBuffer) =
+    BMFRBuffer.GetHitShadingData.PhongMaterialBuffer.buildData(device, state);
+
   state
   |> Pass.setAccumulatedFrameIndex(0)
   |> Pass.setJitterArr(
@@ -285,6 +303,27 @@ let init = (device, window, state) => {
   |> BMFRBuffer.HistoryPixelBuffer.setBufferData((
        historyPixelBufferSize,
        historyPixelBuffer,
+     ))
+  |> BMFRBuffer.GetHitShadingData.SceneDescBuffer.setBufferData((
+       sceneDescBufferSize,
+sceneDescBufferData,
+       sceneDescBuffer,
+     ))
+  |> BMFRBuffer.GetHitShadingData.GeometryOffsetDataBuffer.setBufferData((
+       geometryOffsetDataBufferSize,
+       geometryOffsetDataBuffer,
+     ))
+  |> BMFRBuffer.GetHitShadingData.VertexBuffer.setBufferData((
+       vertexBufferSize,
+       vertexBuffer,
+     ))
+  |> BMFRBuffer.GetHitShadingData.IndexBuffer.setBufferData((
+       indexBufferSize,
+       indexBuffer,
+     ))
+  |> BMFRBuffer.GetHitShadingData.PhongMaterialBuffer.setBufferData((
+       phongMaterialBufferSize,
+       phongMaterialBuffer,
      ));
 };
 
@@ -417,7 +456,12 @@ let _updateTransformData = (time, device, queue, state) => {
     state
     |> ManageAccelerationContainer.updateInstanceContainer(device, queue);
 
-  let state = state |> BMFRBuffer.ModelBuffer.update(allRenderGameObjects);
+  let state =
+    state
+    |> BMFRBuffer.ModelBuffer.update(allRenderGameObjects)
+    |> BMFRBuffer.GetHitShadingData.SceneDescBuffer.update(
+         allRenderGameObjects,
+       );
 
   state;
 };

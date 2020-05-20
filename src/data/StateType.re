@@ -306,6 +306,8 @@ type pass = {
     ImmutableHashMap.t(bufferName, (uniformBufferData, uniformBuffer)),
   storageBufferDataMap:
     ImmutableHashMap.t(bufferName, (storageBufferSize, storageBuffer)),
+  float32StorageBufferTypeArrayDataMap:
+    ImmutableHashMap.t(bufferName, Float32Array.t),
   textureViewMap: ImmutableHashMap.t(textureViewName, TextureView.t),
 };
 

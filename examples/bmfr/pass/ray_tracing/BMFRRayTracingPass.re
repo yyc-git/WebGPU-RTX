@@ -18,8 +18,14 @@ let _createShaderBindingTable = (baseShaderPath, device) => {
     |> Device.createShaderModule({
          "code":
            WebGPUUtils.loadShaderFile(
-             {j|$(baseShaderPath)/ray-closest-hit.rchit|j},
+             {j|$(baseShaderPath)/ray-closest-hit-indirect-gi.rchit|j},
            ),
+       });
+  let rayMissShaderModule =
+    device
+    |> Device.createShaderModule({
+         "code":
+           WebGPUUtils.loadShaderFile({j|$(baseShaderPath)/ray-miss.rmiss|j}),
        });
   let rayMissShadowShaderModule =
     device
@@ -38,6 +44,7 @@ let _createShaderBindingTable = (baseShaderPath, device) => {
            "module": rayRChitShaderModule,
            "stage": ShaderStage.ray_closest_hit,
          },
+         {"module": rayMissShaderModule, "stage": ShaderStage.ray_miss},
          {"module": rayMissShadowShaderModule, "stage": ShaderStage.ray_miss},
        |],
        "groups": [|
@@ -58,6 +65,13 @@ let _createShaderBindingTable = (baseShaderPath, device) => {
          {
            "type": "general",
            "generalIndex": 2,
+           "anyHitIndex": (-1),
+           "closestHitIndex": (-1),
+           "intersectionIndex": (-1),
+         },
+         {
+           "type": "general",
+           "generalIndex": 3,
            "anyHitIndex": (-1),
            "closestHitIndex": (-1),
            "intersectionIndex": (-1),
@@ -98,13 +112,14 @@ let init = (device, queue, state) => {
          |],
        });
 
-  let rtBindGroupLayout =
+  let rtGenBindGroupLayout =
     device
     |> Device.createBindGroupLayout({
          "bindings": [|
            BindGroupLayout.layoutBinding(
              ~binding=0,
-             ~visibility=ShaderStage.ray_generation,
+             ~visibility=
+               ShaderStage.ray_generation lor ShaderStage.ray_closest_hit,
              ~type_="acceleration-container",
              (),
            ),
@@ -118,6 +133,43 @@ let init = (device, queue, state) => {
              ~binding=2,
              ~visibility=ShaderStage.ray_generation,
              ~type_="uniform-buffer",
+             (),
+           ),
+         |],
+       });
+
+  let rtCHitBindGroupLayout =
+    device
+    |> Device.createBindGroupLayout({
+         "bindings": [|
+           BindGroupLayout.layoutBinding(
+             ~binding=0,
+             ~visibility=ShaderStage.ray_closest_hit,
+             ~type_="storage-buffer",
+             (),
+           ),
+           BindGroupLayout.layoutBinding(
+             ~binding=1,
+             ~visibility=ShaderStage.ray_closest_hit,
+             ~type_="storage-buffer",
+             (),
+           ),
+           BindGroupLayout.layoutBinding(
+             ~binding=2,
+             ~visibility=ShaderStage.ray_closest_hit,
+             ~type_="storage-buffer",
+             (),
+           ),
+           BindGroupLayout.layoutBinding(
+             ~binding=3,
+             ~visibility=ShaderStage.ray_closest_hit,
+             ~type_="storage-buffer",
+             (),
+           ),
+           BindGroupLayout.layoutBinding(
+             ~binding=4,
+             ~visibility=ShaderStage.ray_closest_hit,
+             ~type_="storage-buffer",
              (),
            ),
          |],
@@ -210,10 +262,10 @@ let init = (device, queue, state) => {
   let (commonDataBufferData, commonDataBuffer) =
     BMFRBuffer.CommonDataBuffer.unsafeGetBufferData(state);
 
-  let rtBindGroup =
+  let rtGenBindGroup =
     device
     |> Device.createBindGroup({
-         "layout": rtBindGroupLayout,
+         "layout": rtGenBindGroupLayout,
          "bindings": [|
            BindGroup.binding(
              ~binding=0,
@@ -237,6 +289,69 @@ let init = (device, queue, state) => {
                BMFRBuffer.CommonDataBuffer.getBufferSize(
                  commonDataBufferData,
                ),
+             (),
+           ),
+         |],
+       });
+
+  let (sceneDescBufferSize, sceneDescBuffer) =
+    BMFRBuffer.GetHitShadingData.SceneDescBuffer.unsafeGetBufferData(state);
+  let (geometryOffsetDataBufferSize, geometryOffsetDataBuffer) =
+    BMFRBuffer.GetHitShadingData.GeometryOffsetDataBuffer.unsafeGetBufferData(
+      state,
+    );
+  let (vertexBufferSize, vertexBuffer) =
+    BMFRBuffer.GetHitShadingData.VertexBuffer.unsafeGetBufferData(state);
+  let (indexBufferSize, indexBuffer) =
+    BMFRBuffer.GetHitShadingData.IndexBuffer.unsafeGetBufferData(state);
+  let (phongMaterialBufferSize, phongMaterialBuffer) =
+    BMFRBuffer.GetHitShadingData.PhongMaterialBuffer.unsafeGetBufferData(
+      state,
+    );
+
+  let rtCHitBindGroup =
+    device
+    |> Device.createBindGroup({
+         "layout": rtCHitBindGroupLayout,
+         "bindings": [|
+           BindGroup.binding(
+             ~binding=0,
+             ~buffer=sceneDescBuffer,
+             ~offset=0,
+             ~size=
+               sceneDescBufferSize,
+             (),
+           ),
+           BindGroup.binding(
+             ~binding=1,
+             ~buffer=geometryOffsetDataBuffer,
+             ~offset=0,
+             ~size=
+               geometryOffsetDataBufferSize,
+             (),
+           ),
+           BindGroup.binding(
+             ~binding=2,
+             ~buffer=vertexBuffer,
+             ~offset=0,
+             ~size=
+               vertexBufferSize,
+             (),
+           ),
+           BindGroup.binding(
+             ~binding=3,
+             ~buffer=indexBuffer,
+             ~offset=0,
+             ~size=
+               indexBufferSize,
+             (),
+           ),
+           BindGroup.binding(
+             ~binding=4,
+             ~buffer=phongMaterialBuffer,
+             ~offset=0,
+             ~size=
+               phongMaterialBufferSize,
              (),
            ),
          |],
@@ -281,9 +396,10 @@ let init = (device, queue, state) => {
   let state =
     state
     |> Pass.RayTracingPass.addStaticBindGroupData(0, gbufferBindGroup)
-    |> Pass.RayTracingPass.addStaticBindGroupData(1, rtBindGroup)
+    |> Pass.RayTracingPass.addStaticBindGroupData(1, rtGenBindGroup)
     |> Pass.RayTracingPass.addStaticBindGroupData(2, cameraBindGroup)
-    |> Pass.RayTracingPass.addStaticBindGroupData(3, directionLightBindGroup);
+    |> Pass.RayTracingPass.addStaticBindGroupData(3, directionLightBindGroup)
+    |> Pass.RayTracingPass.addStaticBindGroupData(4, rtCHitBindGroup);
 
   let pipeline =
     device
@@ -294,9 +410,10 @@ let init = (device, queue, state) => {
              |> Device.createPipelineLayout({
                   "bindGroupLayouts": [|
                     gbufferBindGroupLayout,
-                    rtBindGroupLayout,
+                    rtGenBindGroupLayout,
                     cameraBindGroupLayout,
                     directionLightBindGroupLayout,
+                    rtCHitBindGroupLayout,
                   |],
                 }),
            ~rayTracingState={

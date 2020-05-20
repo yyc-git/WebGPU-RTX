@@ -6,14 +6,24 @@
 
 #include "../../shaders/camera.glsl"
 #include "common_data.glsl"
+#include "define.glsl"
+#include "raycommon.glsl"
+
 #include "light.glsl"
 #include "phong_compute.glsl"
 #include "random.glsl"
 
-layout(location = 0) rayPayloadNV vec3 hitValue;
+#include "indirect_utils.glsl"
+
 layout(location = 1) rayPayloadNV bool isShadowed;
 
 #include "shadow_ray.glsl"
+
+#include "compute_direct_gi.glsl"
+
+layout(location = 0) rayPayloadNV hitPayload prd;
+
+#include "indirect_ray.glsl"
 
 layout(binding = 0) uniform sampler2D gPositionTexture;
 layout(binding = 1) uniform sampler2D gNormalTexture;
@@ -41,64 +51,59 @@ void main() {
   vec4 commonDataCompressedData = pushC.compressedData;
   uint frame = getFrame(commonDataCompressedData);
   uint lightCount = getLightCount(commonDataCompressedData);
+  // bool doIndirectGI = getDoIndirectGI(commonDataCompressedData);
+  bool doIndirectGI = true;
+
+  float tMin = 0.1;
 
   uint seed = tea(gl_LaunchIDNV.y * gl_LaunchSizeNV.x + gl_LaunchIDNV.x, frame);
+
+  prd.seed = seed;
 
   vec2 lanuchIndex = getLanuchIndex(gl_LaunchIDNV, gl_LaunchSizeNV);
 
   vec4 worldPosition = texture(gPositionTexture, lanuchIndex);
   vec3 worldNormal = texture(gNormalTexture, lanuchIndex).xyz;
   vec3 materialDiffuse = texture(gDiffuseTexture, lanuchIndex).rgb;
+
+  // TODO feat: get specular from material
   // vec3 materialSpecular = texture(gSpecularTexture, lanuchIndex).rgb;
   vec3 materialSpecular = vec3(0.5, 0.0, 0.5);
   // vec3 materialSpecular = vec3(0.0, 0.0, 0.5);
+
   vec4 motionVectorDepthShininess =
       texture(gMotionVectorDepthShininessTexture, lanuchIndex);
   float shininess = motionVectorDepthShininess.w;
 
-  hitValue = vec3(0.0);
-
-  vec3 specular = vec3(0.0);
+  vec3 hitValue = vec3(0.0);
 
   if (isNotBackground(worldPosition)) {
-    uint lightIndexToSample = min(uint(rnd(seed) * lightCount), lightCount - 1);
-    // uint lightIndexToSample = 0;
+    hitValue += computeDirectGI(seed, tMin, lightCount, vec3(worldPosition),
+                                worldNormal, materialDiffuse, materialSpecular,
+                                shininess, topLevelAS);
 
-    vec3 lightDir;
-    float lightIntensity;
-    float lightDistance;
+    if (doIndirectGI) {
+      // Select a random direction for our diffuse interreflection ray.
+      vec3 bounceDir;
+      bounceDir = getCosHemisphereSample(seed, worldNormal);
 
-    getLightData(lightIndexToSample, lightIntensity, lightDistance, lightDir);
+      vec3 bounceColor =
+          shootIndirectRay(topLevelAS, worldPosition.xyz, bounceDir, tMin);
 
-    // Diffuse
-    vec3 diffuse = computeDiffuse(materialDiffuse, lightDir, worldNormal);
+      // Get dotNL for our selected ray direction
+      float dotNL = max(dot(worldNormal, bounceDir), 0.0);
 
-    float attenuation = 1.0;
+      // Probability of selecting this ray ( cos/pi for cosine sampling, 1/2pi
+      // for uniform sampling )
+      float sampleProb = (dotNL / M_PI);
 
-    // Tracing shadow ray only if the light is visible from the surface
-    if (isLightVisibleFromTheSurface(worldNormal, lightDir)) {
-      // float tMin = 0.01;
-      float tMin = 0.1;
-      float tMax = lightDistance;
-      // vec3 origin = gl_WorldRayOriginNV + gl_WorldRayDirectionNV * gl_HitTNV;
-      vec3 origin = vec3(worldPosition);
-      vec3 rayDir = lightDir;
-
-      isShadowed =
-          shadowRayVisibility(topLevelAS, 0, origin, rayDir, tMin, tMax);
-
-      if (isShadowed) {
-        attenuation = 0.3;
-      } else {
-        specular = computeSpecular(materialSpecular, shininess,
-                                   getViewDir(vec3(worldPosition)), lightDir,
-                                   worldNormal);
-      }
+      // Do Monte Carlo integration of indirect light (i.e., rendering equation)
+      //    -> This is:  (dotNL * incoming light * BRDF) / probability-of-sample
+      hitValue += dotNL * bounceColor * materialDiffuse / sampleProb;
     }
-
-    attenuation *= float(lightCount);
-
-    hitValue = computeColor(lightIntensity, attenuation, diffuse, specular);
+  } else {
+    // TODO refactor: add miss color to common data buffer?
+    hitValue = vec3(0.15);
   }
 
   const uint pixelIndex = gl_LaunchIDNV.y * gl_LaunchSizeNV.x + gl_LaunchIDNV.x;
