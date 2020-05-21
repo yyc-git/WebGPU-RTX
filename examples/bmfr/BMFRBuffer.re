@@ -746,6 +746,12 @@ module GetHitShadingData = {
       let (bufferSize, buffer) = unsafeGetBufferData(state);
       let bufferData = unsafeGetBufferTypeArrayData(state);
 
+      // Log.print("update scene desc buffer...") |> ignore;
+      // Log.printComplete(
+      // "renderGameObjects:",
+      // allRenderGameObjects
+      // );
+
       let (bufferData, _) =
         allRenderGameObjects
         |> ArrayUtils.reduceOneParam(
@@ -789,6 +795,11 @@ module GetHitShadingData = {
              (bufferData, 0),
            );
 
+      // Log.printComplete(
+      // "bufferData:",
+      // bufferData
+      // );
+
       buffer |> Buffer.setSubFloat32Data(0, bufferData);
 
       let state = state |> setBufferData((bufferSize, bufferData, buffer));
@@ -813,33 +824,49 @@ module GetHitShadingData = {
 
       let stride = dataCount;
 
-      let bufferData =
+      let (bufferData, _) =
         Geometry.getAllGeometries(state)
         |> ArrayUtils.reduceOneParam(
-             (. bufferData, geometry) => {
+             (. (bufferData, (vertexOffset, indexOffset)), geometry) => {
                let (vertices, _) =
                  Geometry.unsafeGetVertexData(geometry, state);
+
+               let newVertexOffset =
+                 vertexOffset + Geometry.computeVertexCount(vertices);
 
                let (bufferData, newOffset) =
                  bufferData
                  |> TypeArray.Uint32Array.setUint(
                       geometry * stride,
-                      Geometry.computeVertexCount(vertices),
+                      vertexOffset,
                     );
 
                let indices = Geometry.unsafeGetIndexData(geometry, state);
 
+               Log.printComplete(
+               "indices:",
+               ( indices,  
+               Geometry.computeIndexCount(indices)
+               ),
+
+               );
+
+               let newIndexOffset =
+                 indexOffset + Geometry.computeIndexCount(indices);
+
                let (bufferData, _) =
                  bufferData
                  |> TypeArray.Uint32Array.setUint(
-                      newOffset + 1,
-                      Geometry.computeIndexCount(indices),
+                      newOffset,
+                      indexOffset,
                     );
 
-               bufferData;
+               (bufferData, (newVertexOffset, newIndexOffset));
              },
-             bufferData,
+             (bufferData, (0, 0)),
            );
+
+      Log.printComplete("geometry offset bufferData:", bufferData);
 
       buffer |> Buffer.setSubUint32Data(0, bufferData);
 
@@ -941,6 +968,8 @@ module GetHitShadingData = {
              (bufferData, 0),
            );
 
+      Log.printComplete("vertex bufferData:", bufferData);
+
       buffer |> Buffer.setSubFloat32Data(0, bufferData);
 
       (bufferData, bufferSize, buffer);
@@ -995,6 +1024,8 @@ module GetHitShadingData = {
              },
              (bufferData, 0),
            );
+
+      Log.printComplete("index bufferData:", bufferData);
 
       buffer |> Buffer.setSubUint32Data(0, bufferData);
 
@@ -1051,12 +1082,14 @@ module GetHitShadingData = {
 
                let (bufferData, newOffset) =
                  bufferData
-                 |> TypeArray.Float32Array.setFloat(offset, shininess);
+                 |> TypeArray.Float32Array.setFloat(newOffset, shininess);
 
                (bufferData, newOffset + 3);
              },
              (bufferData, 0),
            );
+
+      Log.printComplete("material bufferData:", bufferData);
 
       buffer |> Buffer.setSubFloat32Data(0, bufferData);
 

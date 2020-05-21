@@ -53,6 +53,7 @@ void main() {
   uint lightCount = getLightCount(commonDataCompressedData);
   // bool doIndirectGI = getDoIndirectGI(commonDataCompressedData);
   bool doIndirectGI = true;
+  // bool doIndirectGI = false;
 
   float tMin = 0.1;
 
@@ -99,7 +100,8 @@ void main() {
 
       // Do Monte Carlo integration of indirect light (i.e., rendering equation)
       //    -> This is:  (dotNL * incoming light * BRDF) / probability-of-sample
-      hitValue += dotNL * bounceColor * materialDiffuse / sampleProb;
+      // hitValue += dotNL * bounceColor * materialDiffuse / sampleProb;
+      hitValue += ( dotNL * bounceColor * materialDiffuse / M_PI ) / sampleProb;
     }
   } else {
     // TODO refactor: add miss color to common data buffer?

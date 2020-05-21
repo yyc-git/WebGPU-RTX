@@ -43,7 +43,6 @@ struct PhongMaterial {
   vec4 compressedData;
 };
 
-
 hitAttributeNV vec3 attribs;
 
 layout(std140, set = 1, binding = 3) buffer SceneDesc { InstanceData i[]; }
@@ -66,8 +65,6 @@ layout(std140, set = 1, binding = 7) buffer MatColorBufferObject {
   PhongMaterial m[];
 }
 materials;
-
-
 
 vec4 _getInstanceDataCompressedData(InstanceData instanceData) {
   return instanceData.compressedData;
@@ -162,7 +159,8 @@ HitShadingData getHitShadingData(uint instanceIndex, uint primitiveIndex) {
   PhongMaterial mat = _getMaterial(materialIndex);
 
   HitShadingData data;
-  data.worldPosition = vec3(_getModelMatrix(instanceData) * vec4(localPos, 1.0));
+  data.worldPosition =
+      vec3(_getModelMatrix(instanceData) * vec4(localPos, 1.0));
   data.worldNormal = normalize(_getNormalMatrix(instanceData) * localNormal);
   data.materialDiffuse = _getMaterialDiffuse(mat);
   // TODO feat: get specular from material

@@ -117,7 +117,7 @@ let buildScene = state => {
   let (mat2, state) = PhongMaterial.create(state);
   let state =
     state
-    |> PhongMaterial.setDiffuse(mat2, (0.0, 1., 0.))
+    |> PhongMaterial.setDiffuse(mat2, (0.0, 0.5, 0.5))
     |> PhongMaterial.setShininess(mat2, 36.);
 
   let (shader2, state) = Shader.create(state);
@@ -137,39 +137,35 @@ let buildScene = state => {
 
   let (plane1, state) = GameObject.create(state);
 
-  let (tran2, state) = Transform.create(state);
+  let (tran3, state) = Transform.create(state);
   let state =
     state
-    |> Transform.setTranslation(tran2, (0., (-10.), (-5.)))
-    |> Transform.setRotation(tran2, (0., 0., 0.))
-    |> Transform.setScale(tran2, (50., 50., 50.));
+    |> Transform.setTranslation(tran3, (0., (-10.), (-5.)))
+    |> Transform.setRotation(tran3, (0., 0., 0.))
+    |> Transform.setScale(tran3, (50., 50., 50.));
 
-  let (geo2, state) = Geometry.create(state);
+  let (geo3, state) = Geometry.create(state);
   let state =
     state
-    |> Geometry.setVertexData(geo2, Geometry.buildPlaneVertexData())
-    |> Geometry.setIndexData(geo2, Geometry.buildPlaneIndexData());
+    |> Geometry.setVertexData(geo3, Geometry.buildPlaneVertexData())
+    |> Geometry.setIndexData(geo3, Geometry.buildPlaneIndexData());
 
-  let (mat2, state) = PhongMaterial.create(state);
+  let (mat3, state) = PhongMaterial.create(state);
   let state =
     state
-    // |> PhongMaterial.setAmbient(mat2, (0.1, 0.1, 0.1))
-    |> PhongMaterial.setDiffuse(mat2, (0.0, 1., 0.))
-    // |> PhongMaterial.setSpecular(mat2, (0.5, 0.0, 0.5))
-    |> PhongMaterial.setShininess(mat2, 72.);
-  // |> PhongMaterial.setIllum(mat2, 2)
-  // |> PhongMaterial.setDissolve(mat2, 1.);
+    |> PhongMaterial.setDiffuse(mat3, (0.0, 1., 0.))
+    |> PhongMaterial.setShininess(mat3, 72.);
 
-  let (shader2, state) = Shader.create(state);
+  let (shader3, state) = Shader.create(state);
   // let state = state |> Shader.setHitGroupIndex(shader2, 1);
-  let state = state |> Shader.setHitGroupIndex(shader2, 0);
+  let state = state |> Shader.setHitGroupIndex(shader3, 0);
 
   let state =
     state
-    |> GameObject.addTransform(plane1, tran2)
-    |> GameObject.addGeometry(plane1, geo2)
-    |> GameObject.addPhongMaterial(plane1, mat2)
-    |> GameObject.addShader(plane1, shader2);
+    |> GameObject.addTransform(plane1, tran3)
+    |> GameObject.addGeometry(plane1, geo3)
+    |> GameObject.addPhongMaterial(plane1, mat3)
+    |> GameObject.addShader(plane1, shader3);
 
   state;
 };
