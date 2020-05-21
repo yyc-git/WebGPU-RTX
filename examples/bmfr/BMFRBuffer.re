@@ -851,7 +851,7 @@ module GetHitShadingData = {
     };
 
     let getBufferSize = bufferData => {
-      bufferData |> Float32Array.byteLength;
+      bufferData |> Uint32Array.byteLength;
     };
 
     let setBufferData = ((bufferData, buffer), state) => {
@@ -966,10 +966,16 @@ module GetHitShadingData = {
 
   module IndexBuffer = {
     let buildData = (device, state) => {
-      let geometryCount = Geometry.getCount(state);
-      let dataCount = 3;
-
-      let bufferData = Uint32Array.fromLength(geometryCount * dataCount);
+      let bufferData =
+        Uint32Array.fromLength(
+          Geometry.getAllIndexData(state)
+          |> ArrayUtils.reduceOneParam(
+               (. vertexDataTotalCount, indices) => {
+                 vertexDataTotalCount + Geometry.computeIndexCount(indices)
+               },
+               0,
+             ),
+        );
 
       let bufferSize = bufferData |> Uint32Array.byteLength;
       let buffer =

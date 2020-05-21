@@ -306,7 +306,7 @@ let init = (device, window, state) => {
      ))
   |> BMFRBuffer.GetHitShadingData.SceneDescBuffer.setBufferData((
        sceneDescBufferSize,
-sceneDescBufferData,
+       sceneDescBufferData,
        sceneDescBuffer,
      ))
   |> BMFRBuffer.GetHitShadingData.GeometryOffsetDataBuffer.setBufferData((

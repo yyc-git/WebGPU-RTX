@@ -46,23 +46,23 @@ struct PhongMaterial {
 
 hitAttributeNV vec3 attribs;
 
-layout(std140, set = 4, binding = 0) buffer SceneDesc { InstanceData i[]; }
+layout(std140, set = 1, binding = 3) buffer SceneDesc { InstanceData i[]; }
 sceneDesc;
 
 /* scalar work with only uint fields! */
-layout(scalar, set = 4, binding = 1) buffer SceneGeometryOffsetData {
+layout(scalar, set = 1, binding = 4) buffer SceneGeometryOffsetData {
   GeometryOffsetData o[];
 }
 sceneGeometryOffsetData;
 
 // TODO use array of blocks!how to upload data???
 /* static vertices */
-layout(scalar, set = 4, binding = 2) buffer Vertices { Vertex v[]; }
+layout(scalar, set = 1, binding = 5) buffer Vertices { Vertex v[]; }
 vertices;
-layout(scalar, set = 4, binding = 3) buffer Indices { uint i[]; }
+layout(scalar, set = 1, binding = 6) buffer Indices { uint i[]; }
 indices;
 
-layout(std140, set = 4, binding = 4) buffer MatColorBufferObject {
+layout(std140, set = 1, binding = 7) buffer MatColorBufferObject {
   PhongMaterial m[];
 }
 materials;
