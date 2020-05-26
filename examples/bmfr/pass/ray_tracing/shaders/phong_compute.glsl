@@ -27,5 +27,6 @@ vec3 computeSpecular(vec3 matSpecular, float shininess, vec3 viewDir,
 
 vec3 computeColor(float lightIntensity, float attenuation, vec3 diffuse,
                   vec3 specular) {
-  return vec3(lightIntensity * attenuation * (diffuse + specular));
+  // return vec3(lightIntensity * attenuation * (diffuse + specular));
+  return vec3(lightIntensity * attenuation * diffuse);
 }
