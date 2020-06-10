@@ -40,7 +40,8 @@ vec3 computeDirectGI(uint seed, float tMin, uint lightCount, vec3 worldPosition,
     }
   }
 
-  attenuation *= float(lightCount);
+  // attenuation *= float(lightCount);
+  float pdf = 1 / float(lightCount);
 
-  return computeColor(lightIntensity, attenuation, diffuse, specular);
+  return computeColor(lightIntensity, attenuation, diffuse, specular) / pdf;
 }
