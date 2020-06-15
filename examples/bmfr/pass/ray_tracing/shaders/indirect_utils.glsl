@@ -1,7 +1,7 @@
 
 // Utility function to get a vector perpendicular to an input vector
 //    (from "Efficient Construction of Perpendicular Vectors Without Branching")
-vec3 _getPerpendicularVector(vec3 u) {
+vec3 getPerpendicularVector(vec3 u) {
   vec3 a = abs(u);
   uint xm = ((a.x - a.y) < 0 && (a.x - a.z) < 0) ? 1 : 0;
   uint ym = (a.y - a.z) < 0 ? (1 ^ xm) : 0;
@@ -20,7 +20,7 @@ vec3 getCosHemisphereSample(inout uint randSeed, vec3 hitNorm) {
   vec2 randVal = vec2(rnd(randSeed), rnd(randSeed));
 
   // Cosine weighted hemisphere sample from RNG
-  vec3 bitangent = _getPerpendicularVector(hitNorm);
+  vec3 bitangent = getPerpendicularVector(hitNorm);
   vec3 tangent = cross(bitangent, hitNorm);
   float r = sqrt(randVal.x);
   float phi = 2.0f * 3.14159265f * randVal.y;

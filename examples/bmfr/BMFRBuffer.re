@@ -763,7 +763,7 @@ module GetHitShadingData = {
                       (
                         GameObject.unsafeGetGeometry(renderGameObject, state)
                         |> float_of_int,
-                        GameObject.unsafeGetPhongMaterial(
+                        GameObject.unsafeGetPBRMaterial(
                           renderGameObject,
                           state,
                         )
@@ -1050,13 +1050,13 @@ module GetHitShadingData = {
     };
   };
 
-  module PhongMaterialBuffer = {
+  module PBRMaterialBuffer = {
     let buildData = (device, state) => {
-      let phongMaterialCount = PhongMaterial.getCount(state);
+      let pbrMaterialCount = PBRMaterial.getCount(state);
       let dataCount = 4 + 4;
 
       let bufferData =
-        Float32Array.fromLength(phongMaterialCount * dataCount);
+        Float32Array.fromLength(pbrMaterialCount * dataCount);
 
       let bufferSize = bufferData |> Float32Array.byteLength;
       let buffer =
@@ -1067,12 +1067,16 @@ module GetHitShadingData = {
            });
 
       let (bufferData, _) =
-        PhongMaterial.getAllPhongMaterials(state)
+        PBRMaterial.getAllPBRMaterials(state)
         |> ArrayUtils.reduceOneParam(
              (. (bufferData, offset), material) => {
-               let diffuse = PhongMaterial.unsafeGetDiffuse(material, state);
-               let shininess =
-                 PhongMaterial.unsafeGetShininess(material, state);
+               let diffuse = PBRMaterial.unsafeGetDiffuse(material, state);
+               let metalness =
+                 PBRMaterial.unsafeGetMetalness(material, state);
+               let roughness =
+                 PBRMaterial.unsafeGetRoughness(material, state);
+               let specular =
+                 PBRMaterial.unsafeGetSpecular(material, state);
 
                let (bufferData, newOffset) =
                  bufferData
@@ -1082,9 +1086,9 @@ module GetHitShadingData = {
 
                let (bufferData, newOffset) =
                  bufferData
-                 |> TypeArray.Float32Array.setFloat(newOffset, shininess);
+                 |> TypeArray.Float32Array.setFloatTuple3(newOffset, (metalness, roughness, specular));
 
-               (bufferData, newOffset + 3);
+               (bufferData, newOffset + 1);
              },
              (bufferData, 0),
            );
@@ -1097,7 +1101,7 @@ module GetHitShadingData = {
     };
 
     let unsafeGetBufferData = state => {
-      Pass.unsafeGetStorageBufferData("phongMaterialBuffer", state);
+      Pass.unsafeGetStorageBufferData("pbrMaterialBuffer", state);
     };
 
     let getBufferSize = bufferData => {
@@ -1106,7 +1110,7 @@ module GetHitShadingData = {
 
     let setBufferData = ((bufferData, buffer), state) => {
       Pass.setStorageBufferData(
-        "phongMaterialBuffer",
+        "pbrMaterialBuffer",
         (bufferData, buffer),
         state,
       );

@@ -242,21 +242,21 @@ let init = (device, queue, state) => {
            BindGroup.binding(
              ~binding=0,
              ~textureView=
-               Pass.unsafeGetTextureView("positionRenderTargetView", state),
+               Pass.unsafeGetTextureView("positionRoughnessRenderTargetView", state),
              ~size=0,
              (),
            ),
            BindGroup.binding(
              ~binding=1,
              ~textureView=
-               Pass.unsafeGetTextureView("normalRenderTargetView", state),
+               Pass.unsafeGetTextureView("normalMetalnessRenderTargetView", state),
              ~size=0,
              (),
            ),
            BindGroup.binding(
              ~binding=2,
              ~textureView=
-               Pass.unsafeGetTextureView("diffuseRenderTargetView", state),
+               Pass.unsafeGetTextureView("diffusePositionWRenderTargetView", state),
              ~size=0,
              (),
            ),
@@ -264,7 +264,7 @@ let init = (device, queue, state) => {
              ~binding=3,
              ~textureView=
                Pass.unsafeGetTextureView(
-                 "motionVectorDepthShininessRenderTargetView",
+                 "motionVectorDepthSpecularRenderTargetView",
                  state,
                ),
              ~size=0,
@@ -305,8 +305,8 @@ let init = (device, queue, state) => {
     BMFRBuffer.GetHitShadingData.VertexBuffer.unsafeGetBufferData(state);
   let (indexBufferSize, indexBuffer) =
     BMFRBuffer.GetHitShadingData.IndexBuffer.unsafeGetBufferData(state);
-  let (phongMaterialBufferSize, phongMaterialBuffer) =
-    BMFRBuffer.GetHitShadingData.PhongMaterialBuffer.unsafeGetBufferData(
+  let (pbrMaterialBufferSize, pbrMaterialBuffer) =
+    BMFRBuffer.GetHitShadingData.PBRMaterialBuffer.unsafeGetBufferData(
       state,
     );
 
@@ -369,9 +369,9 @@ let init = (device, queue, state) => {
            ),
            BindGroup.binding(
              ~binding=7,
-             ~buffer=phongMaterialBuffer,
+             ~buffer=pbrMaterialBuffer,
              ~offset=0,
-             ~size=phongMaterialBufferSize,
+             ~size=pbrMaterialBufferSize,
              (),
            ),
          |],
@@ -412,9 +412,9 @@ let init = (device, queue, state) => {
   //         //  ),
   //         //  BindGroup.binding(
   //         //    ~binding=4,
-  //         //    ~buffer=phongMaterialBuffer,
+  //         //    ~buffer=pbrMaterialBuffer,
   //         //    ~offset=0,
-  //         //    ~size=phongMaterialBufferSize,
+  //         //    ~size=pbrMaterialBufferSize,
   //         //    (),
   //         //  ),
   //        |],

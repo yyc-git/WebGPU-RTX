@@ -8,27 +8,32 @@
 #include "common_data.glsl"
 #include "define.glsl"
 #include "raycommon.glsl"
+#include "shading_data.glsl"
 
 #include "light.glsl"
-#include "phong_compute.glsl"
+#include "pbr_compute.glsl"
 #include "random.glsl"
 
 #include "indirect_utils.glsl"
+
+#include "disney.glsl"
 
 layout(location = 1) rayPayloadNV bool isShadowed;
 
 #include "shadow_ray.glsl"
 
-#include "compute_direct_gi.glsl"
+#include "ggx_direct.glsl"
 
 layout(location = 0) rayPayloadNV hitPayload prd;
 
 #include "indirect_ray.glsl"
 
-layout(binding = 0) uniform sampler2D gPositionTexture;
-layout(binding = 1) uniform sampler2D gNormalTexture;
-layout(binding = 2) uniform sampler2D gDiffuseTexture;
-layout(binding = 3) uniform sampler2D gMotionVectorDepthShininessTexture;
+#include "ggx_indirect.glsl"
+
+layout(binding = 0) uniform sampler2D gPositionRoughnessTexture;
+layout(binding = 1) uniform sampler2D gNormalMetalnessTexture;
+layout(binding = 2) uniform sampler2D gDiffusePositionWTexture;
+layout(binding = 3) uniform sampler2D gMotionVectorDepthSpecularTexture;
 
 layout(set = 1, binding = 0) uniform accelerationStructureNV topLevelAS;
 layout(std140, set = 1, binding = 1) buffer PixelBuffer { vec4 pixels[]; }
@@ -63,45 +68,34 @@ void main() {
 
   vec2 lanuchIndex = getLanuchIndex(gl_LaunchIDNV, gl_LaunchSizeNV);
 
-  vec4 worldPosition = texture(gPositionTexture, lanuchIndex);
-  vec3 worldNormal = texture(gNormalTexture, lanuchIndex).xyz;
-  vec3 materialDiffuse = texture(gDiffuseTexture, lanuchIndex).rgb;
+  vec4 positionRoughness = texture(gPositionRoughnessTexture, lanuchIndex);
+  vec4 diffusePositionW = texture(gDiffusePositionWTexture, lanuchIndex);
+  vec4 normalMetalness = texture(gNormalMetalnessTexture, lanuchIndex);
+  vec4 motionVectorDepthSpecular =
+      texture(gMotionVectorDepthSpecularTexture, lanuchIndex);
 
-  // TODO feat: get specular from material
-  // vec3 materialSpecular = texture(gSpecularTexture, lanuchIndex).rgb;
-  vec3 materialSpecular = vec3(0.5, 0.0, 0.5);
-  // vec3 materialSpecular = vec3(0.0, 0.0, 0.5);
+  vec4 worldPosition = vec4(positionRoughness.xyz, diffusePositionW.a);
+  vec3 worldNormal = normalMetalness.xyz;
+  vec3 materialDiffuse = diffusePositionW.rgb;
+  // vec3 materialSpecularColor = vec3(0.5, 0.0, 0.5);
+  float materialMetalness = normalMetalness.w;
+  float materialRoughness = positionRoughness.w;
+  float materialSpecular = motionVectorDepthSpecular.w;
 
-  vec4 motionVectorDepthShininess =
-      texture(gMotionVectorDepthShininessTexture, lanuchIndex);
-  float shininess = motionVectorDepthShininess.w;
+  ShadingData shading = buildShadingData(materialDiffuse, materialMetalness,
+                                         materialRoughness, materialSpecular);
 
   vec3 hitValue = vec3(0.0);
 
   if (isNotBackground(worldPosition)) {
-    hitValue += computeDirectGI(seed, tMin, lightCount, vec3(worldPosition),
-                                worldNormal, materialDiffuse, materialSpecular,
-                                shininess, topLevelAS);
+    vec3 V = normalize(uCamera.cameraPosition.xyz - worldPosition.xyz);
+
+    hitValue += computeDirectLight(seed, tMin, lightCount, worldPosition.xyz,
+                                   worldNormal, V, shading, topLevelAS);
 
     if (doIndirectGI) {
-      // Select a random direction for our diffuse interreflection ray.
-      vec3 bounceDir;
-      bounceDir = getCosHemisphereSample(seed, worldNormal);
-
-      vec3 bounceColor =
-          shootIndirectRay(topLevelAS, worldPosition.xyz, bounceDir, tMin);
-
-      // Get dotNL for our selected ray direction
-      float dotNL = max(dot(worldNormal, bounceDir), 0.0);
-
-      // Probability of selecting this ray ( cos/pi for cosine sampling, 1/2pi
-      // for uniform sampling )
-      float sampleProb = (dotNL / M_PI);
-
-      // Do Monte Carlo integration of indirect light (i.e., rendering equation)
-      //    -> This is:  (dotNL * incoming light * BRDF) / probability-of-sample
-      // hitValue += dotNL * bounceColor * materialDiffuse / sampleProb;
-      hitValue += ( dotNL * bounceColor * materialDiffuse / M_PI ) / sampleProb;
+      hitValue += computeIndirectLight(seed, tMin, worldPosition.xyz,
+                                       worldNormal, V, shading, topLevelAS);
     }
   } else {
     // TODO refactor: add miss color to common data buffer?

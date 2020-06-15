@@ -32,9 +32,9 @@ so need other solutions!!!
 layout(location = 0) in vec2 uv;
 // layout(location = 0) out vec4 outColor;
 
-layout(binding = 0) uniform sampler2D gPositionTexture;
-layout(binding = 1) uniform sampler2D gNormalTexture;
-layout(binding = 2) uniform sampler2D gMotionVectorDepthShininessTexture;
+layout(binding = 0) uniform sampler2D gPositionRoughnessTexture;
+layout(binding = 1) uniform sampler2D gNormalMetalnessTexture;
+layout(binding = 2) uniform sampler2D gMotionVectorDepthSpecularTexture;
 
 layout(std140, set = 1, binding = 0) buffer CurNoisyPixelBuffer {
   vec4 pixels[];
@@ -87,8 +87,8 @@ void main() {
   vec4 commonDataCompressedData = pushC.compressedData;
   uint frame = getFrame(commonDataCompressedData);
 
-  vec3 worldPosition = texture(gPositionTexture, uv).xyz;
-  vec3 worldNormal = texture(gNormalTexture, uv).xyz;
+  vec3 worldPosition = texture(gPositionRoughnessTexture, uv).xyz;
+  vec3 worldNormal = texture(gNormalMetalnessTexture, uv).xyz;
 
   uint pixelIndex = getPixelIndex(uv, screenDimension.resolution);
 
@@ -111,7 +111,7 @@ void main() {
 
   if (frame > 0) {
     //   TODO getClosestMotionVector?
-    vec2 motionVector = texture(gMotionVectorDepthShininessTexture, uv).xy;
+    vec2 motionVector = texture(gMotionVectorDepthSpecularTexture, uv).xy;
 
     float positionLimitSquared = POSITION_LIMIT_SQUARED;
     float normalLimitSquared = NORMAL_LIMIT_SQUARED;

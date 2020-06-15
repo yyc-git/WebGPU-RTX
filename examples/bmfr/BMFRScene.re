@@ -74,15 +74,15 @@ let buildScene = state => {
     |> Geometry.setVertexData(geo1, Geometry.buildTriangleVertexData())
     |> Geometry.setIndexData(geo1, Geometry.buildTriangleIndexData());
 
-  let (mat1, state) = PhongMaterial.create(state);
+  let (mat1, state) = PBRMaterial.create(state);
   let state =
     state
-    // |> PhongMaterial.setAmbient(mat1, (0.1, 0.1, 0.1))
-    |> PhongMaterial.setDiffuse(mat1, (1.0, 0., 0.))
-    // |> PhongMaterial.setSpecular(mat1, (0.2, 0.0, 1.0))
-    |> PhongMaterial.setShininess(mat1, 36.);
-  // |> PhongMaterial.setIllum(mat1, 2)
-  // |> PhongMaterial.setDissolve(mat1, 1.);
+    |> PBRMaterial.setDiffuse(mat1, (1.0, 0., 0.))
+    |> PBRMaterial.setSpecular(mat1, 0.95)
+    |> PBRMaterial.setMetalness(mat1, 0.5)
+    |> PBRMaterial.setRoughness(mat1, 0.5);
+  // |> PBRMaterial.setIllum(mat1, 2)
+  // |> PBRMaterial.setDissolve(mat1, 1.);
 
   let (shader1, state) = Shader.create(state);
   let state = state |> Shader.setHitGroupIndex(shader1, 0);
@@ -95,7 +95,7 @@ let buildScene = state => {
     state
     |> GameObject.addTransform(triangle1, tran1)
     |> GameObject.addGeometry(triangle1, geo1)
-    |> GameObject.addPhongMaterial(triangle1, mat1)
+    |> GameObject.addPBRMaterial(triangle1, mat1)
     |> GameObject.addShader(triangle1, shader1)
     |> GameObject.addTransformAnimation(triangle1, transformAnim1);
 
@@ -114,11 +114,13 @@ let buildScene = state => {
     |> Geometry.setVertexData(geo2, Geometry.buildTriangleVertexData())
     |> Geometry.setIndexData(geo2, Geometry.buildTriangleIndexData());
 
-  let (mat2, state) = PhongMaterial.create(state);
+  let (mat2, state) = PBRMaterial.create(state);
   let state =
     state
-    |> PhongMaterial.setDiffuse(mat2, (0.0, 0.5, 0.5))
-    |> PhongMaterial.setShininess(mat2, 36.);
+    |> PBRMaterial.setDiffuse(mat2, (0.0, 0.5, 0.5))
+    |> PBRMaterial.setSpecular(mat2, 0.95)
+    |> PBRMaterial.setMetalness(mat2, 0.5)
+    |> PBRMaterial.setRoughness(mat2, 0.5);
 
   let (shader2, state) = Shader.create(state);
   let state = state |> Shader.setHitGroupIndex(shader2, 0);
@@ -131,7 +133,7 @@ let buildScene = state => {
     state
     |> GameObject.addTransform(triangle2, tran2)
     |> GameObject.addGeometry(triangle2, geo2)
-    |> GameObject.addPhongMaterial(triangle2, mat2)
+    |> GameObject.addPBRMaterial(triangle2, mat2)
     |> GameObject.addShader(triangle2, shader2);
   // |> GameObject.addTransformAnimation(triangle2, transformAnim2);
 
@@ -150,11 +152,13 @@ let buildScene = state => {
     |> Geometry.setVertexData(geo3, Geometry.buildPlaneVertexData())
     |> Geometry.setIndexData(geo3, Geometry.buildPlaneIndexData());
 
-  let (mat3, state) = PhongMaterial.create(state);
+  let (mat3, state) = PBRMaterial.create(state);
   let state =
     state
-    |> PhongMaterial.setDiffuse(mat3, (0.0, 1., 0.))
-    |> PhongMaterial.setShininess(mat3, 72.);
+    |> PBRMaterial.setDiffuse(mat3, (0.0, 1., 0.))
+    |> PBRMaterial.setSpecular(mat3, 0.95)
+    |> PBRMaterial.setMetalness(mat3, 0.5)
+    |> PBRMaterial.setRoughness(mat3, 0.5);
 
   let (shader3, state) = Shader.create(state);
   // let state = state |> Shader.setHitGroupIndex(shader2, 1);
@@ -164,7 +168,7 @@ let buildScene = state => {
     state
     |> GameObject.addTransform(plane1, tran3)
     |> GameObject.addGeometry(plane1, geo3)
-    |> GameObject.addPhongMaterial(plane1, mat3)
+    |> GameObject.addPBRMaterial(plane1, mat3)
     |> GameObject.addShader(plane1, shader3);
 
   state;
@@ -232,8 +236,8 @@ let init = (device, window, state) => {
     BMFRBuffer.GetHitShadingData.VertexBuffer.buildData(device, state);
   let (indexBufferData, indexBufferSize, indexBuffer) =
     BMFRBuffer.GetHitShadingData.IndexBuffer.buildData(device, state);
-  let (phongMaterialBufferData, phongMaterialBufferSize, phongMaterialBuffer) =
-    BMFRBuffer.GetHitShadingData.PhongMaterialBuffer.buildData(device, state);
+  let (pbrMaterialBufferData, pbrMaterialBufferSize, pbrMaterialBuffer) =
+    BMFRBuffer.GetHitShadingData.PBRMaterialBuffer.buildData(device, state);
 
   state
   |> Pass.setAccumulatedFrameIndex(0)
@@ -317,9 +321,9 @@ let init = (device, window, state) => {
        indexBufferSize,
        indexBuffer,
      ))
-  |> BMFRBuffer.GetHitShadingData.PhongMaterialBuffer.setBufferData((
-       phongMaterialBufferSize,
-       phongMaterialBuffer,
+  |> BMFRBuffer.GetHitShadingData.PBRMaterialBuffer.setBufferData((
+       pbrMaterialBufferSize,
+       pbrMaterialBuffer,
      ));
 };
 

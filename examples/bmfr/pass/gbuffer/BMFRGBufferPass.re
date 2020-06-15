@@ -169,7 +169,7 @@ let init = (device, window, state) => {
          |],
        });
 
-  let phongMaterialBindGroupLayout =
+  let pbrMaterialBindGroupLayout =
     device
     |> Device.createBindGroupLayout({
          "bindings": [|
@@ -239,53 +239,47 @@ let init = (device, window, state) => {
          offsetArrMap,
        );
 
-  let singleRenderGameObjectPhongMaterialBufferSize =
+  let singleRenderGameObjectPBRMaterialBufferSize =
     (4 + 4) * Float32Array._BYTES_PER_ELEMENT;
-  let alignedPhongMaterialBufferBytes =
+  let alignedPBRMaterialBufferBytes =
     ManageBuffer.UniformBuffer.getAlignedBufferBytes(
-      singleRenderGameObjectPhongMaterialBufferSize,
+      singleRenderGameObjectPBRMaterialBufferSize,
     );
-  let alignedPhongMaterialBufferFloats =
+  let alignedPBRMaterialBufferFloats =
     ManageBuffer.UniformBuffer.getAlignedBufferFloats(
-      alignedPhongMaterialBufferBytes,
+      alignedPBRMaterialBufferBytes,
     );
-  let phongMaterialBufferSize =
-    (allRenderGameObjects |> Js.Array.length) * alignedPhongMaterialBufferBytes;
+  let pbrMaterialBufferSize =
+    (allRenderGameObjects |> Js.Array.length) * alignedPBRMaterialBufferBytes;
 
-  let (phongMaterialBufferData, _, offsetArrMap) =
+  let (pbrMaterialBufferData, _, offsetArrMap) =
     allRenderGameObjects
     |> ArrayUtils.reduceOneParam(
-         (.
-           (phongMaterialBufferData, offset, offsetArrMap),
-           renderGameObject,
-         ) => {
+         (. (pbrMaterialBufferData, offset, offsetArrMap), renderGameObject) => {
            let material =
-             GameObject.unsafeGetPhongMaterial(renderGameObject, state);
+             GameObject.unsafeGetPBRMaterial(renderGameObject, state);
 
-           let (phongMaterialBufferData, newOffset) =
-             phongMaterialBufferData
+           let (pbrMaterialBufferData, newOffset) =
+             pbrMaterialBufferData
              |> TypeArray.Float32Array.setFloatTuple3(
                   offset,
-                  PhongMaterial.unsafeGetDiffuse(material, state),
+                  PBRMaterial.unsafeGetDiffuse(material, state),
                 );
 
-           //  let (phongMaterialBufferData, newOffset) =
-           //    phongMaterialBufferData
-           //    |> TypeArray.Float32Array.setFloatTuple3(
-           //         newOffset + 1,
-           //         PhongMaterial.unsafeGetSpecular(material, state),
-           //       );
-
-           let (phongMaterialBufferData, newOffset) =
-             phongMaterialBufferData
-             |> TypeArray.Float32Array.setFloat(
+           let (pbrMaterialBufferData, newOffset) =
+             pbrMaterialBufferData
+             |> TypeArray.Float32Array.setFloatTuple3(
                   newOffset + 1,
-                  PhongMaterial.unsafeGetShininess(material, state),
+                  (
+                    PBRMaterial.unsafeGetMetalness(material, state),
+                    PBRMaterial.unsafeGetRoughness(material, state),
+                    PBRMaterial.unsafeGetSpecular(material, state),
+                  ),
                 );
 
            (
-             phongMaterialBufferData,
-             offset + alignedPhongMaterialBufferFloats,
+             pbrMaterialBufferData,
+             offset + alignedPBRMaterialBufferFloats,
              offsetArrMap
              |> ImmutableSparseMap.set(
                   renderGameObject,
@@ -299,7 +293,7 @@ let init = (device, window, state) => {
          },
          (
            Float32Array.fromLength(
-             phongMaterialBufferSize / Float32Array._BYTES_PER_ELEMENT,
+             pbrMaterialBufferSize / Float32Array._BYTES_PER_ELEMENT,
            ),
            0,
            ImmutableSparseMap.createEmpty(),
@@ -307,28 +301,28 @@ let init = (device, window, state) => {
        );
 
   Log.printComplete(
-    "phongMaterialBufferData:",
-    (phongMaterialBufferData, offsetArrMap),
+    "pbrMaterialBufferData:",
+    (pbrMaterialBufferData, offsetArrMap),
   );
 
-  let phongMaterialBuffer =
+  let pbrMaterialBuffer =
     device
     |> Device.createBuffer({
-         "size": phongMaterialBufferSize,
+         "size": pbrMaterialBufferSize,
          "usage": BufferUsage.copy_dst lor BufferUsage.uniform,
        });
-  phongMaterialBuffer |> Buffer.setSubFloat32Data(0, phongMaterialBufferData);
+  pbrMaterialBuffer |> Buffer.setSubFloat32Data(0, pbrMaterialBufferData);
 
-  let phongMaterialBindGroup =
+  let pbrMaterialBindGroup =
     device
     |> Device.createBindGroup({
-         "layout": phongMaterialBindGroupLayout,
+         "layout": pbrMaterialBindGroupLayout,
          "bindings": [|
            BindGroup.binding(
              ~binding=0,
-             ~buffer=phongMaterialBuffer,
+             ~buffer=pbrMaterialBuffer,
              ~offset=0,
-             ~size=singleRenderGameObjectPhongMaterialBufferSize,
+             ~size=singleRenderGameObjectPBRMaterialBufferSize,
              (),
            ),
          |],
@@ -337,15 +331,15 @@ let init = (device, window, state) => {
   let state =
     state
     |> Pass.setUniformBufferData(
-         "phongMaterialBuffer",
-         (phongMaterialBufferData, phongMaterialBuffer),
+         "pbrMaterialBuffer",
+         (pbrMaterialBufferData, pbrMaterialBuffer),
        );
 
   let state =
     state
     |> Pass.GBufferPass.addDynamicBindGroupData(
          1,
-         phongMaterialBindGroup,
+         pbrMaterialBindGroup,
          offsetArrMap,
        );
 
@@ -395,11 +389,11 @@ let init = (device, window, state) => {
            WebGPUUtils.loadShaderFile({j|$(baseShaderPath)/gbuffer.frag|j}),
        });
 
-  let positionRenderTargetFormat = "rgba16float";
-  let normalRenderTargetFormat = "rgba16float";
-  let diffuseRenderTargetFormat = "rgba8unorm";
+  let positionRoughnessRenderTargetFormat = "rgba16float";
+  let normalMetalnessRenderTargetFormat = "rgba16float";
+  let diffusePositionWRenderTargetFormat = "rgba8unorm";
   // let specularRenderTargetFormat = "rgba8unorm";
-  let motionVectorDepthShininessRenderTargetFormat = "rgba16float";
+  let motionVectorDepthSpecularRenderTargetFormat = "rgba16float";
   // let depthRenderTargetFormat = "r16float";
 
   let depthTextureFormat = "depth24plus";
@@ -414,7 +408,7 @@ let init = (device, window, state) => {
              |> Device.createPipelineLayout({
                   "bindGroupLayouts": [|
                     modelBindGroupLayout,
-                    phongMaterialBindGroupLayout,
+                    pbrMaterialBindGroupLayout,
                     cameraBindGroupLayout,
                   |],
                 }),
@@ -457,17 +451,17 @@ let init = (device, window, state) => {
            ~rasterizationState=Pipeline.Render.rasterizationState(),
            ~colorStates=[|
              Pipeline.Render.colorState(
-               ~format=positionRenderTargetFormat,
+               ~format=positionRoughnessRenderTargetFormat,
                ~alphaBlend=Pipeline.Render.blendDescriptor(),
                ~colorBlend=Pipeline.Render.blendDescriptor(),
              ),
              Pipeline.Render.colorState(
-               ~format=normalRenderTargetFormat,
+               ~format=normalMetalnessRenderTargetFormat,
                ~alphaBlend=Pipeline.Render.blendDescriptor(),
                ~colorBlend=Pipeline.Render.blendDescriptor(),
              ),
              Pipeline.Render.colorState(
-               ~format=diffuseRenderTargetFormat,
+               ~format=diffusePositionWRenderTargetFormat,
                ~alphaBlend=Pipeline.Render.blendDescriptor(),
                ~colorBlend=Pipeline.Render.blendDescriptor(),
              ),
@@ -477,7 +471,7 @@ let init = (device, window, state) => {
              //   ~colorBlend=Pipeline.Render.blendDescriptor(),
              // ),
              Pipeline.Render.colorState(
-               ~format=motionVectorDepthShininessRenderTargetFormat,
+               ~format=motionVectorDepthSpecularRenderTargetFormat,
                ~alphaBlend=Pipeline.Render.blendDescriptor(),
                ~colorBlend=Pipeline.Render.blendDescriptor(),
              ),
@@ -501,19 +495,29 @@ let init = (device, window, state) => {
 
   let state = state |> Pass.GBufferPass.setPipeline(pipeline);
 
-  let (positionRenderTarget, positionRenderTargetView) =
-    _createRenderTargetData(device, window, positionRenderTargetFormat);
-  let (normalRenderTarget, normalRenderTargetView) =
-    _createRenderTargetData(device, window, normalRenderTargetFormat);
-  let (diffuseRenderTarget, diffuseRenderTargetView) =
-    _createRenderTargetData(device, window, diffuseRenderTargetFormat);
-  // let (specularRenderTarget, specularRenderTargetView) =
-  //   _createRenderTargetData(device, window, specularRenderTargetFormat);
-  let (_, motionVectorDepthShininessRenderTargetView) =
+  let (positionRoughnessRenderTarget, positionRoughnessRenderTargetView) =
     _createRenderTargetData(
       device,
       window,
-      motionVectorDepthShininessRenderTargetFormat,
+      positionRoughnessRenderTargetFormat,
+    );
+  let (normalMetalnessRenderTarget, normalMetalnessRenderTargetView) =
+    _createRenderTargetData(
+      device,
+      window,
+      normalMetalnessRenderTargetFormat,
+    );
+  let (diffusePositionWRenderTarget, diffusePositionWRenderTargetView) =
+    _createRenderTargetData(
+      device,
+      window,
+      diffusePositionWRenderTargetFormat,
+    );
+  let (_, motionVectorDepthSpecularRenderTargetView) =
+    _createRenderTargetData(
+      device,
+      window,
+      motionVectorDepthSpecularRenderTargetFormat,
     );
   // let (depthRenderTarget, depthRenderTargetView) =
   //   _createRenderTargetData(device, window, depthRenderTargetFormat);
@@ -521,21 +525,20 @@ let init = (device, window, state) => {
   let state =
     state
     |> Pass.setTextureView(
-         "positionRenderTargetView",
-         positionRenderTargetView,
+         "positionRoughnessRenderTargetView",
+         positionRoughnessRenderTargetView,
        )
-    |> Pass.setTextureView("normalRenderTargetView", normalRenderTargetView)
     |> Pass.setTextureView(
-         "diffuseRenderTargetView",
-         diffuseRenderTargetView,
+         "normalMetalnessRenderTargetView",
+         normalMetalnessRenderTargetView,
        )
-    // |> Pass.setTextureView(
-    //      "specularRenderTargetView",
-    //      specularRenderTargetView,
-    //    )
     |> Pass.setTextureView(
-         "motionVectorDepthShininessRenderTargetView",
-         motionVectorDepthShininessRenderTargetView,
+         "diffusePositionWRenderTargetView",
+         diffusePositionWRenderTargetView,
+       )
+    |> Pass.setTextureView(
+         "motionVectorDepthSpecularRenderTargetView",
+         motionVectorDepthSpecularRenderTargetView,
        );
   // |> Pass.setTextureView("depthRenderTargetView", depthRenderTargetView);
 
@@ -593,12 +596,21 @@ let execute = (device, queue, state) => {
          {
            PassEncoder.Render.descriptor(
              ~colorAttachments=[|
-               _buildColorAttachment("positionRenderTargetView", state),
-               _buildColorAttachment("normalRenderTargetView", state),
-               _buildColorAttachment("diffuseRenderTargetView", state),
+               _buildColorAttachment(
+                 "positionRoughnessRenderTargetView",
+                 state,
+               ),
+               _buildColorAttachment(
+                 "normalMetalnessRenderTargetView",
+                 state,
+               ),
+               _buildColorAttachment(
+                 "diffusePositionWRenderTargetView",
+                 state,
+               ),
                // _buildColorAttachment("specularRenderTargetView", state),
                _buildColorAttachment(
-                 "motionVectorDepthShininessRenderTargetView",
+                 "motionVectorDepthSpecularRenderTargetView",
                  state,
                ),
                //  _buildColorAttachment("depthRenderTargetView", state),

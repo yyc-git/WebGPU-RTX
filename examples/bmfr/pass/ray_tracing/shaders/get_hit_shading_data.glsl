@@ -32,14 +32,10 @@ struct GeometryOffsetData {
   uint indexOffset;
 };
 
-struct PhongMaterial {
-  //   vec4 ambient;
+struct PBRMaterial {
   vec4 diffuse;
-  //   vec4 specular;
-  // vec3  transmittance;
-  // vec3  emission;
 
-  // include shininess
+  // include metalness, roughness, specular
   vec4 compressedData;
 };
 
@@ -62,7 +58,7 @@ layout(scalar, set = 1, binding = 6) buffer Indices { uint i[]; }
 indices;
 
 layout(std140, set = 1, binding = 7) buffer MatColorBufferObject {
-  PhongMaterial m[];
+  PBRMaterial m[];
 }
 materials;
 
@@ -98,13 +94,17 @@ GeometryOffsetData _getGeometryOffsetData(uint geometryIndex) {
   return sceneGeometryOffsetData.o[geometryIndex];
 }
 
-PhongMaterial _getMaterial(uint materialIndex) {
+PBRMaterial _getMaterial(uint materialIndex) {
   return materials.m[materialIndex];
 }
 
-vec3 _getMaterialDiffuse(PhongMaterial mat) { return vec3(mat.diffuse); }
+vec3 _getMaterialDiffuse(PBRMaterial mat) { return vec3(mat.diffuse); }
 
-float _getMaterialShiniess(PhongMaterial mat) { return mat.compressedData.x; }
+float _getMaterialMetalness(PBRMaterial mat) { return mat.compressedData.x; }
+
+float _getMaterialRoughness(PBRMaterial mat) { return mat.compressedData.y; }
+
+float _getMaterialSpecular(PBRMaterial mat) { return mat.compressedData.z; }
 
 ivec3 _getTriangleIndices(uint indexOffset, uint primitiveIndex) {
   return ivec3(indices.i[indexOffset + 3 * primitiveIndex + 0],
@@ -119,9 +119,12 @@ Vertex _getTriangleVertex(uint vertexOffset, uint index) {
 struct HitShadingData {
   vec3 worldPosition;
   vec3 worldNormal;
+  vec3 V;
   vec3 materialDiffuse;
-  vec3 materialSpecular;
-  float shininess;
+  // vec3 materialSpecularColor;
+  float materialMetalness;
+  float materialRoughness;
+  float materialSpecular;
 };
 
 HitShadingData getHitShadingData(uint instanceIndex, uint primitiveIndex) {
@@ -156,16 +159,17 @@ HitShadingData getHitShadingData(uint instanceIndex, uint primitiveIndex) {
                   vec3(v1.position) * barycentrics.y +
                   vec3(v2.position) * barycentrics.z;
 
-  PhongMaterial mat = _getMaterial(materialIndex);
+  PBRMaterial mat = _getMaterial(materialIndex);
 
   HitShadingData data;
   data.worldPosition =
       vec3(_getModelMatrix(instanceData) * vec4(localPos, 1.0));
   data.worldNormal = normalize(_getNormalMatrix(instanceData) * localNormal);
+  data.V = normalize(uCamera.cameraPosition.xyz - data.worldPosition);
   data.materialDiffuse = _getMaterialDiffuse(mat);
-  // TODO feat: get specular from material
-  data.materialSpecular = vec3(0.5, 0.0, 0.5);
-  data.shininess = _getMaterialShiniess(mat);
+  data.materialMetalness = _getMaterialMetalness(mat);
+  data.materialRoughness = _getMaterialRoughness(mat);
+  data.materialSpecular = _getMaterialSpecular(mat);
 
   return data;
 }

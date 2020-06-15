@@ -68,7 +68,7 @@ let _initFrameData =
              ~binding=0,
              ~textureView=
                Pass.unsafeGetTextureView(
-                 "motionVectorDepthShininessRenderTargetView",
+                 "motionVectorDepthSpecularRenderTargetView",
                  state,
                ),
              ~size=0,

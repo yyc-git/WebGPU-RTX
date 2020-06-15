@@ -33,12 +33,12 @@ let addGeometry = (gameObject, geometry, state) => {
   },
 };
 
-let addPhongMaterial = (gameObject, material, state) => {
+let addPBRMaterial = (gameObject, material, state) => {
   ...state,
   gameObject: {
     ...state.gameObject,
-    phongMaterialMap:
-      state.gameObject.phongMaterialMap
+    pbrMaterialMap:
+      state.gameObject.pbrMaterialMap
       |> ImmutableSparseMap.set(gameObject, material),
   },
 };
@@ -96,8 +96,8 @@ let unsafeGetTransform = (gameObject, state) => {
   state.gameObject.transformMap |> ImmutableSparseMap.unsafeGet(gameObject);
 };
 
-let unsafeGetPhongMaterial = (gameObject, state) => {
-  state.gameObject.phongMaterialMap
+let unsafeGetPBRMaterial = (gameObject, state) => {
+  state.gameObject.pbrMaterialMap
   |> ImmutableSparseMap.unsafeGet(gameObject);
 };
 

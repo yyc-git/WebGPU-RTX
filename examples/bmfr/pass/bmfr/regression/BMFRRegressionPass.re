@@ -84,21 +84,21 @@ let init = (device, state) => {
            BindGroup.binding(
              ~binding=0,
              ~textureView=
-               Pass.unsafeGetTextureView("positionRenderTargetView", state),
+               Pass.unsafeGetTextureView("positionRoughnessRenderTargetView", state),
              ~size=0,
              (),
            ),
            BindGroup.binding(
              ~binding=1,
              ~textureView=
-               Pass.unsafeGetTextureView("normalRenderTargetView", state),
+               Pass.unsafeGetTextureView("normalMetalnessRenderTargetView", state),
              ~size=0,
              (),
            ),
            BindGroup.binding(
              ~binding=2,
              ~textureView=
-               Pass.unsafeGetTextureView("diffuseRenderTargetView", state),
+               Pass.unsafeGetTextureView("diffusePositionWRenderTargetView", state),
              ~size=0,
              (),
            ),

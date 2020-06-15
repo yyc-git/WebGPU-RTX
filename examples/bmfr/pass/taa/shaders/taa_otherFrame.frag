@@ -10,7 +10,7 @@
 layout(location = 0) in vec2 uv;
 layout(location = 0) out vec4 outColor;
 
-layout(binding = 0) uniform sampler2D gMotionVectorDepthShininessTexture;
+layout(binding = 0) uniform sampler2D gMotionVectorDepthSpecularTexture;
 
 layout(set = 1, binding = 2) uniform ScreenDimension { vec2 resolution; }
 screenDimension;
@@ -34,7 +34,7 @@ vec2 getClosestMotionVector(vec2 jitteredUV, vec2 resolution) {
       sampleUV = saturateVec2(sampleUV);
 
       float NeighborhoodDepthSamp =
-          texture(gMotionVectorDepthShininessTexture, sampleUV).z;
+          texture(gMotionVectorDepthSpecularTexture, sampleUV).z;
 
       NeighborhoodDepthSamp = linearDepth(NeighborhoodDepthSamp);
 
@@ -51,7 +51,7 @@ vec2 getClosestMotionVector(vec2 jitteredUV, vec2 resolution) {
   }
   closestOffset /= resolution;
 
-  return texture(gMotionVectorDepthShininessTexture, jitteredUV + closestOffset)
+  return texture(gMotionVectorDepthSpecularTexture, jitteredUV + closestOffset)
       .xy;
 }
 

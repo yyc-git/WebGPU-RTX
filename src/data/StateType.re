@@ -22,16 +22,16 @@ type geometry = {
   indexDataMap: ImmutableSparseMap.t(GeometryType.geometry, array(int)),
 };
 
-type phongMaterial = {
+type pbrMaterial = {
   index: int,
-  // ambientMap: ImmutableSparseMap.t(PhongMaterialType.phongMaterial, ColorType.color3),
+  // ambientMap: ImmutableSparseMap.t(PBRMaterialType.pbrMaterial, ColorType.color3),
   diffuseMap:
-    ImmutableSparseMap.t(PhongMaterialType.phongMaterial, ColorType.color3),
-  specularMap:
-    ImmutableSparseMap.t(PhongMaterialType.phongMaterial, ColorType.color3),
-  shininessMap: ImmutableSparseMap.t(PhongMaterialType.phongMaterial, float),
-  // illumMap: ImmutableSparseMap.t(PhongMaterialType.phongMaterial, int),
-  // dissolveMap: ImmutableSparseMap.t(PhongMaterialType.phongMaterial, float),
+    ImmutableSparseMap.t(PBRMaterialType.pbrMaterial, ColorType.color3),
+  metalnessMap: ImmutableSparseMap.t(PBRMaterialType.pbrMaterial, float),
+  roughnessMap: ImmutableSparseMap.t(PBRMaterialType.pbrMaterial, float),
+  specularMap: ImmutableSparseMap.t(PBRMaterialType.pbrMaterial, float),
+  // illumMap: ImmutableSparseMap.t(PBRMaterialType.pbrMaterial, int),
+  // dissolveMap: ImmutableSparseMap.t(PBRMaterialType.pbrMaterial, float),
 };
 
 type directionLight = {
@@ -140,10 +140,10 @@ type gameObject = {
     ImmutableSparseMap.t(GameObjectType.gameObject, TransformType.transform),
   geometryMap:
     ImmutableSparseMap.t(GameObjectType.gameObject, GeometryType.geometry),
-  phongMaterialMap:
+  pbrMaterialMap:
     ImmutableSparseMap.t(
       GameObjectType.gameObject,
-      PhongMaterialType.phongMaterial,
+      PBRMaterialType.pbrMaterial,
     ),
   shaderMap:
     ImmutableSparseMap.t(GameObjectType.gameObject, ShaderType.shader),
@@ -336,7 +336,7 @@ and state = {
   gameObject,
   transform,
   geometry,
-  phongMaterial,
+  pbrMaterial,
   shader,
   directionLight,
   transformAnimation,

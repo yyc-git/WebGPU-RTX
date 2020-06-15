@@ -32,9 +32,9 @@ shared float blockMin;
 shared float blockMax;
 shared float vecLength;
 
-layout(binding = 0) uniform sampler2D gPositionTexture;
-layout(binding = 1) uniform sampler2D gNormalTexture;
-layout(binding = 2) uniform sampler2D gDiffuseTexture;
+layout(binding = 0) uniform sampler2D gPositionRoughnessTexture;
+layout(binding = 1) uniform sampler2D gNormalMetalnessTexture;
+layout(binding = 2) uniform sampler2D gDiffusePositionWTexture;
 
 layout(std140, set = 1, binding = 0) buffer CurNoisyPixelBuffer {
   vec4 pixels[];
@@ -323,7 +323,7 @@ void calculateFilteredColor(uint groupThreadId, uvec3 groupId,
                              gchannel[index] < 0.0 ? 0.0 : gchannel[index],
                              bchannel[index] < 0.0 ? 0.0 : bchannel[index]);
 
-    vec3 diffuse = texture(gDiffuseTexture, uv).xyz;
+    vec3 diffuse = texture(gDiffusePositionWTexture, uv).xyz;
     currentColor = modulateAlbedo(currentColor, diffuse);
 
     curNoisyPixelBuffer.pixels[pixelIndex] =
@@ -355,8 +355,8 @@ void main() {
 
     vec2 uv = convertPixelIndicesToUV(pixelIndices, screenDimension.resolution);
 
-    vec3 worldPosition = texture(gPositionTexture, uv).xyz;
-    vec3 worldNormal = texture(gNormalTexture, uv).xyz;
+    vec3 worldPosition = texture(gPositionRoughnessTexture, uv).xyz;
+    vec3 worldNormal = texture(gNormalMetalnessTexture, uv).xyz;
 
     uint pixelIndex = convertPixelIndicesToPixelIndex(
         pixelIndices, screenDimension.resolution);
@@ -394,7 +394,7 @@ void main() {
         .data[convertDataBufferTwoDIndexToOneDIndex(index, 9 + BLOCK_OFFSET)] =
         worldPosition.z * worldPosition.z;
 
-    vec3 diffuse = texture(gDiffuseTexture, uv).xyz;
+    vec3 diffuse = texture(gDiffusePositionWTexture, uv).xyz;
     currentColor = demodulateAlbedo(currentColor, diffuse);
 
     tmpDataBuffer

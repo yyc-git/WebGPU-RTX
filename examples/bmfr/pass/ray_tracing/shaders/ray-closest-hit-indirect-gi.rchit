@@ -4,22 +4,24 @@
 #extension GL_EXT_scalar_block_layout : enable
 #pragma shader_stage(closest)
 
+#include "../../shaders/camera.glsl"
 #include "common_data.glsl"
 #include "get_hit_shading_data.glsl"
+#include "shading_data.glsl"
 
 #include "random.glsl"
 #include "raycommon.glsl"
 
-#include "../../shaders/camera.glsl"
 #include "light.glsl"
-#include "phong_compute.glsl"
+#include "pbr_compute.glsl"
+
+#include "disney.glsl"
 
 layout(location = 1) rayPayloadNV bool isShadowed;
 
 #include "shadow_ray.glsl"
 
-#include "compute_direct_gi.glsl"
-#include "compute_indirect_gi.glsl"
+#include "ggx_direct.glsl"
 
 layout(location = 0) rayPayloadInNV hitPayload prd;
 
@@ -36,7 +38,11 @@ void main() {
 
   HitShadingData data = getHitShadingData(gl_InstanceID, gl_PrimitiveID);
 
-  prd.hitValue = computeIndirectGI(
-      prd.seed, tMin, lightCount, data.worldPosition, data.worldNormal,
-      data.materialDiffuse, data.materialSpecular, data.shininess, topLevelAS);
+  ShadingData shading =
+      buildShadingData(data.materialDiffuse, data.materialMetalness,
+                       data.materialRoughness, data.materialSpecular);
+
+  prd.hitValue =
+      computeDirectLight(prd.seed, tMin, lightCount, data.worldPosition,
+                         data.worldNormal, data.V, shading, topLevelAS);
 }
