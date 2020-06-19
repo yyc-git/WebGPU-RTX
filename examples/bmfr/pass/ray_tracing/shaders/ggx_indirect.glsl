@@ -26,7 +26,7 @@ vec3 _getGGXMicrofacet(uint seed, vec3 worldNormal, vec3 V,
   const float phi = r1 * TWO_PI;
   vec3 H = normalize(vec3(cos(phi) * sinTheta, sin(phi) * sinTheta, cosTheta));
   H = H.x * T + H.y * B + H.z * N;
-  H = dot(H, V) <= 0.0 ? H * -1.0 : H;
+  // H = dot(H, V) <= 0.0 ? H * -1.0 : H;
 
   return H;
 }
