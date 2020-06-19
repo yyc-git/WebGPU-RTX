@@ -6,7 +6,6 @@ layout(std140, set = 1, binding = 1) buffer HistoryPixelBuffer {
 }
 historyPixelBuffer;
 
-
 vec4 getCurrentColor(vec2 unjitteredUV, vec2 resolution) {
   uint currentColorPixelIndex = getPixelIndex(unjitteredUV, resolution);
 
@@ -43,17 +42,17 @@ vec3 yCoCgR2RGB(vec3 yCoCgRColor) {
   return rgbColor;
 }
 
-float luminance(in vec3 color) {
+float _luminance(in vec3 color) {
 #ifdef USE_TONEMAP
   return color.r;
 #else
-  return dot(color, vec3(0.25f, 0.50f, 0.25f));
+  return luminance(color);
 #endif
 }
 
 vec3 toneMap(vec3 color) {
 #ifdef USE_MIXED_TONE_MAP
-  float luma = luminance(color);
+  float luma = _luminance(color);
   if (luma <= MIXED_TONE_MAP_LINEAR_UPPER_BOUND) {
     return color;
   } else {
@@ -64,13 +63,13 @@ vec3 toneMap(vec3 color) {
            (luma * (2 * MIXED_TONE_MAP_LINEAR_UPPER_BOUND - 1 - luma));
   }
 #else
-  return color / (1 + luminance(color));
+  return color / (1 + _luminance(color));
 #endif
 }
 
 vec3 unToneMap(vec3 color) {
 #ifdef USE_MIXED_TONE_MAP
-  float luma = luminance(color);
+  float luma = _luminance(color);
   if (luma <= MIXED_TONE_MAP_LINEAR_UPPER_BOUND) {
     return color;
   } else {
@@ -81,6 +80,6 @@ vec3 unToneMap(vec3 color) {
            (luma * (1 - luma));
   }
 #else
-  return color / (1 - luminance(color));
+  return color / (1 - _luminance(color));
 #endif
 }

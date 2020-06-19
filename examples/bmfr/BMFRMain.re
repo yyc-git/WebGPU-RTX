@@ -1,6 +1,5 @@
 open WebGPU;
 
-
 open WonderBsMost.Most;
 
 let window = Window.make({"width": 640, "height": 480, "title": "WebGPU"});
@@ -27,10 +26,14 @@ Director.load(window)
             BMFRRayTracingPass.init(device, queue),
             BMFRRayTracingPass.execute(device, window, queue),
           )
-      //  |> Director.addPassFuncs(
-      //       BMFRPreprocessPass.init(device, swapChainFormat),
-      //       BMFRPreprocessPass.execute(device, queue, swapChain),
-      //     )
+       |> Director.addPassFuncs(
+            BMFRReweightFirefliesPass.init(device, swapChainFormat),
+            BMFRReweightFirefliesPass.execute(device, queue, swapChain),
+          )
+       //  |> Director.addPassFuncs(
+       //       BMFRPreprocessPass.init(device, swapChainFormat),
+       //       BMFRPreprocessPass.execute(device, queue, swapChain),
+       //     )
        |> Director.addPassFuncs(
             BMFRRegressionPass.init(device),
             BMFRRegressionPass.execute(device, queue, window),

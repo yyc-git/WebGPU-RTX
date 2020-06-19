@@ -1,6 +1,11 @@
 open WebGPU;
 
 let buildScene = state => {
+  let state =
+    state
+    |> Pass.ReweightFirefliesPass.setK(1e-9)
+    |> Pass.ReweightFirefliesPass.setSpp(1.0);
+
   let (light1, state) = GameObject.create(state);
 
   let (directionLight1, state) = DirectionLight.create(state);
@@ -189,6 +194,11 @@ let init = (device, window, state) => {
   let (pixelBufferSize, pixelBuffer) =
     BMFRBuffer.PixelBuffer.buildData(device, window);
 
+  let (cascadeBuffersBufferSize, cascadeBuffersBuffer) =
+    BMFRBuffer.ReweightFireflies.CascadeBuffers.buildData(device, window);
+  let (paramBufferData, paramBufferSize, paramBuffer) =
+    BMFRBuffer.ReweightFireflies.ParamBuffer.buildData(device, state);
+
   let (prevNoisyPixelBufferSize, prevNoisyPixelBuffer) =
     BMFRBuffer.PrevNoisyPixelBuffer.buildData(device, window);
   let (prevPositionBufferSize, prevPositionBuffer) =
@@ -264,6 +274,14 @@ let init = (device, window, state) => {
        commonDataBuffer,
      ))
   |> BMFRBuffer.PixelBuffer.setBufferData((pixelBufferSize, pixelBuffer))
+  |> BMFRBuffer.ReweightFireflies.CascadeBuffers.setBufferData((
+       cascadeBuffersBufferSize,
+       cascadeBuffersBuffer,
+     ))
+  |> BMFRBuffer.ReweightFireflies.ParamBuffer.setBufferData((
+       paramBufferData,
+       paramBuffer,
+     ))
   |> BMFRBuffer.PrevNoisyPixelBuffer.setBufferData((
        prevNoisyPixelBufferSize,
        prevNoisyPixelBuffer,

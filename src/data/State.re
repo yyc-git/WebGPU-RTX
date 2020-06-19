@@ -83,6 +83,12 @@ let create = () => {
       pipeline: None,
       staticBindGroupDataArr: [||],
     },
+    reweightFirefliesPassData: {
+      pipeline: None,
+      staticBindGroupData: None,
+      k: Pass.ReweightFirefliesPass.getKForDisable(),
+      spp: 1.0,
+    },
     preprocessPassData: {
       pipeline: None,
       staticBindGroupDataArr: [||],
@@ -104,7 +110,7 @@ let create = () => {
     },
     uniformBufferDataMap: ImmutableHashMap.createEmpty(),
     storageBufferDataMap: ImmutableHashMap.createEmpty(),
-float32StorageBufferTypeArrayDataMap: ImmutableHashMap.createEmpty(),
+    float32StorageBufferTypeArrayDataMap: ImmutableHashMap.createEmpty(),
     textureViewMap: ImmutableHashMap.createEmpty(),
   },
   rayTracing: {
