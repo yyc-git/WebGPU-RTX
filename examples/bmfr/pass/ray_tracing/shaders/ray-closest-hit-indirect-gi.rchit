@@ -42,7 +42,7 @@ void main() {
       buildShadingData(data.materialDiffuse, data.materialMetalness,
                        data.materialRoughness, data.materialSpecular);
 
-  prd.hitValue =
-      computeDirectLight(prd.seed, tMin, lightCount, data.worldPosition,
-                         data.worldNormal, data.V, shading, topLevelAS);
+  prd.hitValue = computeDirectLight(prd.seed, prd.evalDisneyType, tMin, lightCount,
+                                    data.worldPosition, data.worldNormal,
+                                    data.V, shading, topLevelAS);
 }

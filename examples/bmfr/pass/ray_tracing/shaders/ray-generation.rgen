@@ -8,15 +8,19 @@
 #include "common_data.glsl"
 #include "define.glsl"
 #include "raycommon.glsl"
+#include "reduce_noise_data.glsl"
 #include "shading_data.glsl"
 
 #include "light.glsl"
 #include "pbr_compute.glsl"
 #include "random.glsl"
 
+#include "disney.glsl"
+#include "disney_utils.glsl"
+
 #include "indirect_utils.glsl"
 
-#include "disney.glsl"
+#include "../../shaders/sample_utils.glsl"
 
 layout(location = 1) rayPayloadNV bool isShadowed;
 
@@ -41,6 +45,11 @@ pixelBuffer;
 
 layout(std140, set = 1, binding = 2) uniform CommonData { vec4 compressedData; }
 pushC;
+
+layout(std140, set = 1, binding = 3) uniform ReduceNoiseData {
+  vec4 compressedData;
+}
+reduceNoiseData;
 
 vec2 getLanuchIndex(uvec3 launchIDNV, uvec3 launchSizeNV) {
   const vec2 pixelCenter = vec2(launchIDNV.xy) + vec2(0.5);
@@ -88,14 +97,37 @@ void main() {
   vec3 hitValue = vec3(0.0);
 
   if (isNotBackground(worldPosition)) {
-    vec3 V = normalize(uCamera.cameraPosition.xyz - worldPosition.xyz);
+    vec3 V = computeV(uCamera.cameraPosition.xyz, worldPosition.xyz);
 
-    hitValue += computeDirectLight(seed, tMin, lightCount, worldPosition.xyz,
+    hitValue += computeDirectLight(seed, 0, tMin, lightCount, worldPosition.xyz,
                                    worldNormal, V, shading, topLevelAS);
 
+    // if(luminance(hitValue) >= maxValue ){
+
+    //         hitValue = vec3(clamp(hitValue.x, 0.0, maxValue),
+    //                              clamp(hitValue.y, 0.0, maxValue),
+    //                              clamp(hitValue.z, 0.0, maxValue));
+    // }
+
     if (doIndirectGI) {
-      hitValue += computeIndirectLight(seed, tMin, worldPosition.xyz,
-                                       worldNormal, V, shading, topLevelAS);
+      vec3 indirectLight = computeIndirectLight(
+          seed, tMin,
+          getIndirectLightSpecularSampleCount(reduceNoiseData.compressedData),
+          uCamera.cameraPosition.xyz, worldPosition.xyz, worldNormal, shading,
+          topLevelAS);
+
+      // if(luminance(indirectLight) <= maxValue ){
+
+      //         hitValue += indirectLight;
+
+      // }
+
+      const vec3 indirectLightClampMaxValue = vec3(18.0);
+
+      indirectLight =
+          clamp(indirectLight, vec3(0.0), indirectLightClampMaxValue);
+
+      hitValue += indirectLight;
     }
   } else {
     // TODO refactor: add miss color to common data buffer?

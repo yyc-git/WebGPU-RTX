@@ -41,23 +41,23 @@ struct PBRMaterial {
 
 hitAttributeNV vec3 attribs;
 
-layout(std140, set = 1, binding = 3) buffer SceneDesc { InstanceData i[]; }
+layout(std140, set = 1, binding = 4) buffer SceneDesc { InstanceData i[]; }
 sceneDesc;
 
 /* scalar work with only uint fields! */
-layout(scalar, set = 1, binding = 4) buffer SceneGeometryOffsetData {
+layout(scalar, set = 1, binding = 5) buffer SceneGeometryOffsetData {
   GeometryOffsetData o[];
 }
 sceneGeometryOffsetData;
 
 // TODO use array of blocks!how to upload data???
 /* static vertices */
-layout(scalar, set = 1, binding = 5) buffer Vertices { Vertex v[]; }
+layout(scalar, set = 1, binding = 6) buffer Vertices { Vertex v[]; }
 vertices;
-layout(scalar, set = 1, binding = 6) buffer Indices { uint i[]; }
+layout(scalar, set = 1, binding = 7) buffer Indices { uint i[]; }
 indices;
 
-layout(std140, set = 1, binding = 7) buffer MatColorBufferObject {
+layout(std140, set = 1, binding = 8) buffer MatColorBufferObject {
   PBRMaterial m[];
 }
 materials;

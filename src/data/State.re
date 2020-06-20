@@ -82,6 +82,7 @@ let create = () => {
     rayTracingPassData: {
       pipeline: None,
       staticBindGroupDataArr: [||],
+      indirectLightSpecularSampleCount: 1,
     },
     preprocessPassData: {
       pipeline: None,
@@ -104,7 +105,7 @@ let create = () => {
     },
     uniformBufferDataMap: ImmutableHashMap.createEmpty(),
     storageBufferDataMap: ImmutableHashMap.createEmpty(),
-float32StorageBufferTypeArrayDataMap: ImmutableHashMap.createEmpty(),
+    float32StorageBufferTypeArrayDataMap: ImmutableHashMap.createEmpty(),
     textureViewMap: ImmutableHashMap.createEmpty(),
   },
   rayTracing: {

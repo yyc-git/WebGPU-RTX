@@ -1,8 +1,11 @@
 
-vec3 computeDirectLight(uint seed, float tMin, uint lightCount, vec3 worldPosition,
-                     vec3 worldNormal, vec3 V, ShadingData shading,
+vec3 computeDirectLight(uint seed,
+                        // 0:both, 1:diffuse, 2:specular
+                        uint evalDisneyType, float tMin, uint lightCount,
+                        vec3 worldPosition, vec3 worldNormal, vec3 V,
+                        ShadingData shading,
 
-                     accelerationStructureNV topLevelAS) {
+                        accelerationStructureNV topLevelAS) {
   uint lightIndexToSample = min(uint(rnd(seed) * lightCount), lightCount - 1);
   // uint lightIndexToSample = 0;
 
@@ -58,8 +61,19 @@ vec3 computeDirectLight(uint seed, float tMin, uint lightCount, vec3 worldPositi
 
   // const float bsdfPdf = DisneyPdf(NdotH, NdotL, HdotL);
 
-  const vec3 f = eval(NdotL, NdotV, NdotH, HdotL, shading);
+  vec3 f;
+  switch (evalDisneyType) {
+  case 1:
+    f = evalDiffuse(NdotL, NdotV, HdotL, shading);
+    break;
+  case 2:
+    f = evalSpecular(NdotL, NdotV, NdotH, HdotL, shading);
+    break;
+  case 0:
+  default:
+    f = eval(NdotL, NdotV, NdotH, HdotL, shading);
+    break;
+  }
 
-  // return computeColor(lightIntensity, attenuation, diffuse, specular) / pdf;
   return lightIntensity * f / pdf;
 }

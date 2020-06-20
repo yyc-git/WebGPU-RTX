@@ -138,8 +138,9 @@ let init = (device, queue, state) => {
            ),
            BindGroupLayout.layoutBinding(
              ~binding=3,
-             ~visibility=ShaderStage.ray_closest_hit,
-             ~type_="storage-buffer",
+             ~visibility=
+               ShaderStage.ray_generation,
+             ~type_="uniform-buffer",
              (),
            ),
            BindGroupLayout.layoutBinding(
@@ -162,6 +163,12 @@ let init = (device, queue, state) => {
            ),
            BindGroupLayout.layoutBinding(
              ~binding=7,
+             ~visibility=ShaderStage.ray_closest_hit,
+             ~type_="storage-buffer",
+             (),
+           ),
+           BindGroupLayout.layoutBinding(
+             ~binding=8,
              ~visibility=ShaderStage.ray_closest_hit,
              ~type_="storage-buffer",
              (),
@@ -295,6 +302,10 @@ let init = (device, queue, state) => {
   let (commonDataBufferData, commonDataBuffer) =
     BMFRBuffer.CommonDataBuffer.unsafeGetBufferData(state);
 
+
+  let (reduceNoiseDataBufferData, reduceNoiseDataBuffer) =
+    BMFRBuffer.ReduceNoiseDataBuffer.unsafeGetBufferData(state);
+
   let (sceneDescBufferSize, sceneDescBuffer) =
     BMFRBuffer.GetHitShadingData.SceneDescBuffer.unsafeGetBufferData(state);
   let (geometryOffsetDataBufferSize, geometryOffsetDataBuffer) =
@@ -341,34 +352,44 @@ let init = (device, queue, state) => {
            ),
            BindGroup.binding(
              ~binding=3,
+             ~buffer=  reduceNoiseDataBuffer ,
+             ~offset=0,
+             ~size=
+               BMFRBuffer.ReduceNoiseDataBuffer.getBufferSize(
+                 reduceNoiseDataBufferData,
+               ),
+             (),
+           ),
+           BindGroup.binding(
+             ~binding=4,
              ~buffer=sceneDescBuffer,
              ~offset=0,
              ~size=sceneDescBufferSize,
              (),
            ),
            BindGroup.binding(
-             ~binding=4,
+             ~binding=5,
              ~buffer=geometryOffsetDataBuffer,
              ~offset=0,
              ~size=geometryOffsetDataBufferSize,
              (),
            ),
            BindGroup.binding(
-             ~binding=5,
+             ~binding=6,
              ~buffer=vertexBuffer,
              ~offset=0,
              ~size=vertexBufferSize,
              (),
            ),
            BindGroup.binding(
-             ~binding=6,
+             ~binding=7,
              ~buffer=indexBuffer,
              ~offset=0,
              ~size=indexBufferSize,
              (),
            ),
            BindGroup.binding(
-             ~binding=7,
+             ~binding=8,
              ~buffer=pbrMaterialBuffer,
              ~offset=0,
              ~size=pbrMaterialBufferSize,

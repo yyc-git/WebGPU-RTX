@@ -52,9 +52,9 @@ let setStorageBufferData = (bufferName, (bufferSize, buffer), state) => {
   },
 };
 
-
 let unsafeGetFloat32StorageBufferTypeArrayData = (bufferName, state) => {
-  state.pass.float32StorageBufferTypeArrayDataMap |> ImmutableHashMap.unsafeGet(bufferName);
+  state.pass.float32StorageBufferTypeArrayDataMap
+  |> ImmutableHashMap.unsafeGet(bufferName);
 };
 
 let setFloat32StorageBufferTypeArrayData = (bufferName, bufferData, state) => {
@@ -66,8 +66,6 @@ let setFloat32StorageBufferTypeArrayData = (bufferName, bufferData, state) => {
       |> ImmutableHashMap.set(bufferName, bufferData),
   },
 };
-
-
 
 let unsafeGetTextureView = (textureViewName, state) => {
   state.pass.textureViewMap |> ImmutableHashMap.unsafeGet(textureViewName);
@@ -336,6 +334,22 @@ module RayTracingPass = {
       },
     },
   };
+
+  let getIndirectLightSpecularSampleCount = state => {
+    _getPassData(state).indirectLightSpecularSampleCount;
+  };
+
+  let setIndirectLightSpecularSampleCount =
+      (indirectLightSpecularSampleCount, state) => {
+    ...state,
+    pass: {
+      ...state.pass,
+      rayTracingPassData: {
+        ..._getPassData(state),
+        indirectLightSpecularSampleCount,
+      },
+    },
+  };
 };
 
 module PreprocessPass = {
@@ -376,7 +390,6 @@ module PreprocessPass = {
   };
 };
 
-
 module RegressionPass = {
   let _getPassData = state => {
     state.pass.regressionPassData;
@@ -414,7 +427,6 @@ module RegressionPass = {
     _getPassData(state).staticBindGroupDataArr;
   };
 };
-
 
 module PostprocessPass = {
   let _getPassData = state => {

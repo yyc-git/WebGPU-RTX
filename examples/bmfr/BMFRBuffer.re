@@ -22,7 +22,7 @@ module CameraBuffer = {
     Pass.unsafeGetUniformBufferData("cameraBuffer", state);
   };
 
-  let _setCameraBufferData = ((bufferData, buffer), state) => {
+  let setBufferData = ((bufferData, buffer), state) => {
     Pass.setUniformBufferData("cameraBuffer", (bufferData, buffer), state);
   };
 
@@ -61,7 +61,7 @@ module CameraBuffer = {
 
     cameraBuffer |> Buffer.setSubFloat32Data(0, cameraBufferData);
     let state =
-      state |> _setCameraBufferData((cameraBufferData, cameraBuffer));
+      state |> setBufferData((cameraBufferData, cameraBuffer));
 
     state;
   };
@@ -844,11 +844,8 @@ module GetHitShadingData = {
                let indices = Geometry.unsafeGetIndexData(geometry, state);
 
                Log.printComplete(
-               "indices:",
-               ( indices,  
-               Geometry.computeIndexCount(indices)
-               ),
-
+                 "indices:",
+                 (indices, Geometry.computeIndexCount(indices)),
                );
 
                let newIndexOffset =
@@ -856,10 +853,7 @@ module GetHitShadingData = {
 
                let (bufferData, _) =
                  bufferData
-                 |> TypeArray.Uint32Array.setUint(
-                      newOffset,
-                      indexOffset,
-                    );
+                 |> TypeArray.Uint32Array.setUint(newOffset, indexOffset);
 
                (bufferData, (newVertexOffset, newIndexOffset));
              },
@@ -1055,8 +1049,7 @@ module GetHitShadingData = {
       let pbrMaterialCount = PBRMaterial.getCount(state);
       let dataCount = 4 + 4;
 
-      let bufferData =
-        Float32Array.fromLength(pbrMaterialCount * dataCount);
+      let bufferData = Float32Array.fromLength(pbrMaterialCount * dataCount);
 
       let bufferSize = bufferData |> Float32Array.byteLength;
       let buffer =
@@ -1075,8 +1068,7 @@ module GetHitShadingData = {
                  PBRMaterial.unsafeGetMetalness(material, state);
                let roughness =
                  PBRMaterial.unsafeGetRoughness(material, state);
-               let specular =
-                 PBRMaterial.unsafeGetSpecular(material, state);
+               let specular = PBRMaterial.unsafeGetSpecular(material, state);
 
                let (bufferData, newOffset) =
                  bufferData
@@ -1086,7 +1078,10 @@ module GetHitShadingData = {
 
                let (bufferData, newOffset) =
                  bufferData
-                 |> TypeArray.Float32Array.setFloatTuple3(newOffset, (metalness, roughness, specular));
+                 |> TypeArray.Float32Array.setFloatTuple3(
+                      newOffset,
+                      (metalness, roughness, specular),
+                    );
 
                (bufferData, newOffset + 1);
              },
@@ -1120,5 +1115,47 @@ module GetHitShadingData = {
     let update = (allRenderGameObjects, state) => {
       state;
     };
+  };
+};
+
+module ReduceNoiseDataBuffer = {
+  let buildData = (device, state) => {
+    let bufferData = Float32Array.fromLength(1);
+
+    let (bufferData, _) =
+      bufferData
+      |> TypeArray.Float32Array.setFloat(
+           0,
+           Pass.RayTracingPass.getIndirectLightSpecularSampleCount(state)
+           |> float_of_int,
+         );
+
+    let bufferSize = bufferData |> Float32Array.byteLength;
+    let buffer =
+      device
+      |> Device.createBuffer({
+           "size": bufferSize,
+           "usage": BufferUsage.copy_dst lor BufferUsage.uniform,
+         });
+
+    buffer |> Buffer.setSubFloat32Data(0, bufferData);
+
+    (bufferData, bufferSize, buffer);
+  };
+
+  let unsafeGetBufferData = state => {
+    Pass.unsafeGetUniformBufferData("reduceNoiseDataBuffer", state);
+  };
+
+  let getBufferSize = bufferData => {
+    bufferData |> Float32Array.byteLength;
+  };
+
+  let setBufferData = ((bufferData, buffer), state) => {
+    Pass.setUniformBufferData(
+      "reduceNoiseDataBuffer",
+      (bufferData, buffer),
+      state,
+    );
   };
 };

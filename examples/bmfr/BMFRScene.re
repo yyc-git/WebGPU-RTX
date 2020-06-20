@@ -1,6 +1,10 @@
 open WebGPU;
 
 let buildScene = state => {
+  let state =
+    state |> Pass.RayTracingPass.setIndirectLightSpecularSampleCount(1);
+
+
   let (light1, state) = GameObject.create(state);
 
   let (directionLight1, state) = DirectionLight.create(state);
@@ -157,8 +161,8 @@ let buildScene = state => {
     state
     |> PBRMaterial.setDiffuse(mat3, (0.0, 1., 0.))
     |> PBRMaterial.setSpecular(mat3, 0.95)
-    |> PBRMaterial.setMetalness(mat3, 0.5)
-    |> PBRMaterial.setRoughness(mat3, 0.5);
+    |> PBRMaterial.setMetalness(mat3, 0.9)
+    |> PBRMaterial.setRoughness(mat3, 0.1);
 
   let (shader3, state) = Shader.create(state);
   // let state = state |> Shader.setHitGroupIndex(shader2, 1);
@@ -185,6 +189,13 @@ let init = (device, window, state) => {
     BMFRBuffer.ResolutionBuffer.buildData(device, window);
   let (cameraBufferData, cameraBufferSize, cameraBuffer) =
     BMFRBuffer.CameraBuffer.buildData(device, state);
+
+  let (
+    reduceNoiseDataBufferData,
+    reduceNoiseDataBufferSize,
+    reduceNoiseDataBuffer,
+  ) =
+    BMFRBuffer.ReduceNoiseDataBuffer.buildData(device, state);
 
   let (pixelBufferSize, pixelBuffer) =
     BMFRBuffer.PixelBuffer.buildData(device, window);
@@ -254,10 +265,11 @@ let init = (device, window, state) => {
        resolutionBufferSize,
        resolutionBuffer,
      ))
-  |> Pass.setUniformBufferData(
-       "cameraBuffer",
-       (cameraBufferData, cameraBuffer),
-     )
+  |> BMFRBuffer.CameraBuffer.setBufferData((cameraBufferData, cameraBuffer))
+  |> BMFRBuffer.ReduceNoiseDataBuffer.setBufferData((
+       reduceNoiseDataBufferData,
+       reduceNoiseDataBuffer,
+     ))
   |> BMFRBuffer.TAABuffer.setBufferData((taaBufferData, taaBuffer))
   |> BMFRBuffer.CommonDataBuffer.setBufferData((
        commonDataBufferData,

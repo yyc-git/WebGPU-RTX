@@ -39,6 +39,7 @@ vec3 _computeSpecular(uint seed, float tMin, vec3 worldPosition,
 
   const vec3 L = reflect(-V, H);
 
+  prd.evalDisneyType = 0;
   vec3 bounceColor = shootIndirectRay(topLevelAS, worldPosition, L, tMin);
 
   const vec3 N = worldNormal;
@@ -58,6 +59,7 @@ vec3 _computeDiffuse(uint seed, float tMin, vec3 worldPosition,
                      accelerationStructureNV topLevelAS) {
   vec3 bounceDir = getCosHemisphereSample(seed, worldNormal);
 
+  prd.evalDisneyType = 1;
   vec3 bounceColor =
       shootIndirectRay(topLevelAS, worldPosition, bounceDir, tMin);
 
@@ -73,20 +75,32 @@ vec3 _computeDiffuse(uint seed, float tMin, vec3 worldPosition,
          (computeDiffusePdf(NdotL) * (1.0 - specularLobeProb));
 }
 
-vec3 computeIndirectLight(uint seed, float tMin, vec3 worldPosition,
-                          vec3 worldNormal, vec3 V,
-
-                          ShadingData shading,
+vec3 computeIndirectLight(uint seed, float tMin,
+                          uint indirectLightSpecularSampleCount,
+                          vec3 cameraPosition, vec3 worldPosition,
+                          vec3 worldNormal, ShadingData shading,
                           accelerationStructureNV topLevelAS) {
 
   float specularLobeProb = _computeSpecularLobeProb(shading);
   bool chooseSpecular = (rnd(seed) < specularLobeProb);
 
   if (chooseSpecular) {
-    return _computeSpecular(seed, tMin, worldPosition, worldNormal, V, shading,
-                            specularLobeProb, topLevelAS);
+    vec3 indirectSpecularColor = vec3(0.0);
+
+    for (uint _ss = 0; _ss < indirectLightSpecularSampleCount; ++_ss) {
+      vec3 jitteredV = buildJitteredV(seed, cameraPosition, worldPosition);
+
+      indirectSpecularColor +=
+          _computeSpecular(seed, tMin, worldPosition, worldNormal, jitteredV,
+                           shading, specularLobeProb, topLevelAS);
+    }
+
+    indirectSpecularColor /= indirectLightSpecularSampleCount;
+
+    return indirectSpecularColor;
   }
 
-  return _computeDiffuse(seed, tMin, worldPosition, worldNormal, V, shading,
+  return _computeDiffuse(seed, tMin, worldPosition, worldNormal,
+                         computeV(cameraPosition, worldPosition), shading,
                          specularLobeProb, topLevelAS);
 }
