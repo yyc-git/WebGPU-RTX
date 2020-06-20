@@ -228,13 +228,6 @@ type rayTracingPassData = {
   staticBindGroupDataArr: array(staticBindGroupData),
 };
 
-type reweightFirefliesPassData = {
-  pipeline: option(Pipeline.Render.t),
-  staticBindGroupData: option(staticBindGroupData),
-  k: float,
-  spp:float,
-};
-
 type preprocessPassData = {
   pipeline: option(Pipeline.Render.t),
   staticBindGroupDataArr: array(staticBindGroupData),
@@ -303,7 +296,6 @@ type jitter = (jitterX, jitterY);
 type pass = {
   gbufferPassData,
   rayTracingPassData,
-  reweightFirefliesPassData,
   preprocessPassData,
   regressionPassData,
   postprocessPassData,

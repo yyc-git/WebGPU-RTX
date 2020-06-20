@@ -1,4 +1,9 @@
 
+uint convertBufferTwoDIndexToOneDIndex(uint twoDIndexX, uint twoDIndexY,
+                                       uint bufferSizeX) {
+  return twoDIndexY * bufferSizeX + twoDIndexX;
+}
+
 float getAlbedoMinLimit() { return 0.01; }
 
 vec3 demodulateAlbedo(vec3 currentColor, vec3 diffuse) {

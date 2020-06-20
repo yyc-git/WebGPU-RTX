@@ -52,9 +52,9 @@ let setStorageBufferData = (bufferName, (bufferSize, buffer), state) => {
   },
 };
 
+
 let unsafeGetFloat32StorageBufferTypeArrayData = (bufferName, state) => {
-  state.pass.float32StorageBufferTypeArrayDataMap
-  |> ImmutableHashMap.unsafeGet(bufferName);
+  state.pass.float32StorageBufferTypeArrayDataMap |> ImmutableHashMap.unsafeGet(bufferName);
 };
 
 let setFloat32StorageBufferTypeArrayData = (bufferName, bufferData, state) => {
@@ -66,6 +66,8 @@ let setFloat32StorageBufferTypeArrayData = (bufferName, bufferData, state) => {
       |> ImmutableHashMap.set(bufferName, bufferData),
   },
 };
+
+
 
 let unsafeGetTextureView = (textureViewName, state) => {
   state.pass.textureViewMap |> ImmutableHashMap.unsafeGet(textureViewName);
@@ -336,78 +338,6 @@ module RayTracingPass = {
   };
 };
 
-module ReweightFirefliesPass = {
-  let _getPassData = state => {
-    state.pass.reweightFirefliesPassData;
-  };
-
-  let unsafeGetPipeline = state => {
-    _getPassData(state).pipeline |> Js.Option.getExn;
-  };
-
-  let setPipeline = (pipeline, state) => {
-    ...state,
-    pass: {
-      ...state.pass,
-      reweightFirefliesPassData: {
-        ..._getPassData(state),
-        pipeline: Some(pipeline),
-      },
-    },
-  };
-
-  let unsafeGetStaticBindGroupData = state => {
-    _getPassData(state).staticBindGroupData |> Js.Option.getExn;
-  };
-
-  let setStaticBindGroupData = (setSlot, bindGroup, state) => {
-    ...state,
-    pass: {
-      ...state.pass,
-      reweightFirefliesPassData: {
-        ..._getPassData(state),
-        staticBindGroupData: Some({
-          setSlot,
-          bindGroup,
-        }),
-      },
-    },
-  };
-
-
-  let getK = state => {
-    _getPassData(state).k;
-  };
-
-  let setK = (k, state) => {
-    ...state,
-    pass: {
-      ...state.pass,
-      reweightFirefliesPassData: {
-        ..._getPassData(state),
-        k,
-      },
-    },
-  };
-
-  let getKForDisable = () => 1e-9;
-
-  let getSpp = state => {
-    _getPassData(state).spp;
-  };
-
-  let setSpp = (spp, state) => {
-    ...state,
-    pass: {
-      ...state.pass,
-      reweightFirefliesPassData: {
-        ..._getPassData(state),
-        spp,
-      },
-    },
-  };
-};
-
 module PreprocessPass = {
   let _getPassData = state => {
     state.pass.preprocessPassData;
@@ -446,6 +376,7 @@ module PreprocessPass = {
   };
 };
 
+
 module RegressionPass = {
   let _getPassData = state => {
     state.pass.regressionPassData;
@@ -483,6 +414,7 @@ module RegressionPass = {
     _getPassData(state).staticBindGroupDataArr;
   };
 };
+
 
 module PostprocessPass = {
   let _getPassData = state => {
