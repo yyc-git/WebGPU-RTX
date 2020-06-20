@@ -8,7 +8,7 @@
 #define BLEND_ALPHA 0.2f
 #define PIXEL_OFFSET 0.5f
 
-#include "../../../ray_tracing/shaders/common_data.glsl"
+#include "../../../shaders/common_data.glsl"
 #include "../../../shaders/utils.glsl"
 #include "../../shaders/utils.glsl"
 

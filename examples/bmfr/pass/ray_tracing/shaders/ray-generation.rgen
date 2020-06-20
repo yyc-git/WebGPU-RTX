@@ -5,7 +5,7 @@
 #pragma shader_stage(raygen)
 
 #include "../../shaders/camera.glsl"
-#include "common_data.glsl"
+#include "../../shaders/common_data.glsl"
 #include "define.glsl"
 #include "raycommon.glsl"
 #include "reduce_noise_data.glsl"

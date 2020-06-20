@@ -5,7 +5,7 @@
 #pragma shader_stage(closest)
 
 #include "../../shaders/camera.glsl"
-#include "common_data.glsl"
+#include "../../shaders/common_data.glsl"
 #include "get_hit_shading_data.glsl"
 #include "shading_data.glsl"
 
