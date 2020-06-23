@@ -191,11 +191,11 @@ let init = (device, window, state) => {
     BMFRBuffer.CameraBuffer.buildData(device, state);
 
   let (
-    reduceNoiseDataBufferData,
-    reduceNoiseDataBufferSize,
-    reduceNoiseDataBuffer,
+    rayTracingCommonDataBufferData,
+    rayTracingCommonDataBufferSize,
+    rayTracingCommonDataBuffer,
   ) =
-    BMFRBuffer.ReduceNoiseDataBuffer.buildData(device, state);
+    BMFRBuffer.RayTracingCommonDataBuffer.buildData(device, state);
 
   let (pixelBufferSize, pixelBuffer) =
     BMFRBuffer.PixelBuffer.buildData(device, window);
@@ -266,9 +266,9 @@ let init = (device, window, state) => {
        resolutionBuffer,
      ))
   |> BMFRBuffer.CameraBuffer.setBufferData((cameraBufferData, cameraBuffer))
-  |> BMFRBuffer.ReduceNoiseDataBuffer.setBufferData((
-       reduceNoiseDataBufferData,
-       reduceNoiseDataBuffer,
+  |> BMFRBuffer.RayTracingCommonDataBuffer.setBufferData((
+       rayTracingCommonDataBufferData,
+       rayTracingCommonDataBuffer,
      ))
   |> BMFRBuffer.TAABuffer.setBufferData((taaBufferData, taaBuffer))
   |> BMFRBuffer.CommonDataBuffer.setBufferData((

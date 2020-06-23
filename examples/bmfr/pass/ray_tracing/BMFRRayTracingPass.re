@@ -303,8 +303,8 @@ let init = (device, queue, state) => {
     BMFRBuffer.CommonDataBuffer.unsafeGetBufferData(state);
 
 
-  let (reduceNoiseDataBufferData, reduceNoiseDataBuffer) =
-    BMFRBuffer.ReduceNoiseDataBuffer.unsafeGetBufferData(state);
+  let (rayTracingCommonDataBufferData, rayTracingCommonDataBuffer) =
+    BMFRBuffer.RayTracingCommonDataBuffer.unsafeGetBufferData(state);
 
   let (sceneDescBufferSize, sceneDescBuffer) =
     BMFRBuffer.GetHitShadingData.SceneDescBuffer.unsafeGetBufferData(state);
@@ -352,11 +352,11 @@ let init = (device, queue, state) => {
            ),
            BindGroup.binding(
              ~binding=3,
-             ~buffer=  reduceNoiseDataBuffer ,
+             ~buffer=  rayTracingCommonDataBuffer ,
              ~offset=0,
              ~size=
-               BMFRBuffer.ReduceNoiseDataBuffer.getBufferSize(
-                 reduceNoiseDataBufferData,
+               BMFRBuffer.RayTracingCommonDataBuffer.getBufferSize(
+                 rayTracingCommonDataBufferData,
                ),
              (),
            ),

@@ -84,7 +84,7 @@ vec3 computeIndirectLight(uint seed, float tMin,
   float specularLobeProb = _computeSpecularLobeProb(shading);
   bool chooseSpecular = (rnd(seed) < specularLobeProb);
 
-  const uint indirectLightSpecularSampleCount = 100;
+  const uint indirectLightSpecularSampleCount = 30;
 
   float sampleRandomArr[indirectLightSpecularSampleCount];
 

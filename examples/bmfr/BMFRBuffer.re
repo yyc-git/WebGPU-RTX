@@ -1118,7 +1118,7 @@ module GetHitShadingData = {
   };
 };
 
-module ReduceNoiseDataBuffer = {
+module RayTracingCommonDataBuffer = {
   let buildData = (device, state) => {
     let bufferData = Float32Array.fromLength(1);
 
@@ -1144,7 +1144,7 @@ module ReduceNoiseDataBuffer = {
   };
 
   let unsafeGetBufferData = state => {
-    Pass.unsafeGetUniformBufferData("reduceNoiseDataBuffer", state);
+    Pass.unsafeGetUniformBufferData("rayTracingCommonDataBuffer", state);
   };
 
   let getBufferSize = bufferData => {
@@ -1153,7 +1153,7 @@ module ReduceNoiseDataBuffer = {
 
   let setBufferData = ((bufferData, buffer), state) => {
     Pass.setUniformBufferData(
-      "reduceNoiseDataBuffer",
+      "rayTracingCommonDataBuffer",
       (bufferData, buffer),
       state,
     );
