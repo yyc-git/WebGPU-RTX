@@ -1,10 +1,84 @@
 open WebGPU;
 
-let buildScene = state => {
-  // let state =
-  //   state |> Pass.RayTracingPass.setIndirectLightSpecularSampleCount(1);
 
+let _createSphere = ((translation, rotation), (diffuse, specular, metalness, roughness), state) =>{
+  let (sphere, state) = GameObject.create(state);
 
+  let (tran3, state) = Transform.create(state);
+  let state =
+    state
+    |> Transform.setTranslation(tran3, translation)
+    |> Transform.setRotation(tran3, rotation)
+    |> Transform.setScale(tran3, (1.,1.,1.));
+
+    let radius = 2.;
+    let bands = 20;
+
+  let (geo3, state) = Geometry.create(state);
+  let state =
+    state
+    |> Geometry.setVertexData(geo3, Geometry.buildSphereVertexData(radius, bands))
+    |> Geometry.setIndexData(geo3, Geometry.buildSphereIndexData(bands));
+
+  let (mat3, state) = PBRMaterial.create(state);
+  let state =
+    state
+    |> PBRMaterial.setDiffuse(mat3, diffuse)
+    |> PBRMaterial.setSpecular(mat3, specular)
+    |> PBRMaterial.setMetalness(mat3, Js.Math.min_float(metalness, 0.99))
+    |> PBRMaterial.setRoughness(mat3, Js.Math.max_float(0.01, roughness));
+
+  let (shader3, state) = Shader.create(state);
+  let state = state |> Shader.setHitGroupIndex(shader3, 0);
+
+  let state =
+    state
+    |> GameObject.addTransform(sphere, tran3)
+    |> GameObject.addGeometry(sphere, geo3)
+    |> GameObject.addPBRMaterial(sphere, mat3)
+    |> GameObject.addShader(sphere, shader3);
+
+    state
+};
+
+let _createPlane = ((translation, rotation), (diffuse, specular, metalness, roughness), state) =>{
+  let (plane3, state) = GameObject.create(state);
+
+  let (tran3, state) = Transform.create(state);
+  let state =
+    state
+    |> Transform.setTranslation(tran3, translation)
+    |> Transform.setRotation(tran3, rotation)
+    |> Transform.setScale(tran3, (50., 50., 50.));
+
+  let (geo3, state) = Geometry.create(state);
+  let state =
+    state
+    |> Geometry.setVertexData(geo3, Geometry.buildPlaneVertexData())
+    |> Geometry.setIndexData(geo3, Geometry.buildPlaneIndexData());
+
+  let (mat3, state) = PBRMaterial.create(state);
+  let state =
+    state
+    |> PBRMaterial.setDiffuse(mat3, diffuse)
+    |> PBRMaterial.setSpecular(mat3, specular)
+    |> PBRMaterial.setMetalness(mat3, metalness)
+    |> PBRMaterial.setRoughness(mat3, roughness);
+
+  let (shader3, state) = Shader.create(state);
+  let state = state |> Shader.setHitGroupIndex(shader3, 0);
+
+  let state =
+    state
+    |> GameObject.addTransform(plane3, tran3)
+    |> GameObject.addGeometry(plane3, geo3)
+    |> GameObject.addPBRMaterial(plane3, mat3)
+    |> GameObject.addShader(plane3, shader3);
+
+    state
+};
+
+let _buildScene1 = state => {
   let (light1, state) = GameObject.create(state);
 
   let (directionLight1, state) = DirectionLight.create(state);
@@ -141,41 +215,176 @@ let buildScene = state => {
     |> GameObject.addShader(triangle2, shader2);
   // |> GameObject.addTransformAnimation(triangle2, transformAnim2);
 
-  let (plane1, state) = GameObject.create(state);
 
-  let (tran3, state) = Transform.create(state);
-  let state =
-    state
-    |> Transform.setTranslation(tran3, (0., (-10.), (-5.)))
-    |> Transform.setRotation(tran3, (0., 0., 0.))
-    |> Transform.setScale(tran3, (50., 50., 50.));
+ let state = _createSphere (((10.0, 0.0, 10.0), (0.,0.,0.)), ((Js.Math.random(),0.0,Js.Math.random()), 0.95, Js.Math.random(), Js.Math.random()), state);
 
-  let (geo3, state) = Geometry.create(state);
-  let state =
-    state
-    |> Geometry.setVertexData(geo3, Geometry.buildPlaneVertexData())
-    |> Geometry.setIndexData(geo3, Geometry.buildPlaneIndexData());
+// let state = _createPlane (((0., (-10.), (-5.)), (0., 0., 0.)), ((0., 1., 0.), 0.95, 0.9, 0.1), state);
+let state = _createPlane (((0., (-10.), (-5.)), (0., 0., 0.)), ((0., 1., 0.), 0.95, 0.9, 0.3), state);
 
-  let (mat3, state) = PBRMaterial.create(state);
-  let state =
-    state
-    |> PBRMaterial.setDiffuse(mat3, (0.0, 1., 0.))
-    |> PBRMaterial.setSpecular(mat3, 0.95)
-    |> PBRMaterial.setMetalness(mat3, 0.9)
-    |> PBRMaterial.setRoughness(mat3, 0.1);
 
-  let (shader3, state) = Shader.create(state);
-  // let state = state |> Shader.setHitGroupIndex(shader2, 1);
-  let state = state |> Shader.setHitGroupIndex(shader3, 0);
-
-  let state =
-    state
-    |> GameObject.addTransform(plane1, tran3)
-    |> GameObject.addGeometry(plane1, geo3)
-    |> GameObject.addPBRMaterial(plane1, mat3)
-    |> GameObject.addShader(plane1, shader3);
 
   state;
+};
+
+
+let _buildScene2 = state => {
+  let (light1, state) = GameObject.create(state);
+
+  let (directionLight1, state) = DirectionLight.create(state);
+  let state =
+    state
+    |> DirectionLight.setIntensity(directionLight1, 1.)
+    |> DirectionLight.setPosition(directionLight1, (0., 1., 1.));
+
+  let state = state |> GameObject.addDirectionLight(light1, directionLight1);
+
+  let (light2, state) = GameObject.create(state);
+
+  let (directionLight2, state) = DirectionLight.create(state);
+  let state =
+    state
+    |> DirectionLight.setIntensity(directionLight2, 0.5)
+    |> DirectionLight.setPosition(directionLight2, (1., 2., 1.));
+
+  let state = state |> GameObject.addDirectionLight(light2, directionLight2);
+
+  let (camera1, state) = GameObject.create(state);
+
+  let (cameraView1, state) = CameraView.create(state);
+  let state = state |> CameraView.setCurrentCameraView(cameraView1);
+
+  let (arcballCameraController1, state) =
+    ArcballCameraController.create(state);
+  let state =
+    state
+    |> ArcballCameraController.setCurrentArcballCameraController(
+         arcballCameraController1,
+       )
+    |> ArcballCameraController.setPhi(
+         arcballCameraController1,
+         Js.Math._PI /. 2.,
+       )
+    |> ArcballCameraController.setTheta(
+         arcballCameraController1,
+         Js.Math._PI /. 2.,
+       )
+    |> ArcballCameraController.setTarget(
+         arcballCameraController1,
+         (0., 0., 0.),
+       )
+    |> ArcballCameraController.setRotateSpeed(arcballCameraController1, 1.)
+    |> ArcballCameraController.setWheelSpeed(arcballCameraController1, 1.)
+    |> ArcballCameraController.setDistance(arcballCameraController1, 20.);
+
+  let state =
+    state
+    |> GameObject.addCameraView(camera1, cameraView1)
+    |> GameObject.addArcballCameraController(
+         camera1,
+         arcballCameraController1,
+       );
+
+  let (triangle1, state) = GameObject.create(state);
+
+  let (tran1, state) = Transform.create(state);
+  let state =
+    state
+    // |> Transform.setTranslation(tran1, (0., (-5.), 0.))
+    |> Transform.setTranslation(tran1, (0., 0., 0.))
+    // |> Transform.setRotation(tran1, (30., 45., 0.))
+    |> Transform.setRotation(tran1, (0., 20., 0.))
+    |> Transform.setScale(tran1, (1., 1., 1.));
+
+  let (geo1, state) = Geometry.create(state);
+  let state =
+    state
+    |> Geometry.setVertexData(geo1, Geometry.buildTriangleVertexData())
+    |> Geometry.setIndexData(geo1, Geometry.buildTriangleIndexData());
+
+  let (mat1, state) = PBRMaterial.create(state);
+  let state =
+    state
+    |> PBRMaterial.setDiffuse(mat1, (1.0, 0., 0.))
+    |> PBRMaterial.setSpecular(mat1, 0.95)
+    |> PBRMaterial.setMetalness(mat1, 0.5)
+    |> PBRMaterial.setRoughness(mat1, 0.5);
+  // |> PBRMaterial.setIllum(mat1, 2)
+  // |> PBRMaterial.setDissolve(mat1, 1.);
+
+  let (shader1, state) = Shader.create(state);
+  let state = state |> Shader.setHitGroupIndex(shader1, 0);
+
+  let (transformAnim1, state) = TransformAnimation.create(state);
+  let state =
+    state |> TransformAnimation.setDynamicTransform(transformAnim1, 0);
+
+  let state =
+    state
+    |> GameObject.addTransform(triangle1, tran1)
+    |> GameObject.addGeometry(triangle1, geo1)
+    |> GameObject.addPBRMaterial(triangle1, mat1)
+    |> GameObject.addShader(triangle1, shader1)
+    |> GameObject.addTransformAnimation(triangle1, transformAnim1);
+
+  let (triangle2, state) = GameObject.create(state);
+
+  let (tran2, state) = Transform.create(state);
+  let state =
+    state
+    |> Transform.setTranslation(tran2, (3., 0., 5.))
+    |> Transform.setRotation(tran2, (0., 70., 0.))
+    |> Transform.setScale(tran2, (5., 5., 5.));
+
+  let (geo2, state) = Geometry.create(state);
+  let state =
+    state
+    |> Geometry.setVertexData(geo2, Geometry.buildTriangleVertexData())
+    |> Geometry.setIndexData(geo2, Geometry.buildTriangleIndexData());
+
+  let (mat2, state) = PBRMaterial.create(state);
+  let state =
+    state
+    |> PBRMaterial.setDiffuse(mat2, (0.0, 0.5, 0.5))
+    |> PBRMaterial.setSpecular(mat2, 0.95)
+    |> PBRMaterial.setMetalness(mat2, 0.5)
+    |> PBRMaterial.setRoughness(mat2, 0.5);
+
+  let (shader2, state) = Shader.create(state);
+  let state = state |> Shader.setHitGroupIndex(shader2, 0);
+
+  // let (transformAnim2, state) = TransformAnimation.create(state);
+  // let state =
+  //   state |> TransformAnimation.setDynamicTransform(transformAnim2, 0);
+
+  let state =
+    state
+    |> GameObject.addTransform(triangle2, tran2)
+    |> GameObject.addGeometry(triangle2, geo2)
+    |> GameObject.addPBRMaterial(triangle2, mat2)
+    |> GameObject.addShader(triangle2, shader2);
+  // |> GameObject.addTransformAnimation(triangle2, transformAnim2);
+
+
+let state = 
+               ArrayUtils.range(0, 300)
+               |> ArrayUtils.reduceOneParam(
+                    (. state, index) => {
+//  _createSphere (((( index * 2 - 500 ) |> float_of_int, Js.Math.random() *. 10., Js.Math.random() *. 100. -. 50.), (0.,0.,0.)), ((Js.Math.random(),0.0,Js.Math.random()), 0.95, Js.Math.random(), Js.Math.random()), state);
+ _createSphere (((Js.Math.random() *. 200. -. 100., Js.Math.random() *. 10., Js.Math.random() *. 100. -. 50.), (0.,0.,0.)), ((Js.Math.random(),0.0,Js.Math.random()), 0.95, Js.Math.random(), Js.Math.random()), state);
+                    },
+state
+                  );
+
+let state = _createPlane (((0., (-10.), (-5.)), (0., 0., 0.)), ((0., 1., 0.), 0.95, 0.9, 0.3), state);
+let state = _createPlane (((0., (-10.), (-5. -. 50.)), (90., 0., 0.)), ((0., 0., 1.), 0.95, 0.5, 0.5), state);
+let state = _createPlane (((0., (-10.), (-5. +. 50.)), (-90., 0., 0.)), ((0., 1., 0.), 0.95, 0.6, 0.3), state);
+
+
+  state;
+};
+
+let buildScene = state => {
+  _buildScene2(state)
 };
 
 let getAllRenderGameObjects = state => {
