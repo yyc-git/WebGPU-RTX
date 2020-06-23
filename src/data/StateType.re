@@ -226,7 +226,7 @@ type gbufferPassData = {
 type rayTracingPassData = {
   pipeline: option(Pipeline.RayTracing.t),
   staticBindGroupDataArr: array(staticBindGroupData),
-indirectLightSpecularSampleCount: int
+// indirectLightSpecularSampleCount: int
 };
 
 type preprocessPassData = {

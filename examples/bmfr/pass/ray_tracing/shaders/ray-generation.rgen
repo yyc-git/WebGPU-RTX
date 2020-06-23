@@ -32,6 +32,10 @@ layout(location = 0) rayPayloadNV hitPayload prd;
 
 #include "indirect_ray.glsl"
 
+const uint indirectLightSpecularSampleCount = 1;
+
+float randomArr[indirectLightSpecularSampleCount];
+
 #include "ggx_indirect.glsl"
 
 layout(binding = 0) uniform sampler2D gPositionRoughnessTexture;
@@ -111,10 +115,7 @@ void main() {
 
     if (doIndirectGI) {
       vec3 indirectLight = computeIndirectLight(
-          seed, tMin,
-          getIndirectLightSpecularSampleCount(reduceNoiseData.compressedData),
-          uCamera.cameraPosition.xyz, worldPosition.xyz, worldNormal, shading,
-          topLevelAS);
+          seed, tMin, V, worldPosition.xyz, worldNormal, shading, topLevelAS);
 
       // if(luminance(indirectLight) <= maxValue ){
 
@@ -122,10 +123,10 @@ void main() {
 
       // }
 
-      const vec3 indirectLightClampMaxValue = vec3(18.0);
+      // const vec3 indirectLightClampMaxValue = vec3(18.0);
 
-      indirectLight =
-          clamp(indirectLight, vec3(0.0), indirectLightClampMaxValue);
+      // indirectLight =
+      //     clamp(indirectLight, vec3(0.0), indirectLightClampMaxValue);
 
       hitValue += indirectLight;
     }

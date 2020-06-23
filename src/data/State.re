@@ -82,7 +82,7 @@ let create = () => {
     rayTracingPassData: {
       pipeline: None,
       staticBindGroupDataArr: [||],
-      indirectLightSpecularSampleCount: 1,
+      // indirectLightSpecularSampleCount: 1,
     },
     preprocessPassData: {
       pipeline: None,

@@ -1122,13 +1122,13 @@ module ReduceNoiseDataBuffer = {
   let buildData = (device, state) => {
     let bufferData = Float32Array.fromLength(1);
 
-    let (bufferData, _) =
-      bufferData
-      |> TypeArray.Float32Array.setFloat(
-           0,
-           Pass.RayTracingPass.getIndirectLightSpecularSampleCount(state)
-           |> float_of_int,
-         );
+    // let (bufferData, _) =
+    //   bufferData
+    //   |> TypeArray.Float32Array.setFloat(
+    //        0,
+    //        Pass.RayTracingPass.getIndirectLightSpecularSampleCount(state)
+    //        |> float_of_int,
+    //      );
 
     let bufferSize = bufferData |> Float32Array.byteLength;
     let buffer =

@@ -335,21 +335,21 @@ module RayTracingPass = {
     },
   };
 
-  let getIndirectLightSpecularSampleCount = state => {
-    _getPassData(state).indirectLightSpecularSampleCount;
-  };
+  // let getIndirectLightSpecularSampleCount = state => {
+  //   _getPassData(state).indirectLightSpecularSampleCount;
+  // };
 
-  let setIndirectLightSpecularSampleCount =
-      (indirectLightSpecularSampleCount, state) => {
-    ...state,
-    pass: {
-      ...state.pass,
-      rayTracingPassData: {
-        ..._getPassData(state),
-        indirectLightSpecularSampleCount,
-      },
-    },
-  };
+  // let setIndirectLightSpecularSampleCount =
+  //     (indirectLightSpecularSampleCount, state) => {
+  //   ...state,
+  //   pass: {
+  //     ...state.pass,
+  //     rayTracingPassData: {
+  //       ..._getPassData(state),
+  //       indirectLightSpecularSampleCount,
+  //     },
+  //   },
+  // };
 };
 
 module PreprocessPass = {

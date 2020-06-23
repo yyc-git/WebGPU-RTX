@@ -1,8 +1,8 @@
 open WebGPU;
 
 let buildScene = state => {
-  let state =
-    state |> Pass.RayTracingPass.setIndirectLightSpecularSampleCount(1);
+  // let state =
+  //   state |> Pass.RayTracingPass.setIndirectLightSpecularSampleCount(1);
 
 
   let (light1, state) = GameObject.create(state);
