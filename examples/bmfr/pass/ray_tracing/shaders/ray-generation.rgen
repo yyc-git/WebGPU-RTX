@@ -123,7 +123,21 @@ void main() {
     prd.V = V;
 
     if (doIndirectGI) {
+      float roughnessBias = 0.0;
+
       for (uint bb = 0; bb < bounceCount; bb++) {
+        ShadingData shadingForEachBounce =
+            buildShadingData(prd.materialDiffuse, prd.materialMetalness,
+                             prd.materialRoughness, prd.materialSpecular);
+
+        // Increase Roughness Per Bounce for reduce fireflies:
+        // https://twitter.com/YuriyODonnell/status/1199253959086612480
+        // http://cg.ivd.kit.edu/publications/p2013/PSR_Kaplanyan_2013/PSR_Kaplanyan_2013.pdf
+        // http://jcgt.org/published/0007/04/01/paper.pdf
+        float oldRoughness = shadingForEachBounce.roughness;
+        shadingForEachBounce.roughness = min(1.0, oldRoughness + roughnessBias);
+        roughnessBias += oldRoughness * 0.75f;
+
         // TODO fix when use normal map:
         //  Use the same normal for the normal-mapped and non-normal mapped
         // vectors... This means we could get light
@@ -132,9 +146,7 @@ void main() {
         //     (TODO: fix)
         vec3 indirectLight = computeIndirectLight(
             seed, tMin, prd.V, prd.worldPosition, prd.worldNormal,
-            buildShadingData(prd.materialDiffuse, prd.materialMetalness,
-                             prd.materialRoughness, prd.materialSpecular),
-            topLevelAS);
+            shadingForEachBounce, topLevelAS);
 
         // if(luminance(indirectLight) <= maxValue ){
 
