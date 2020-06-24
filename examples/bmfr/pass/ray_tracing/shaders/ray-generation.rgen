@@ -169,6 +169,5 @@ void main() {
 
   const uint pixelIndex = gl_LaunchIDNV.y * gl_LaunchSizeNV.x + gl_LaunchIDNV.x;
 
-  // gamma
-  pixelBuffer.pixels[pixelIndex] = vec4(pow(hitValue, vec3(1.0 / 2.2)), 1.0);
+  pixelBuffer.pixels[pixelIndex] = vec4(hitValue, 1.0);
 }
