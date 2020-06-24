@@ -79,10 +79,10 @@ let _buildVertexAndIndexBufferMap = (device, allUniqueGeometries, state) => {
               });
          indexBuffer |> Buffer.setSubUint32Data(0, Uint32Array.make(indices));
 
-         Log.printComplete(
-           "vertex data:",
-           (geometry, vertexBufferData, indices),
-         );
+        //  Log.printComplete(
+        //    "vertex data:",
+        //    (geometry, vertexBufferData, indices),
+        //  );
 
          vertexAndIndexBufferMap
          |> ImmutableSparseMap.set(geometry, (vertexBuffer, indexBuffer));

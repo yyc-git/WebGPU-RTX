@@ -16,6 +16,7 @@ accumulationPixelBuffer;
 
 layout(std140, set = 0, binding = 2) uniform AccumulationCommonData {
   float accumFrameCount;
+  float useDenoise;
 }
 accumulationCommonData;
 
@@ -26,14 +27,20 @@ void main() {
   uint accumFrameCount = uint(accumulationCommonData.accumFrameCount);
   uint pixelIndex = getPixelIndex(uv, screenDimension.resolution);
 
-  vec4 accumulationColor = accumulationPixelBuffer.pixels[pixelIndex] +
-                           pixelBuffer.pixels[pixelIndex];
+  bool useDenoise = accumulationCommonData.useDenoise != 0.0;
 
-  accumulationPixelBuffer.pixels[pixelIndex] = accumulationColor;
+  if (useDenoise) {
+    outColor = pixelBuffer.pixels[pixelIndex];
+  } else {
+    vec4 accumulationColor = accumulationPixelBuffer.pixels[pixelIndex] +
+                             pixelBuffer.pixels[pixelIndex];
 
-  vec4 finalColor = accumulationColor / accumFrameCount;
+    accumulationPixelBuffer.pixels[pixelIndex] = accumulationColor;
 
-  pixelBuffer.pixels[pixelIndex] = finalColor;
+    vec4 finalColor = accumulationColor / accumFrameCount;
 
-  outColor = finalColor;
+    pixelBuffer.pixels[pixelIndex] = finalColor;
+
+    outColor = finalColor;
+  }
 }

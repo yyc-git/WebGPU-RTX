@@ -635,6 +635,11 @@ module AccumulationPass = {
     getAccumFrameCount(state) >= getAccumFrameCountForDenoise(state);
   };
 
+
+  let convertCanDenoiseToFloat = state => {
+canDenoise(state) ? 1.0 : 0.0
+  };
+
   let unsafeGetPipeline = state => {
     _getPassData(state).pipeline |> Js.Option.getExn;
   };

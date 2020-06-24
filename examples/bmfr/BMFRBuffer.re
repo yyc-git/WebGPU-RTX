@@ -961,7 +961,7 @@ module GetHitShadingData = {
              (bufferData, 0),
            );
 
-      Log.printComplete("vertex bufferData:", bufferData);
+      // Log.printComplete("vertex bufferData:", bufferData);
 
       buffer |> Buffer.setSubFloat32Data(0, bufferData);
 
@@ -1018,7 +1018,7 @@ module GetHitShadingData = {
              (bufferData, 0),
            );
 
-      Log.printComplete("index bufferData:", bufferData);
+      // Log.printComplete("index bufferData:", bufferData);
 
       buffer |> Buffer.setSubUint32Data(0, bufferData);
 
@@ -1205,14 +1205,23 @@ module AccumulationPixelBuffer = {
 
 module AccumulationCommonDataBuffer = {
   let buildData = (device, state) => {
-    let bufferData = Float32Array.fromLength(1);
+    let bufferData = Float32Array.fromLength(2);
 
     let (bufferData, _) =
       bufferData
-      |> TypeArray.Float32Array.setFloat(
+      |> TypeArray.Float32Array.setFloatTuple2(
            0,
-           Pass.AccumulationPass.getAccumFrameCount(state) |> float_of_int,
+           (
+             Pass.AccumulationPass.getAccumFrameCount(state) |> float_of_int,
+             Pass.AccumulationPass.convertCanDenoiseToFloat(state),
+           ),
          );
+
+    Log.print((
+      "  Pass.AccumulationPass.convertCanDenoiseToFloat(state): ",
+      Pass.AccumulationPass.convertCanDenoiseToFloat(state),
+    ))
+    |> ignore;
 
     let bufferSize = bufferData |> Float32Array.byteLength;
     let buffer =
@@ -1243,12 +1252,15 @@ module AccumulationCommonDataBuffer = {
     );
   };
 
-  let update = (accumFrameCount, state) => {
+  let update = (accumFrameCount, canDenoise, state) => {
     let (bufferData, buffer) = unsafeGetBufferData(state);
 
     let (bufferData, _) =
       bufferData
-      |> TypeArray.Float32Array.setFloat(0, accumFrameCount |> float_of_int);
+      |> TypeArray.Float32Array.setFloatTuple2(
+           0,
+           (accumFrameCount |> float_of_int, canDenoise),
+         );
 
     buffer |> Buffer.setSubFloat32Data(0, bufferData);
 

@@ -436,7 +436,7 @@ let _buildScene2 = state => {
 };
 
 let buildScene = state => {
-  _buildScene2(state);
+  _buildScene1(state);
 };
 
 let getAllRenderGameObjects = state => {
@@ -724,7 +724,9 @@ let _updateAccumulationData = state => {
   Log.print(("accum:", accumFrameCount)) |> ignore;
 
   state
-  |> BMFRBuffer.AccumulationCommonDataBuffer.update(accumFrameCount)
+  |> BMFRBuffer.AccumulationCommonDataBuffer.update(accumFrameCount, 
+  Pass.AccumulationPass.convertCanDenoiseToFloat(state)
+  )
   |> Pass.AccumulationPass.setLastViewMatrix(viewMatrix);
 };
 
