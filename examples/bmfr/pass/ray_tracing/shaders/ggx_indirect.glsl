@@ -53,11 +53,11 @@ vec3 _computeSpecular(float r1, float r2, float tMin, vec3 worldPosition,
          (computeSpecularPdf(NdotH, HdotL, shading) * specularLobeProb);
 }
 
-vec3 _computeDiffuse(uint seed, float tMin, vec3 worldPosition,
+vec3 _computeDiffuse(float r1, float r2, float tMin, vec3 worldPosition,
                      vec3 worldNormal, vec3 V, ShadingData shading,
                      float specularLobeProb,
                      accelerationStructureNV topLevelAS) {
-  vec3 bounceDir = getCosHemisphereSample(seed, worldNormal);
+  vec3 bounceDir = getCosHemisphereSample(r1, r2, worldNormal);
 
   prd.evalDisneyType = 1;
   vec3 bounceColor =
@@ -85,6 +85,7 @@ vec3 computeIndirectLight(uint seed, float tMin,
   bool chooseSpecular = (rnd(seed) < specularLobeProb);
 
   const uint indirectLightSpecularSampleCount = 30;
+  const uint indirectLightDiffuseSampleCount = 30;
 
   float sampleRandomArr[indirectLightSpecularSampleCount];
 
@@ -96,9 +97,9 @@ vec3 computeIndirectLight(uint seed, float tMin,
   if (chooseSpecular) {
     vec3 indirectSpecularColor = vec3(0.0);
 
-    for (uint _ss = 0; _ss < indirectLightSpecularSampleCount; ++_ss) {
+    for (uint ss1 = 0; ss1 < indirectLightSpecularSampleCount; ++ss1) {
       indirectSpecularColor += _computeSpecular(
-          rnd(seed), sampleRandomArr[_ss % indirectLightSpecularSampleCount],
+          rnd(seed), sampleRandomArr[ss1 % indirectLightSpecularSampleCount],
           tMin, worldPosition, worldNormal, V, shading, specularLobeProb,
           topLevelAS);
     }
@@ -108,6 +109,15 @@ vec3 computeIndirectLight(uint seed, float tMin,
     return indirectSpecularColor;
   }
 
-  return _computeDiffuse(seed, tMin, worldPosition, worldNormal, V, shading,
-                         specularLobeProb, topLevelAS);
+  vec3 indirectDiffuseColor = vec3(0.0);
+
+  for (uint ss2 = 0; ss2 < indirectLightDiffuseSampleCount; ++ss2) {
+    indirectDiffuseColor +=
+        _computeDiffuse(rnd(seed), rnd(seed), tMin, worldPosition, worldNormal,
+                        V, shading, specularLobeProb, topLevelAS);
+  }
+
+  indirectDiffuseColor /= indirectLightDiffuseSampleCount;
+
+  return indirectDiffuseColor;
 }

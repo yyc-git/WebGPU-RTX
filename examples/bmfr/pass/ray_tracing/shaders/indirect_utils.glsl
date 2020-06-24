@@ -15,9 +15,9 @@ vec3 getPerpendicularVector(vec3 u) {
 //   return float(s & 0x00FFFFFF) / float(0x01000000);
 // }
 
-vec3 getCosHemisphereSample(inout uint randSeed, vec3 hitNorm) {
+vec3 getCosHemisphereSample(float r1, float r2, vec3 hitNorm) {
   // Get 2 random numbers to select our sample with
-  vec2 randVal = vec2(rnd(randSeed), rnd(randSeed));
+  vec2 randVal = vec2(r1, r2);
 
   // Cosine weighted hemisphere sample from RNG
   vec3 bitangent = getPerpendicularVector(hitNorm);
