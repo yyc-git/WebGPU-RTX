@@ -43,6 +43,10 @@ Director.load(window)
             BMFRTAAPass.init(device, window, swapChainFormat),
             BMFRTAAPass.execute(device, queue, swapChain),
           )
+       |> Director.addPassFuncs(
+            BMFRAccumulationPass.init(device, swapChainFormat),
+            BMFRAccumulationPass.execute(device, queue, swapChain),
+          )
        |> Director.start(window, swapChain);
      },
      "error": e => {

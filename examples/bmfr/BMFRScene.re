@@ -1,7 +1,11 @@
 open WebGPU;
 
-
-let _createSphere = ((translation, rotation), (diffuse, specular, metalness, roughness), state) =>{
+let _createSphere =
+    (
+      (translation, rotation),
+      (diffuse, specular, metalness, roughness),
+      state,
+    ) => {
   let (sphere, state) = GameObject.create(state);
 
   let (tran3, state) = Transform.create(state);
@@ -9,15 +13,18 @@ let _createSphere = ((translation, rotation), (diffuse, specular, metalness, rou
     state
     |> Transform.setTranslation(tran3, translation)
     |> Transform.setRotation(tran3, rotation)
-    |> Transform.setScale(tran3, (1.,1.,1.));
+    |> Transform.setScale(tran3, (1., 1., 1.));
 
-    let radius = 2.;
-    let bands = 20;
+  let radius = 2.;
+  let bands = 20;
 
   let (geo3, state) = Geometry.create(state);
   let state =
     state
-    |> Geometry.setVertexData(geo3, Geometry.buildSphereVertexData(radius, bands))
+    |> Geometry.setVertexData(
+         geo3,
+         Geometry.buildSphereVertexData(radius, bands),
+       )
     |> Geometry.setIndexData(geo3, Geometry.buildSphereIndexData(bands));
 
   let (mat3, state) = PBRMaterial.create(state);
@@ -38,10 +45,15 @@ let _createSphere = ((translation, rotation), (diffuse, specular, metalness, rou
     |> GameObject.addPBRMaterial(sphere, mat3)
     |> GameObject.addShader(sphere, shader3);
 
-    state
+  state;
 };
 
-let _createPlane = ((translation, rotation), (diffuse, specular, metalness, roughness), state) =>{
+let _createPlane =
+    (
+      (translation, rotation),
+      (diffuse, specular, metalness, roughness),
+      state,
+    ) => {
   let (plane3, state) = GameObject.create(state);
 
   let (tran3, state) = Transform.create(state);
@@ -75,7 +87,7 @@ let _createPlane = ((translation, rotation), (diffuse, specular, metalness, roug
     |> GameObject.addPBRMaterial(plane3, mat3)
     |> GameObject.addShader(plane3, shader3);
 
-    state
+  state;
 };
 
 let _buildScene1 = state => {
@@ -215,17 +227,28 @@ let _buildScene1 = state => {
     |> GameObject.addShader(triangle2, shader2);
   // |> GameObject.addTransformAnimation(triangle2, transformAnim2);
 
+  let state =
+    _createSphere(
+      ((10.0, 0.0, 10.0), (0., 0., 0.)),
+      (
+        (Js.Math.random(), 0.0, Js.Math.random()),
+        0.95,
+        Js.Math.random(),
+        Js.Math.random(),
+      ),
+      state,
+    );
 
- let state = _createSphere (((10.0, 0.0, 10.0), (0.,0.,0.)), ((Js.Math.random(),0.0,Js.Math.random()), 0.95, Js.Math.random(), Js.Math.random()), state);
-
-// let state = _createPlane (((0., (-10.), (-5.)), (0., 0., 0.)), ((0., 1., 0.), 0.95, 0.9, 0.1), state);
-let state = _createPlane (((0., (-10.), (-5.)), (0., 0., 0.)), ((0., 1., 0.), 0.95, 0.9, 0.3), state);
-
-
+  // let state = _createPlane (((0., (-10.), (-5.)), (0., 0., 0.)), ((0., 1., 0.), 0.95, 0.9, 0.1), state);
+  let state =
+    _createPlane(
+      ((0., (-10.), (-5.)), (0., 0., 0.)),
+      ((0., 1., 0.), 0.95, 0.9, 0.3),
+      state,
+    );
 
   state;
 };
-
 
 let _buildScene2 = state => {
   let (light1, state) = GameObject.create(state);
@@ -364,27 +387,56 @@ let _buildScene2 = state => {
     |> GameObject.addShader(triangle2, shader2);
   // |> GameObject.addTransformAnimation(triangle2, transformAnim2);
 
+  let state =
+    ArrayUtils.range(0, 300)
+    |> ArrayUtils.reduceOneParam(
+         (. state, index) => {
+           //  _createSphere (((( index * 2 - 500 ) |> float_of_int, Js.Math.random() *. 10., Js.Math.random() *. 100. -. 50.), (0.,0.,0.)), ((Js.Math.random(),0.0,Js.Math.random()), 0.95, Js.Math.random(), Js.Math.random()), state);
+           _createSphere(
+             (
+               (
+                 Js.Math.random() *. 200. -. 100.,
+                 Js.Math.random() *. 10.,
+                 Js.Math.random() *. 100. -. 50.,
+               ),
+               (0., 0., 0.),
+             ),
+             (
+               (Js.Math.random(), 0.0, Js.Math.random()),
+               0.95,
+               Js.Math.random(),
+               Js.Math.random(),
+             ),
+             state,
+           )
+         },
+         state,
+       );
 
-let state = 
-               ArrayUtils.range(0, 300)
-               |> ArrayUtils.reduceOneParam(
-                    (. state, index) => {
-//  _createSphere (((( index * 2 - 500 ) |> float_of_int, Js.Math.random() *. 10., Js.Math.random() *. 100. -. 50.), (0.,0.,0.)), ((Js.Math.random(),0.0,Js.Math.random()), 0.95, Js.Math.random(), Js.Math.random()), state);
- _createSphere (((Js.Math.random() *. 200. -. 100., Js.Math.random() *. 10., Js.Math.random() *. 100. -. 50.), (0.,0.,0.)), ((Js.Math.random(),0.0,Js.Math.random()), 0.95, Js.Math.random(), Js.Math.random()), state);
-                    },
-state
-                  );
-
-let state = _createPlane (((0., (-10.), (-5.)), (0., 0., 0.)), ((0., 1., 0.), 0.95, 0.9, 0.3), state);
-let state = _createPlane (((0., (-10.), (-5. -. 50.)), (90., 0., 0.)), ((0., 0., 1.), 0.95, 0.5, 0.5), state);
-let state = _createPlane (((0., (-10.), (-5. +. 50.)), (-90., 0., 0.)), ((0., 1., 0.), 0.95, 0.6, 0.3), state);
-
+  let state =
+    _createPlane(
+      ((0., (-10.), (-5.)), (0., 0., 0.)),
+      ((0., 1., 0.), 0.95, 0.9, 0.3),
+      state,
+    );
+  let state =
+    _createPlane(
+      ((0., (-10.), (-5.) -. 50.), (90., 0., 0.)),
+      ((0., 0., 1.), 0.95, 0.5, 0.5),
+      state,
+    );
+  let state =
+    _createPlane(
+      ((0., (-10.), (-5.) +. 50.), ((-90.), 0., 0.)),
+      ((0., 1., 0.), 0.95, 0.6, 0.3),
+      state,
+    );
 
   state;
 };
 
 let buildScene = state => {
-  _buildScene2(state)
+  _buildScene2(state);
 };
 
 let getAllRenderGameObjects = state => {
@@ -458,6 +510,15 @@ let init = (device, window, state) => {
     BMFRBuffer.GetHitShadingData.IndexBuffer.buildData(device, state);
   let (pbrMaterialBufferData, pbrMaterialBufferSize, pbrMaterialBuffer) =
     BMFRBuffer.GetHitShadingData.PBRMaterialBuffer.buildData(device, state);
+
+  let (accumulationPixelBufferSize, accumulationPixelBuffer) =
+    BMFRBuffer.AccumulationPixelBuffer.buildData(device, window);
+  let (
+    accumulationCommonDataBufferData,
+    accumulationCommonDataBufferSize,
+    accumulationCommonDataBuffer,
+  ) =
+    BMFRBuffer.AccumulationCommonDataBuffer.buildData(device, state);
 
   state
   |> Pass.setAccumulatedFrameIndex(0)
@@ -545,6 +606,14 @@ let init = (device, window, state) => {
   |> BMFRBuffer.GetHitShadingData.PBRMaterialBuffer.setBufferData((
        pbrMaterialBufferSize,
        pbrMaterialBuffer,
+     ))
+  |> BMFRBuffer.AccumulationPixelBuffer.setBufferData((
+       accumulationPixelBufferSize,
+       accumulationPixelBuffer,
+     ))
+  |> BMFRBuffer.AccumulationCommonDataBuffer.setBufferData((
+       accumulationCommonDataBufferData,
+       accumulationCommonDataBuffer,
      ));
 };
 
@@ -634,6 +703,31 @@ let _updateJitterData = state => {
      );
 };
 
+let _updateAccumulationData = state => {
+  let currentCameraView = state |> CameraView.unsafeGetCurrentCameraView;
+
+  let viewMatrix = CameraView.unsafeGetViewMatrix(currentCameraView, state);
+
+  let (accumFrameCount, state) =
+    Pass.AccumulationPass.isCameraMove(viewMatrix, state)
+      ? {
+        let (accumFrameCount, state) =
+          state |> Pass.AccumulationPass.resetAccumFrameCount;
+
+        let state = state |> BMFRBuffer.AccumulationPixelBuffer.clear;
+
+        (accumFrameCount, state);
+      }
+      : {
+        Pass.AccumulationPass.increaseAccumFrameCount(state);
+      };
+  Log.print(("accum:", accumFrameCount)) |> ignore;
+
+  state
+  |> BMFRBuffer.AccumulationCommonDataBuffer.update(accumFrameCount)
+  |> Pass.AccumulationPass.setLastViewMatrix(viewMatrix);
+};
+
 let _updateTransformAnim = (time, state) => {
   TransformAnimation.getAllDynamicTransforms(state)
   |> ArrayUtils.reduceOneParam(
@@ -693,5 +787,6 @@ let update = (device, queue, window, state) => {
   |> _updateRegressionData
   |> _updateCameraData(window)
   |> _updateTransformData(Director.getTime(state), device, queue)
-  |> _updateJitterData;
+  |> _updateJitterData
+  |> _updateAccumulationData;
 };

@@ -8,7 +8,7 @@
 #include "./taa_utils.glsl"
 
 layout(location = 0) in vec2 uv;
-layout(location = 0) out vec4 outColor;
+// layout(location = 0) out vec4 outColor;
 
 layout(binding = 0) uniform sampler2D gMotionVectorDepthSpecularTexture;
 
@@ -172,7 +172,9 @@ void main() {
   color = unToneMap(color);
 #endif
 
-  outColor = vec4(color, 1.0);
+  // outColor = vec4(color, 1.0);
+
+  setCurrentColor(uv, screenDimension.resolution, vec4(color, 1.0));
 
   setPrevColor(uv, screenDimension.resolution, vec4(color, 1.0));
 }

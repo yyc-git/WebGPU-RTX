@@ -252,6 +252,16 @@ type taaPassData = {
   otherFrameStaticBindGroupDataArr: array(staticBindGroupData),
 };
 
+
+type accumulationPassData = {
+  pipeline: option(Pipeline.Render.t),
+  staticBindGroupData: option(staticBindGroupData),
+  accumFrameCount: int,
+  accumFrameCountForDenoise:int,
+  lastViewMatrix:option(Js.Typed_array.Float32Array.t)
+};
+
+
 // type rayTracingPassData = {
 //   pipeline: Pipeline.t,
 //   indexBuffer: Buffer.t,
@@ -301,6 +311,7 @@ type pass = {
   regressionPassData,
   postprocessPassData,
   taaPassData,
+  accumulationPassData,
   accumulatedFrameIndex: int,
   jitterArr: array(jitter),
   uniformBufferDataMap:

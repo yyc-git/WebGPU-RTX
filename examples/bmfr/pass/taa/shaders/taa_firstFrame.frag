@@ -7,9 +7,8 @@
 #include "./taa_definition.glsl"
 #include "./taa_utils.glsl"
 
-
 layout(location = 0) in vec2 uv;
-layout(location = 0) out vec4 outColor;
+// layout(location = 0) out vec4 outColor;
 
 layout(binding = 0) uniform sampler2D gMotionVectorDepthSpecularTexture;
 
@@ -30,7 +29,7 @@ void main() {
 
   currentColor.xyz = rgb2YCoCgR(currentColor.xyz);
 
-  outColor = currentColor;
+  // outColor = currentColor;
 
-  setPrevColor(uv, screenDimension.resolution, outColor);
+  setPrevColor(uv, screenDimension.resolution, currentColor);
 }

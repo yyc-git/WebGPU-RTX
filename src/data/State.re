@@ -82,8 +82,8 @@ let create = () => {
     rayTracingPassData: {
       pipeline: None,
       staticBindGroupDataArr: [||],
-      // indirectLightSpecularSampleCount: 1,
     },
+    // indirectLightSpecularSampleCount: 1,
     preprocessPassData: {
       pipeline: None,
       staticBindGroupDataArr: [||],
@@ -102,6 +102,13 @@ let create = () => {
       firstFrameStaticBindGroupDataArr: [||],
       otherFramePipeline: None,
       otherFrameStaticBindGroupDataArr: [||],
+    },
+    accumulationPassData: {
+      pipeline: None,
+      staticBindGroupData: None,
+      accumFrameCount: 1,
+      accumFrameCountForDenoise: 100,
+      lastViewMatrix: None,
     },
     uniformBufferDataMap: ImmutableHashMap.createEmpty(),
     storageBufferDataMap: ImmutableHashMap.createEmpty(),

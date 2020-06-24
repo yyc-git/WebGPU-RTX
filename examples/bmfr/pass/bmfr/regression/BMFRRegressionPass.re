@@ -84,21 +84,30 @@ let init = (device, state) => {
            BindGroup.binding(
              ~binding=0,
              ~textureView=
-               Pass.unsafeGetTextureView("positionRoughnessRenderTargetView", state),
+               Pass.unsafeGetTextureView(
+                 "positionRoughnessRenderTargetView",
+                 state,
+               ),
              ~size=0,
              (),
            ),
            BindGroup.binding(
              ~binding=1,
              ~textureView=
-               Pass.unsafeGetTextureView("normalMetalnessRenderTargetView", state),
+               Pass.unsafeGetTextureView(
+                 "normalMetalnessRenderTargetView",
+                 state,
+               ),
              ~size=0,
              (),
            ),
            BindGroup.binding(
              ~binding=2,
              ~textureView=
-               Pass.unsafeGetTextureView("diffusePositionWRenderTargetView", state),
+               Pass.unsafeGetTextureView(
+                 "diffusePositionWRenderTargetView",
+                 state,
+               ),
              ~size=0,
              (),
            ),
@@ -195,34 +204,40 @@ let init = (device, state) => {
 };
 
 let execute = (device, queue, window, state) => {
-  let commandEncoder =
-    device |> Device.createCommandEncoder(CommandEncoder.descriptor());
-  let renderPass =
-    commandEncoder
-    |> CommandEncoder.beginComputePass(
-         {
-           PassEncoder.Compute.descriptor();
-         },
-       );
+  Pass.AccumulationPass.canDenoise(state)
+    ? {
+      let commandEncoder =
+        device |> Device.createCommandEncoder(CommandEncoder.descriptor());
+      let renderPass =
+        commandEncoder
+        |> CommandEncoder.beginComputePass(
+             {
+               PassEncoder.Compute.descriptor();
+             },
+           );
 
-  let (staticBindGroupDataArr, pipeline) = (
-    Pass.RegressionPass.getStaticBindGroupDataArr(state),
-    Pass.RegressionPass.unsafeGetPipeline(state),
-  );
+      let (staticBindGroupDataArr, pipeline) = (
+        Pass.RegressionPass.getStaticBindGroupDataArr(state),
+        Pass.RegressionPass.unsafeGetPipeline(state),
+      );
 
-  renderPass |> PassEncoder.Compute.setPipeline(pipeline);
+      renderPass |> PassEncoder.Compute.setPipeline(pipeline);
 
-  staticBindGroupDataArr
-  |> Js.Array.forEach(({setSlot, bindGroup}: staticBindGroupData) => {
-       renderPass |> PassEncoder.Compute.setBindGroup(setSlot, bindGroup)
-     });
+      staticBindGroupDataArr
+      |> Js.Array.forEach(({setSlot, bindGroup}: staticBindGroupData) => {
+           renderPass |> PassEncoder.Compute.setBindGroup(setSlot, bindGroup)
+         });
 
-  let w = BMFRBuffer.Regression.computeHorizentalBlocksCount(window);
-  let h = BMFRBuffer.Regression.computeVerticalBlocksCount(window);
-  renderPass |> PassEncoder.Compute.dispatchX(w * h);
-  renderPass |> PassEncoder.Compute.endPass;
+      let w = BMFRBuffer.Regression.computeHorizentalBlocksCount(window);
+      let h = BMFRBuffer.Regression.computeVerticalBlocksCount(window);
+      renderPass |> PassEncoder.Compute.dispatchX(w * h);
+      renderPass |> PassEncoder.Compute.endPass;
 
-  queue |> Queue.submit([|commandEncoder |> CommandEncoder.finish|]);
+      queue |> Queue.submit([|commandEncoder |> CommandEncoder.finish|]);
 
-  state;
+      state;
+    }
+    : {
+      state;
+    };
 };

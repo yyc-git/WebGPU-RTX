@@ -334,11 +334,9 @@ module RayTracingPass = {
       },
     },
   };
-
   // let getIndirectLightSpecularSampleCount = state => {
   //   _getPassData(state).indirectLightSpecularSampleCount;
   // };
-
   // let setIndirectLightSpecularSampleCount =
   //     (indirectLightSpecularSampleCount, state) => {
   //   ...state,
@@ -559,5 +557,111 @@ module TAAPass = {
 
   let getOtherFrameStaticBindGroupDataArr = state => {
     _getPassData(state).otherFrameStaticBindGroupDataArr;
+  };
+};
+
+module AccumulationPass = {
+  let _getPassData = state => {
+    state.pass.accumulationPassData;
+  };
+
+  let _getLastViewMatrix = state => {
+    _getPassData(state).lastViewMatrix;
+  };
+
+  let setLastViewMatrix = (lastViewMatrix, state) => {
+    ...state,
+    pass: {
+      ...state.pass,
+      accumulationPassData: {
+        ..._getPassData(state),
+        lastViewMatrix: Some(lastViewMatrix),
+      },
+    },
+  };
+
+  let isCameraMove = (currentViewMatrix, state) => {
+    switch (_getLastViewMatrix(state)) {
+    | None => true
+    | Some(lastViewMatrix) =>
+      Log.print((lastViewMatrix, currentViewMatrix)) |> ignore;
+      lastViewMatrix != currentViewMatrix;
+    };
+  };
+
+  let getAccumFrameCountForDenoise = state => {
+    _getPassData(state).accumFrameCountForDenoise;
+  };
+
+  let setAccumFrameCountForDenoise = (accumFrameCountForDenoise, state) => {
+    ...state,
+    pass: {
+      ...state.pass,
+      accumulationPassData: {
+        ..._getPassData(state),
+        accumFrameCountForDenoise,
+      },
+    },
+  };
+
+  let getAccumFrameCount = state => {
+    _getPassData(state).accumFrameCount;
+  };
+
+  let _setAccumFrameCount = (accumFrameCount, state) => {
+    ...state,
+    pass: {
+      ...state.pass,
+      accumulationPassData: {
+        ..._getPassData(state),
+        accumFrameCount,
+      },
+    },
+  };
+
+  let increaseAccumFrameCount = state => {
+    let accumFrameCount = getAccumFrameCount(state) |> succ;
+
+    (accumFrameCount, _setAccumFrameCount(accumFrameCount, state));
+  };
+
+  let resetAccumFrameCount = state => {
+    let accumFrameCount = 1;
+
+    (accumFrameCount, _setAccumFrameCount(accumFrameCount, state));
+  };
+
+  let canDenoise = state => {
+    getAccumFrameCount(state) >= getAccumFrameCountForDenoise(state);
+  };
+
+  let unsafeGetPipeline = state => {
+    _getPassData(state).pipeline |> Js.Option.getExn;
+  };
+
+  let setPipeline = (pipeline, state) => {
+    ...state,
+    pass: {
+      ...state.pass,
+      accumulationPassData: {
+        ..._getPassData(state),
+        pipeline: Some(pipeline),
+      },
+    },
+  };
+
+  let unsafeGetStaticBindGroupData = state => {
+    _getPassData(state).staticBindGroupData |> Js.Option.getExn;
+  };
+
+  let setStaticBindGroupData = (setSlot, bindGroup, state) => {
+    ...state,
+    pass: {
+      ...state.pass,
+      accumulationPassData: {
+        ..._getPassData(state),
+        staticBindGroupData: Some({setSlot, bindGroup}),
+      },
+    },
   };
 };

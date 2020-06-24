@@ -92,14 +92,20 @@ let init = (device, swapChainFormat, state) => {
            BindGroup.binding(
              ~binding=0,
              ~textureView=
-               Pass.unsafeGetTextureView("positionRoughnessRenderTargetView", state),
+               Pass.unsafeGetTextureView(
+                 "positionRoughnessRenderTargetView",
+                 state,
+               ),
              ~size=0,
              (),
            ),
            BindGroup.binding(
              ~binding=1,
              ~textureView=
-               Pass.unsafeGetTextureView("normalMetalnessRenderTargetView", state),
+               Pass.unsafeGetTextureView(
+                 "normalMetalnessRenderTargetView",
+                 state,
+               ),
              ~size=0,
              (),
            ),
@@ -239,49 +245,55 @@ let init = (device, swapChainFormat, state) => {
 };
 
 let execute = (device, queue, swapChain, state) => {
-  let backBufferView = swapChain |> SwapChain.getCurrentTextureView();
+  Pass.AccumulationPass.canDenoise(state)
+    ? {
+      let backBufferView = swapChain |> SwapChain.getCurrentTextureView();
 
-  let commandEncoder =
-    device |> Device.createCommandEncoder(CommandEncoder.descriptor());
-  let renderPass =
-    commandEncoder
-    |> CommandEncoder.beginRenderPass(
-         {
-           PassEncoder.Render.descriptor(
-             ~colorAttachments=[|
-               {
-                 "clearColor": {
-                   "r": 0.0,
-                   "g": 0.0,
-                   "b": 0.0,
-                   "a": 1.0,
-                 },
-                 "loadOp": "clear",
-                 "storeOp": "store",
-                 "attachment": backBufferView,
-               },
-             |],
-             (),
+      let commandEncoder =
+        device |> Device.createCommandEncoder(CommandEncoder.descriptor());
+      let renderPass =
+        commandEncoder
+        |> CommandEncoder.beginRenderPass(
+             {
+               PassEncoder.Render.descriptor(
+                 ~colorAttachments=[|
+                   {
+                     "clearColor": {
+                       "r": 0.0,
+                       "g": 0.0,
+                       "b": 0.0,
+                       "a": 1.0,
+                     },
+                     "loadOp": "clear",
+                     "storeOp": "store",
+                     "attachment": backBufferView,
+                   },
+                 |],
+                 (),
+               );
+             },
            );
-         },
-       );
 
-  let (staticBindGroupDataArr, pipeline) = (
-    Pass.PostprocessPass.getStaticBindGroupDataArr(state),
-    Pass.PostprocessPass.unsafeGetPipeline(state),
-  );
+      let (staticBindGroupDataArr, pipeline) = (
+        Pass.PostprocessPass.getStaticBindGroupDataArr(state),
+        Pass.PostprocessPass.unsafeGetPipeline(state),
+      );
 
-  renderPass |> PassEncoder.Render.setPipeline(pipeline);
+      renderPass |> PassEncoder.Render.setPipeline(pipeline);
 
-  staticBindGroupDataArr
-  |> Js.Array.forEach(({setSlot, bindGroup}: staticBindGroupData) => {
-       renderPass |> PassEncoder.Render.setBindGroup(setSlot, bindGroup)
-     });
+      staticBindGroupDataArr
+      |> Js.Array.forEach(({setSlot, bindGroup}: staticBindGroupData) => {
+           renderPass |> PassEncoder.Render.setBindGroup(setSlot, bindGroup)
+         });
 
-  renderPass |> PassEncoder.Render.draw(3, 1, 0, 0);
-  renderPass |> PassEncoder.Render.endPass;
+      renderPass |> PassEncoder.Render.draw(3, 1, 0, 0);
+      renderPass |> PassEncoder.Render.endPass;
 
-  queue |> Queue.submit([|commandEncoder |> CommandEncoder.finish|]);
+      queue |> Queue.submit([|commandEncoder |> CommandEncoder.finish|]);
 
-  state;
+      state;
+    }
+    : {
+      state;
+    };
 };

@@ -60,8 +60,7 @@ module CameraBuffer = {
     // Log.printComplete("cameraBufferData:", cameraBufferData);
 
     cameraBuffer |> Buffer.setSubFloat32Data(0, cameraBufferData);
-    let state =
-      state |> setBufferData((cameraBufferData, cameraBuffer));
+    let state = state |> setBufferData((cameraBufferData, cameraBuffer));
 
     state;
   };
@@ -1157,5 +1156,104 @@ module RayTracingCommonDataBuffer = {
       (bufferData, buffer),
       state,
     );
+  };
+};
+
+module AccumulationPixelBuffer = {
+  let buildData = (device, window) => {
+    // ManageBuffer.StorageBuffer.buildPixelBufferData(window, device);
+    let pixelBufferSize =
+      Window.getWidth(window)
+      * Window.getHeight(window)
+      * 4
+      * Float32Array._BYTES_PER_ELEMENT;
+    let pixelBuffer =
+      device
+      |> Device.createBuffer({
+           "size": pixelBufferSize,
+           "usage": BufferUsage.copy_dst lor BufferUsage.storage,
+         });
+
+    (pixelBufferSize, pixelBuffer);
+  };
+
+  let unsafeGetBufferData = state => {
+    Pass.unsafeGetStorageBufferData("accumulationPixelBuffer", state);
+  };
+
+  let setBufferData = ((bufferSize, buffer), state) => {
+    state
+    |> Pass.setStorageBufferData(
+         "accumulationPixelBuffer",
+         (bufferSize, buffer),
+       );
+  };
+
+  let clear = state => {
+    let (bufferSize, buffer) = unsafeGetBufferData(state);
+
+    let bufferData =
+      Float32Array.fromLength(bufferSize / Float32Array._BYTES_PER_ELEMENT);
+
+    buffer |> Buffer.setSubFloat32Data(0, bufferData);
+
+    let state = state |> setBufferData((bufferSize, buffer));
+
+    state;
+  };
+};
+
+module AccumulationCommonDataBuffer = {
+  let buildData = (device, state) => {
+    let bufferData = Float32Array.fromLength(1);
+
+    let (bufferData, _) =
+      bufferData
+      |> TypeArray.Float32Array.setFloat(
+           0,
+           Pass.AccumulationPass.getAccumFrameCount(state) |> float_of_int,
+         );
+
+    let bufferSize = bufferData |> Float32Array.byteLength;
+    let buffer =
+      device
+      |> Device.createBuffer({
+           "size": bufferSize,
+           "usage": BufferUsage.copy_dst lor BufferUsage.uniform,
+         });
+
+    buffer |> Buffer.setSubFloat32Data(0, bufferData);
+
+    (bufferData, bufferSize, buffer);
+  };
+
+  let unsafeGetBufferData = state => {
+    Pass.unsafeGetUniformBufferData("accumulationCommonDataBuffer", state);
+  };
+
+  let getBufferSize = bufferData => {
+    bufferData |> Float32Array.byteLength;
+  };
+
+  let setBufferData = ((bufferData, buffer), state) => {
+    Pass.setUniformBufferData(
+      "accumulationCommonDataBuffer",
+      (bufferData, buffer),
+      state,
+    );
+  };
+
+  let update = (accumFrameCount, state) => {
+    let (bufferData, buffer) = unsafeGetBufferData(state);
+
+    let (bufferData, _) =
+      bufferData
+      |> TypeArray.Float32Array.setFloat(0, accumFrameCount |> float_of_int);
+
+    buffer |> Buffer.setSubFloat32Data(0, bufferData);
+
+    let state = state |> setBufferData((bufferData, buffer));
+
+    state;
   };
 };

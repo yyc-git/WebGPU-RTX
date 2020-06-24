@@ -6,11 +6,14 @@ layout(std140, set = 1, binding = 1) buffer HistoryPixelBuffer {
 }
 historyPixelBuffer;
 
-
 vec4 getCurrentColor(vec2 unjitteredUV, vec2 resolution) {
   uint currentColorPixelIndex = getPixelIndex(unjitteredUV, resolution);
 
   return pixelBuffer.pixels[currentColorPixelIndex];
+}
+
+void setCurrentColor(vec2 unjitteredUV, vec2 resolution, vec4 currentColor) {
+  pixelBuffer.pixels[getPixelIndex(unjitteredUV, resolution)] = currentColor;
 }
 
 vec4 getPrevColor(vec2 jitteredUV, vec2 resolution) {
