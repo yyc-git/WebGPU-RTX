@@ -31,7 +31,9 @@ let load = window => {
     ),
   )
   |> flatMap(adapter => {
-       fromPromise(adapter |> Adapter.requestDevice)
+       fromPromise(
+         adapter |> Adapter.requestDevice({"extensions": [|"ray_tracing"|]}),
+       )
        |> flatMap(device => {
             let context = Window.getContext(window);
             let queue = device |> Device.getQueue;

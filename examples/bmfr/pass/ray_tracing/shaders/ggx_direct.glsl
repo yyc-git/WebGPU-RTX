@@ -5,7 +5,7 @@ vec3 computeDirectLight(uint seed,
                         vec3 worldPosition, vec3 worldNormal, vec3 V,
                         ShadingData shading,
 
-                        accelerationStructureNV topLevelAS) {
+                        accelerationStructureEXT topLevelAS) {
   uint lightIndexToSample = min(uint(rnd(seed) * lightCount), lightCount - 1);
   // uint lightIndexToSample = 0;
 
@@ -26,8 +26,8 @@ vec3 computeDirectLight(uint seed,
   if (isLightVisibleFromTheSurface(worldNormal, lightDir)) {
 
     float tMax = lightDistance;
-    // vec3 origin = gl_WorldRayOriginNV + gl_WorldRayDirectionNV *
-    // gl_HitTNV;
+    // vec3 origin = gl_WorldRayOriginEXT + gl_WorldRayDirectionEXT *
+    // gl_HitTEXT;
     vec3 origin = worldPosition;
     vec3 rayDir = lightDir;
 

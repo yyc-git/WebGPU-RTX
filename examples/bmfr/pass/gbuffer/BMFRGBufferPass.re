@@ -155,10 +155,11 @@ let _createRenderTargetData = (device, window, format) => {
 };
 
 let init = (device, window, state) => {
+  Js.logMany([|"zxczxc" |> Obj.magic|]);
   let modelBindGroupLayout =
     device
     |> Device.createBindGroupLayout({
-         "bindings": [|
+         "entries": [|
            BindGroupLayout.layoutBinding(
              ~binding=0,
              ~visibility=ShaderStage.vertex,
@@ -172,7 +173,7 @@ let init = (device, window, state) => {
   let pbrMaterialBindGroupLayout =
     device
     |> Device.createBindGroupLayout({
-         "bindings": [|
+         "entries": [|
            BindGroupLayout.layoutBinding(
              ~binding=0,
              ~visibility=ShaderStage.fragment,
@@ -186,7 +187,7 @@ let init = (device, window, state) => {
   let cameraBindGroupLayout =
     device
     |> Device.createBindGroupLayout({
-         "bindings": [|
+         "entries": [|
            BindGroupLayout.layoutBinding(
              ~binding=0,
              ~visibility=ShaderStage.vertex,
@@ -220,7 +221,7 @@ let init = (device, window, state) => {
     device
     |> Device.createBindGroup({
          "layout": modelBindGroupLayout,
-         "bindings": [|
+         "entries": [|
            BindGroup.binding(
              ~binding=0,
              ~buffer=modelBuffer,
@@ -317,7 +318,7 @@ let init = (device, window, state) => {
     device
     |> Device.createBindGroup({
          "layout": pbrMaterialBindGroupLayout,
-         "bindings": [|
+         "entries": [|
            BindGroup.binding(
              ~binding=0,
              ~buffer=pbrMaterialBuffer,
@@ -350,7 +351,7 @@ let init = (device, window, state) => {
     device
     |> Device.createBindGroup({
          "layout": cameraBindGroupLayout,
-         "bindings": [|
+         "entries": [|
            BindGroup.binding(
              ~binding=0,
              ~buffer=cameraBuffer,
@@ -569,6 +570,7 @@ let init = (device, window, state) => {
        );
 
   let state = state |> Pass.GBufferPass.setDepthTextureView(depthTextureView);
+  Js.logMany([|"zxczxc" |> Obj.magic|]);
 
   state;
 };
@@ -588,6 +590,7 @@ let _buildColorAttachment = (textureViewName, state) => {
 };
 
 let execute = (device, queue, state) => {
+  Js.logMany([|"nnn" |> Obj.magic|]);
   let commandEncoder =
     device |> Device.createCommandEncoder(CommandEncoder.descriptor());
   let renderPass =
@@ -682,6 +685,7 @@ let execute = (device, queue, state) => {
   renderPass |> PassEncoder.Render.endPass;
 
   queue |> Queue.submit([|commandEncoder |> CommandEncoder.finish|]);
+  Js.logMany([|"nnn" |> Obj.magic|]);
 
   state;
 };

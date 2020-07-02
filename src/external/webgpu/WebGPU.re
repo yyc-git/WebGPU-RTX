@@ -45,6 +45,19 @@ module TextureUsage = {
   external output_attachment: t = "OUTPUT_ATTACHMENT";
 };
 
+module Sampler = {
+  type t;
+
+  [@bs.deriving abstract]
+  type descriptor = {
+    magFilter: string,
+    minFilter: string,
+    addressModeU: string,
+    addressModeV: string,
+    addressModeW: string,
+  };
+};
+
 module Texture = {
   type t;
 
@@ -122,6 +135,8 @@ module BufferUsage = {
   external copy_src: t = "COPY_SRC";
   [@bs.val] [@bs.scope "GPUBufferUsage"] [@bs.module "webgpu"]
   external copy_dst: t = "COPY_DST";
+  [@bs.val] [@bs.scope "GPUBufferUsage"] [@bs.module "webgpu"]
+  external ray_tracing: t = "RAY_TRACING";
 };
 
 module Buffer = {
@@ -144,70 +159,70 @@ module Buffer = {
     "setSubData";
 };
 
-module AccelerationContainerFlag = {
+module AccelerationContainerUsage = {
   type t = int;
 
   [@bs.val]
-  [@bs.scope "GPURayTracingAccelerationContainerFlag"]
+  [@bs.scope "GPURayTracingAccelerationContainerUsage"]
   [@bs.module "webgpu"]
   external none: t = "NONE";
   [@bs.val]
-  [@bs.scope "GPURayTracingAccelerationContainerFlag"]
+  [@bs.scope "GPURayTracingAccelerationContainerUsage"]
   [@bs.module "webgpu"]
   external allow_update: t = "ALLOW_UPDATE";
   [@bs.val]
-  [@bs.scope "GPURayTracingAccelerationContainerFlag"]
+  [@bs.scope "GPURayTracingAccelerationContainerUsage"]
   [@bs.module "webgpu"]
   external prefer_fast_trace: t = "PREFER_FAST_TRACE";
   [@bs.val]
-  [@bs.scope "GPURayTracingAccelerationContainerFlag"]
+  [@bs.scope "GPURayTracingAccelerationContainerUsage"]
   [@bs.module "webgpu"]
   external prefer_fast_build: t = "PREFER_FAST_BUILD";
   [@bs.val]
-  [@bs.scope "GPURayTracingAccelerationContainerFlag"]
+  [@bs.scope "GPURayTracingAccelerationContainerUsage"]
   [@bs.module "webgpu"]
   external low_memory: t = "LOW_MEMORY";
 };
 
-module AccelerationGeometryFlag = {
+module AccelerationGeometryUsage = {
   type t = int;
 
   [@bs.val]
-  [@bs.scope "GPURayTracingAccelerationGeometryFlag"]
+  [@bs.scope "GPURayTracingAccelerationGeometryUsage"]
   [@bs.module "webgpu"]
   external none: t = "NONE";
   [@bs.val]
-  [@bs.scope "GPURayTracingAccelerationGeometryFlag"]
+  [@bs.scope "GPURayTracingAccelerationGeometryUsage"]
   [@bs.module "webgpu"]
   external opaque: t = "OPAQUE";
   [@bs.val]
-  [@bs.scope "GPURayTracingAccelerationGeometryFlag"]
+  [@bs.scope "GPURayTracingAccelerationGeometryUsage"]
   [@bs.module "webgpu"]
   external allow_any_hit: t = "ALLOW_ANY_HIT";
 };
 
-module AccelerationInstanceFlag = {
+module AccelerationInstanceUsage = {
   type t = int;
 
   [@bs.val]
-  [@bs.scope "GPURayTracingAccelerationInstanceFlag"]
+  [@bs.scope "GPURayTracingAccelerationInstanceUsage"]
   [@bs.module "webgpu"]
   external none: t = "NONE";
   [@bs.val]
-  [@bs.scope "GPURayTracingAccelerationInstanceFlag"]
+  [@bs.scope "GPURayTracingAccelerationInstanceUsage"]
   [@bs.module "webgpu"]
   external triangle_cull_disable: t = "TRIANGLE_CULL_DISABLE";
   [@bs.val]
-  [@bs.scope "GPURayTracingAccelerationInstanceFlag"]
+  [@bs.scope "GPURayTracingAccelerationInstanceUsage"]
   [@bs.module "webgpu"]
   external triangle_front_counterclockwise: t =
     "TRIANGLE_FRONT_COUNTERCLOCKWISE";
   [@bs.val]
-  [@bs.scope "GPURayTracingAccelerationInstanceFlag"]
+  [@bs.scope "GPURayTracingAccelerationInstanceUsage"]
   [@bs.module "webgpu"]
   external force_opaque: t = "FORCE_OPAQUE";
   [@bs.val]
-  [@bs.scope "GPURayTracingAccelerationInstanceFlag"]
+  [@bs.scope "GPURayTracingAccelerationInstanceUsage"]
   [@bs.module "webgpu"]
   external force_no_opaque: t = "FORCE_NO_OPAQUE";
 };
@@ -235,7 +250,7 @@ module AccelerationContainer = {
 
   type geometry = {
     .
-    "flags": AccelerationGeometryFlag.t,
+    "usage": AccelerationGeometryUsage.t,
     "type": string,
     "vertex": geometryVertex,
     "index": geometryIndex,
@@ -255,28 +270,40 @@ module AccelerationContainer = {
     "scale": transform3D,
   };
 
+  type instanceId = int;
+
   [@bs.deriving abstract]
   type instance = {
-    flags: AccelerationInstanceFlag.t,
+    usage: AccelerationInstanceUsage.t,
     mask: int,
-    instanceId: int,
+    instanceId,
     instanceOffset: int,
     geometryContainer: t,
     [@bs.optional]
     transform,
+    [@bs.optional]
+    transformMatrix: Js.Typed_array.Float32Array.t,
+  };
+
+  let getInstanceId = instance => {
+    instance->instanceIdGet;
   };
 
   [@bs.deriving abstract]
   type descriptor = {
     level: string,
-    flags: AccelerationContainerFlag.t,
+    usage: AccelerationContainerUsage.t,
     [@bs.optional]
     geometries: array(geometry),
     [@bs.optional]
     instances: array(instance),
-    [@bs.optional]
-    instanceBuffer: Buffer.t,
   };
+
+  [@bs.send.pipe: t] external updateInstance: (instanceId, instance) => unit;
+
+  [@bs.send.pipe: t]
+  external setSubFloat32Data: (int, Js.Typed_array.Float32Array.t) => unit =
+    "setSubData";
 };
 
 module BindGroupLayout = {
@@ -294,7 +321,7 @@ module BindGroupLayout = {
     hasDynamicOffset: bool,
   };
 
-  type descriptor = {. "bindings": array(layoutBinding)};
+  type descriptor = {. "entries": array(layoutBinding)};
 };
 
 module BindGroup = {
@@ -308,6 +335,8 @@ module BindGroup = {
     [@bs.optional]
     buffer: Buffer.t,
     [@bs.optional]
+    sampler: Sampler.t,
+    [@bs.optional]
     textureView: TextureView.t,
     [@bs.optional]
     offset: int,
@@ -317,7 +346,7 @@ module BindGroup = {
   type descriptor = {
     .
     "layout": BindGroupLayout.t,
-    "bindings": array(binding),
+    "entries": array(binding),
   };
 };
 
@@ -467,6 +496,7 @@ module Pipeline = {
     type rayTracingState = {
       shaderBindingTable: ShaderBindingTable.t,
       maxRecursionDepth: int,
+      maxPayloadSize: int,
     };
 
     [@bs.deriving abstract]
@@ -671,6 +701,7 @@ module Device = {
     AccelerationContainer.descriptor => AccelerationContainer.t;
   [@bs.send.pipe: t]
   external createCommandEncoder: CommandEncoder.descriptor => CommandEncoder.t;
+  [@bs.send.pipe: t] external createSampler: Sampler.descriptor => Sampler.t;
   [@bs.send.pipe: t] external createTexture: Texture.descriptor => Texture.t;
 };
 
@@ -698,6 +729,7 @@ module Window = {
     "width": int,
     "height": int,
     "title": string,
+    "resizable": bool,
   };
 
   [@bs.module "webgpu"] [@bs.new]
@@ -713,7 +745,9 @@ module Window = {
 module Adapter = {
   type t;
 
-  [@bs.send.pipe: t] external requestDevice: Js.Promise.t(Device.t);
+  [@bs.send.pipe: t]
+  external requestDevice:
+    {. "extensions": array(string)} => Js.Promise.t(Device.t);
 };
 
 module GPU = {

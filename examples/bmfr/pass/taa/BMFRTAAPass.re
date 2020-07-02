@@ -18,7 +18,7 @@ let _initFrameData =
   let gbufferBindGroupLayout =
     device
     |> Device.createBindGroupLayout({
-         "bindings": [|
+         "entries": [|
            BindGroupLayout.layoutBinding(
              ~binding=0,
              ~visibility=ShaderStage.fragment,
@@ -31,7 +31,7 @@ let _initFrameData =
   let otherBindGroupLayout =
     device
     |> Device.createBindGroupLayout({
-         "bindings": [|
+         "entries": [|
            BindGroupLayout.layoutBinding(
              ~binding=0,
              ~visibility=ShaderStage.fragment,
@@ -63,7 +63,7 @@ let _initFrameData =
     device
     |> Device.createBindGroup({
          "layout": gbufferBindGroupLayout,
-         "bindings": [|
+         "entries": [|
            BindGroup.binding(
              ~binding=0,
              ~textureView=
@@ -81,7 +81,7 @@ let _initFrameData =
     device
     |> Device.createBindGroup({
          "layout": otherBindGroupLayout,
-         "bindings": [|
+         "entries": [|
            BindGroup.binding(
              ~binding=0,
              ~buffer=pixelBuffer,

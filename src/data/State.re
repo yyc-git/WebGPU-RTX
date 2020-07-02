@@ -119,8 +119,6 @@ let create = () => {
     accelerationContainer: {
       geometryContainers: None,
       instanceContainer: None,
-      instanceBufferArrayBuffer: None,
-      instanceBuffer: None,
     },
   },
   director: {

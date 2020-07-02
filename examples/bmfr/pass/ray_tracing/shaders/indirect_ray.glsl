@@ -1,12 +1,12 @@
 
-vec3 shootIndirectRay(accelerationStructureNV topLevelAS, vec3 origin,
+vec3 shootIndirectRay(accelerationStructureEXT topLevelAS, vec3 origin,
                       vec3 rayDir, float tMin) {
   float tMax = 1.0e38f; // The farthest distance we'll count as a hit
-  uint flags = gl_RayFlagsNoneNV;
+  uint flags = gl_RayFlagsNoneEXT;
 
   prd.hitValue = vec3(0.0);
 
-  traceNV(topLevelAS, // acceleration structure
+  traceRayEXT(topLevelAS, // acceleration structure
           flags,      // rayFlags
           0xFF,       // cullMask
           0,          // sbtRecordOffset

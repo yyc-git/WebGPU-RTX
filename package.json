@@ -20,6 +20,8 @@
     },
     "dependencies": {
         "bs-platform": "^7.2.2",
+        "clang-format": "^1.4.0",
+        "webgpu": "^0.1.16",
         "wonder-bs-most": "^0.0.3"
     }
 }

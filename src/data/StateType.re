@@ -323,11 +323,11 @@ type pass = {
   textureViewMap: ImmutableHashMap.t(textureViewName, TextureView.t),
 };
 
+type instanceId = int;
+
 type accelerationContainer = {
   geometryContainers: option(array(AccelerationContainer.t)),
   instanceContainer: option(AccelerationContainer.t),
-  instanceBufferArrayBuffer: option(ArrayBuffer.t),
-  instanceBuffer: option(Buffer.t),
 };
 
 type rayTracing = {accelerationContainer};

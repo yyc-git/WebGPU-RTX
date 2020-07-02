@@ -7,7 +7,7 @@ let _unsafeGet = (index: int, map: SparseMapType.t2('a)): 'a => {
 };
 
 let _isEmpty = (value: 'a): bool =>
-  value |> SparseMapType.notNullableToNullable |> Js.Nullable.test;
+  value |> SparseMapType.notNullableToNullable |> Js.Nullable.isNullable;
 
 let get = (index: int, map) => {
   let value = _unsafeGet(index, map);

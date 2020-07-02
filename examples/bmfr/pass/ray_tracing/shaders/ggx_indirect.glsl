@@ -34,7 +34,7 @@ vec3 _getGGXMicrofacet(float r1, float r2, vec3 worldNormal, vec3 V,
 vec3 _computeSpecular(float r1, float r2, float tMin, vec3 worldPosition,
                       vec3 worldNormal, vec3 V, ShadingData shading,
                       float specularLobeProb,
-                      accelerationStructureNV topLevelAS) {
+                      accelerationStructureEXT topLevelAS) {
   const vec3 H = _getGGXMicrofacet(r1, r2, worldNormal, V, shading);
 
   const vec3 L = reflect(-V, H);
@@ -56,7 +56,7 @@ vec3 _computeSpecular(float r1, float r2, float tMin, vec3 worldPosition,
 vec3 _computeDiffuse(float r1, float r2, float tMin, vec3 worldPosition,
                      vec3 worldNormal, vec3 V, ShadingData shading,
                      float specularLobeProb,
-                     accelerationStructureNV topLevelAS) {
+                     accelerationStructureEXT topLevelAS) {
   vec3 bounceDir = getCosHemisphereSample(r1, r2, worldNormal);
 
   prd.evalDisneyType = 1;
@@ -79,7 +79,7 @@ vec3 computeIndirectLight(uint seed, float tMin,
 
                           vec3 V, vec3 worldPosition, vec3 worldNormal,
                           ShadingData shading,
-                          accelerationStructureNV topLevelAS) {
+                          accelerationStructureEXT topLevelAS) {
 
   float specularLobeProb = _computeSpecularLobeProb(shading);
   bool chooseSpecular = (rnd(seed) < specularLobeProb);

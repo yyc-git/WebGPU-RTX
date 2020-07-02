@@ -1,5 +1,5 @@
 #version 460
-#extension GL_NV_ray_tracing : require
+#extension GL_EXT_ray_tracing : enable
 #extension GL_EXT_nonuniform_qualifier : enable
 #extension GL_EXT_scalar_block_layout : enable
 #pragma shader_stage(closest)
@@ -17,7 +17,7 @@
 
 #include "disney.glsl"
 
-layout(location = 1) rayPayloadNV bool isShadowed;
+layout(location = 1) rayPayloadEXT bool isShadowed;
 
 #include "shadow_ray.glsl"
 
@@ -25,13 +25,13 @@ layout(location = 1) rayPayloadNV bool isShadowed;
 
 #include "indirect_utils.glsl"
 
-layout(location = 0) rayPayloadInNV hitPayload prd;
+layout(location = 0) rayPayloadInEXT hitPayload prd;
 
 #include "indirect_ray.glsl"
 
 #include "ggx_indirect.glsl"
 
-layout(set = 1, binding = 0) uniform accelerationStructureNV topLevelAS;
+layout(set = 1, binding = 0) uniform accelerationStructureEXT topLevelAS;
 
 layout(std140, set = 1, binding = 2) uniform CommonData { vec4 compressedData; }
 pushC;

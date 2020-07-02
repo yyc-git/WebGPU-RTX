@@ -26,6 +26,18 @@ external inspectFloat32Array:
   "inspect";
 
 let print = value => {
+  // Js.log(
+  //   inspectFloat32Array(
+  //     value |> Obj.magic,
+  //     {"maxArrayLength": Js.Nullable.null},
+  //   ),
+  // );
+
+  value;
+};
+
+
+let print2 = value => {
   Js.log(
     inspectFloat32Array(
       value |> Obj.magic,
@@ -38,13 +50,13 @@ let print = value => {
 
 
 let printComplete = (message, value) => {
-  Js.log2(
-    message,
-    inspectFloat32Array(
-      value |> Obj.magic,
-      {"maxArrayLength": Js.Nullable.null},
-    ),
-  );
+  // Js.log2(
+  //   message,
+  //   inspectFloat32Array(
+  //     value |> Obj.magic,
+  //     {"maxArrayLength": Js.Nullable.null},
+  //   ),
+  // );
 
   value;
 };

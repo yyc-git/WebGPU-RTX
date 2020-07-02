@@ -39,7 +39,7 @@ struct PBRMaterial {
   vec4 compressedData;
 };
 
-hitAttributeNV vec3 attribs;
+hitAttributeEXT vec3 attribs;
 
 layout(std140, set = 1, binding = 4) buffer SceneDesc { InstanceData i[]; }
 sceneDesc;

@@ -1,9 +1,14 @@
 open WebGPU;
 
-
 open WonderBsMost.Most;
 
-let window = Window.make({"width": 640, "height": 480, "title": "WebGPU"});
+let window =
+  Window.make({
+    "width": 640,
+    "height": 480,
+    "title": "WebGPU",
+    "resizable": false,
+  });
 
 Director.load(window)
 |> subscribe({
@@ -27,22 +32,22 @@ Director.load(window)
             BMFRRayTracingPass.init(device, queue),
             BMFRRayTracingPass.execute(device, window, queue),
           )
-      //  |> Director.addPassFuncs(
-      //       BMFRPreprocessPass.init(device, swapChainFormat),
-      //       BMFRPreprocessPass.execute(device, queue, swapChain),
-      //     )
-       |> Director.addPassFuncs(
-            BMFRRegressionPass.init(device),
-            BMFRRegressionPass.execute(device, queue, window),
-          )
-       |> Director.addPassFuncs(
-            BMFRPostprocessPass.init(device, swapChainFormat),
-            BMFRPostprocessPass.execute(device, queue, swapChain),
-          )
-       |> Director.addPassFuncs(
-            BMFRTAAPass.init(device, window, swapChainFormat),
-            BMFRTAAPass.execute(device, queue, swapChain),
-          )
+       //  |> Director.addPassFuncs(
+       //       BMFRPreprocessPass.init(device, swapChainFormat),
+       //       BMFRPreprocessPass.execute(device, queue, swapChain),
+       //     )
+       //  |> Director.addPassFuncs(
+       //       BMFRRegressionPass.init(device),
+       //       BMFRRegressionPass.execute(device, queue, window),
+       //     )
+       //  |> Director.addPassFuncs(
+       //       BMFRPostprocessPass.init(device, swapChainFormat),
+       //       BMFRPostprocessPass.execute(device, queue, swapChain),
+       //     )
+       //  |> Director.addPassFuncs(
+       //       BMFRTAAPass.init(device, window, swapChainFormat),
+       //       BMFRTAAPass.execute(device, queue, swapChain),
+       //     )
        |> Director.addPassFuncs(
             BMFRAccumulationPass.init(device, swapChainFormat),
             BMFRAccumulationPass.execute(device, queue, swapChain),

@@ -1,10 +1,10 @@
-bool shadowRayVisibility(accelerationStructureNV topLevelAS, uint missIndex,
+bool shadowRayVisibility(accelerationStructureEXT topLevelAS, uint missIndex,
                          vec3 origin, vec3 rayDir, float tMin, float tMax) {
-  uint flags = gl_RayFlagsTerminateOnFirstHitNV | gl_RayFlagsOpaqueNV |
-               gl_RayFlagsSkipClosestHitShaderNV;
+  uint flags = gl_RayFlagsTerminateOnFirstHitEXT | gl_RayFlagsOpaqueEXT |
+               gl_RayFlagsSkipClosestHitShaderEXT;
   isShadowed = true;
 
-  traceNV(topLevelAS, // acceleration structure
+  traceRayEXT(topLevelAS, // acceleration structure
           flags,      // rayFlags
           0xFF,       // cullMask
           0,          // sbtRecordOffset

@@ -15,7 +15,7 @@ let init = (device, swapChainFormat, state) => {
   let bindGroupLayout =
     device
     |> Device.createBindGroupLayout({
-         "bindings": [|
+         "entries": [|
            BindGroupLayout.layoutBinding(
              ~binding=0,
              ~visibility=ShaderStage.fragment,
@@ -47,7 +47,7 @@ let init = (device, swapChainFormat, state) => {
     device
     |> Device.createBindGroup({
          "layout": bindGroupLayout,
-         "bindings": [|
+         "entries": [|
            BindGroup.binding(
              ~binding=0,
              ~buffer=pixelBuffer,

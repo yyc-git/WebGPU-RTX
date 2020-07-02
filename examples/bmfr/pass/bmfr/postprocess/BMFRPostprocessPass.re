@@ -19,7 +19,7 @@ let init = (device, swapChainFormat, state) => {
   let gbufferBindGroupLayout =
     device
     |> Device.createBindGroupLayout({
-         "bindings": [|
+         "entries": [|
            BindGroupLayout.layoutBinding(
              ~binding=0,
              ~visibility=ShaderStage.fragment,
@@ -44,7 +44,7 @@ let init = (device, swapChainFormat, state) => {
   let otherBindGroupLayout =
     device
     |> Device.createBindGroupLayout({
-         "bindings": [|
+         "entries": [|
            BindGroupLayout.layoutBinding(
              ~binding=0,
              ~visibility=ShaderStage.fragment,
@@ -88,7 +88,7 @@ let init = (device, swapChainFormat, state) => {
     device
     |> Device.createBindGroup({
          "layout": gbufferBindGroupLayout,
-         "bindings": [|
+         "entries": [|
            BindGroup.binding(
              ~binding=0,
              ~textureView=
@@ -126,7 +126,7 @@ let init = (device, swapChainFormat, state) => {
     device
     |> Device.createBindGroup({
          "layout": otherBindGroupLayout,
-         "bindings": [|
+         "entries": [|
            BindGroup.binding(
              ~binding=0,
              ~buffer=pixelBuffer,

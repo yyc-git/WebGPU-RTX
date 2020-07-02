@@ -1,5 +1,5 @@
 #version 460
-#extension GL_NV_ray_tracing : require
+#extension GL_EXT_ray_tracing : require
 #extension GL_EXT_nonuniform_qualifier : enable
 #extension GL_EXT_scalar_block_layout : enable
 #pragma shader_stage(raygen)
@@ -23,24 +23,25 @@
 
 #include "../../shaders/sample_utils.glsl"
 
-layout(location = 1) rayPayloadNV bool isShadowed;
+layout(location = 1) rayPayloadEXT bool isShadowed;
 
 #include "shadow_ray.glsl"
 
 #include "ggx_direct.glsl"
 
-layout(location = 0) rayPayloadNV hitPayload prd;
+layout(location = 0) rayPayloadEXT hitPayload prd;
 
 #include "indirect_ray.glsl"
 
 #include "ggx_indirect.glsl"
 
-layout(binding = 0) uniform sampler2D gPositionRoughnessTexture;
-layout(binding = 1) uniform sampler2D gNormalMetalnessTexture;
-layout(binding = 2) uniform sampler2D gDiffusePositionWTexture;
-layout(binding = 3) uniform sampler2D gMotionVectorDepthSpecularTexture;
+layout(binding = 0) uniform sampler sampler0;
+layout(binding = 1) uniform texture2D gPositionRoughnessTexture;
+layout(binding = 2) uniform texture2D gNormalMetalnessTexture;
+layout(binding = 3) uniform texture2D gDiffusePositionWTexture;
+layout(binding = 4) uniform texture2D gMotionVectorDepthSpecularTexture;
 
-layout(set = 1, binding = 0) uniform accelerationStructureNV topLevelAS;
+layout(set = 1, binding = 0) uniform accelerationStructureEXT topLevelAS;
 layout(std140, set = 1, binding = 1) buffer PixelBuffer { vec4 pixels[]; }
 pixelBuffer;
 
@@ -52,9 +53,9 @@ layout(std140, set = 1, binding = 3) uniform RayTracingCommonData {
 }
 rayTracingCommonData;
 
-vec2 getLanuchIndex(uvec3 launchIDNV, uvec3 launchSizeNV) {
-  const vec2 pixelCenter = vec2(launchIDNV.xy) + vec2(0.5);
-  const vec2 inUV = pixelCenter / vec2(launchSizeNV.xy);
+vec2 getLanuchIndex(uvec3 launchID, uvec3 launchSize) {
+  const vec2 pixelCenter = vec2(launchID.xy) + vec2(0.5);
+  const vec2 inUV = pixelCenter / vec2(launchSize.xy);
 
   // // return inUV * 2.0 - 1.0;
   return inUV;
@@ -73,17 +74,21 @@ void main() {
   const bool doIndirectGI = true;
   const float tMin = 0.1;
 
-  uint seed = tea(gl_LaunchIDNV.y * gl_LaunchSizeNV.x + gl_LaunchIDNV.x, frame);
+  uint seed =
+      tea(gl_LaunchIDEXT.y * gl_LaunchSizeEXT.x + gl_LaunchIDEXT.x, frame);
 
   prd.seed = seed;
 
-  vec2 lanuchIndex = getLanuchIndex(gl_LaunchIDNV, gl_LaunchSizeNV);
+  vec2 lanuchIndex = getLanuchIndex(gl_LaunchIDEXT, gl_LaunchSizeEXT);
 
-  vec4 positionRoughness = texture(gPositionRoughnessTexture, lanuchIndex);
-  vec4 diffusePositionW = texture(gDiffusePositionWTexture, lanuchIndex);
-  vec4 normalMetalness = texture(gNormalMetalnessTexture, lanuchIndex);
-  vec4 motionVectorDepthSpecular =
-      texture(gMotionVectorDepthSpecularTexture, lanuchIndex);
+  vec4 positionRoughness =
+      texture(sampler2D(gPositionRoughnessTexture, sampler0), lanuchIndex);
+  vec4 diffusePositionW =
+      texture(sampler2D(gDiffusePositionWTexture, sampler0), lanuchIndex);
+  vec4 normalMetalness =
+      texture(sampler2D(gNormalMetalnessTexture, sampler0), lanuchIndex);
+  vec4 motionVectorDepthSpecular = texture(
+      sampler2D(gMotionVectorDepthSpecularTexture, sampler0), lanuchIndex);
 
   vec4 worldPosition = vec4(positionRoughness.xyz, diffusePositionW.a);
   vec3 worldNormal = normalMetalness.xyz;
@@ -167,7 +172,8 @@ void main() {
     hitValue = vec3(0.15);
   }
 
-  const uint pixelIndex = gl_LaunchIDNV.y * gl_LaunchSizeNV.x + gl_LaunchIDNV.x;
+  const uint pixelIndex =
+      gl_LaunchIDEXT.y * gl_LaunchSizeEXT.x + gl_LaunchIDEXT.x;
 
   pixelBuffer.pixels[pixelIndex] = vec4(hitValue, 1.0);
 }
