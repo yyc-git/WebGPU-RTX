@@ -2,82 +2,7 @@ open Js.Typed_array;
 
 open WebGPU;
 
-module InstanceBuffer = {
-  let _getInstanceBufferStride = () => 64;
-
-  let _computeInstanceOffset = instanceIndex => {
-    instanceIndex * _getInstanceBufferStride();
-  };
-
-  // let createInstanceBuffer = (geometryCount, device) => {
-  //   let byteLength = geometryCount * _getInstanceBufferStride();
-
-  //   (
-  //     ArrayBuffer.make(byteLength),
-  //     device
-  //     |> Device.createBuffer({
-  //          "size": byteLength,
-  //          "usage": BufferUsage.copy_dst,
-  //        }),
-  //   );
-  // };
-
-  let setInstanceData =
-      (
-        instanceIndex,
-        (
-          transformMatrix,
-          instanceId,
-          mask,
-          instanceOffset,
-          usage,
-          blasHandle,
-        ),
-        instanceBufferArrayBuffer,
-      ) => {
-    let dataView = DataView.make(instanceBufferArrayBuffer);
-    let offset = _computeInstanceOffset(instanceIndex);
-
-    let offset =
-      ArrayUtils.range(0, 12)
-      |> ArrayUtils.reduceOneParam(
-           (. offset, i) => {
-             DataView.setFloat32LittleEndian(
-               dataView,
-               offset,
-               Float32Array.unsafe_get(transformMatrix, i),
-             );
-
-             offset + 4;
-           },
-           offset,
-         );
-
-    DataView.setUint32LittleEndian(
-      dataView,
-      offset,
-      mask lsl 24 lor instanceId,
-    );
-    DataView.setUint32LittleEndian(
-      dataView,
-      offset + 4,
-      usage lsl 24 lor instanceOffset,
-    );
-    DataViewUtils.setBigInt64LittleEndian(dataView, offset + 8, blasHandle);
-
-    instanceBufferArrayBuffer;
-  };
-
-  let setInstanceBufferData = (instanceBufferArrayBuffer, instanceBuffer) => {
-    Buffer.setSubUint8Data(
-      0,
-      Uint8Array.fromBuffer(instanceBufferArrayBuffer),
-      instanceBuffer,
-    );
-
-    instanceBuffer;
-  };
-
+module Instance = {
   let _convertMat4To34RowMajorMatrix = (mat4): Float32Array.t => {
     Float32Array.make([|
       Float32Array.unsafe_get(mat4, 0),
@@ -95,7 +20,7 @@ module InstanceBuffer = {
     |]);
   };
 
-  let convertInstanceTransformDataToContainerTransformMatrix =
+  let _convertInstanceTransformDataToContainerTransformMatrix =
       ((translation, rotation, scale)) => {
     Matrix4.createIdentityMatrix4()
     |> Matrix4.fromTranslationRotationScale(
@@ -106,17 +31,55 @@ module InstanceBuffer = {
     |> _convertMat4To34RowMajorMatrix;
   };
 
-  let convertHitGroupIndexToInstanceOffset = hitGroupIndex => {
-    // Log.print(("groupIndex:", hitGroupIndex)) |> ignore;
-    MathUtils.convertDecimalToHex(
-      hitGroupIndex,
-      16,
-    );
+  let _convertHitGroupIndexToInstanceOffset = hitGroupIndex => {
+    MathUtils.convertDecimalToHex(hitGroupIndex, 16);
   };
-};
 
-let _getGeomtryContainerHandle = (geometryContainer: AccelerationContainer.t) => {
-  Obj.magic(geometryContainer)##getHandle();
+  let createInstances = (geometryContainerMap, state) => {
+    let (instances, _) =
+      GameObject.getAllGeometryGameObjects(state)
+      |> ArrayUtils.reduceOneParam(
+           (. (instances, instanceIndex), gameObject) => {
+             let transform = GameObject.unsafeGetTransform(gameObject, state);
+
+             let geometryContainer =
+               geometryContainerMap
+               |> ImmutableSparseMap.unsafeGet(
+                    GameObject.unsafeGetGeometry(gameObject, state),
+                  );
+
+             (
+               instances
+               |> ArrayUtils.push(
+                    AccelerationContainer.instance(
+                      ~usage=AccelerationInstanceUsage.triangle_cull_disable,
+                      ~mask=0xFF,
+                      ~instanceId=instanceIndex,
+                      ~transformMatrix=
+                        _convertInstanceTransformDataToContainerTransformMatrix((
+                          Transform.getTranslation(transform, state),
+                          Transform.getRotation(transform, state),
+                          Transform.getScale(transform, state),
+                        )),
+                      ~instanceOffset=
+                        _convertHitGroupIndexToInstanceOffset(
+                          Shader.unsafeGetHitGroupIndex(
+                            GameObject.unsafeGetShader(gameObject, state),
+                            state,
+                          ),
+                        ),
+                      ~geometryContainer,
+                      (),
+                    ),
+                  ),
+               instanceIndex |> succ,
+             );
+           },
+           ([||], 0),
+         );
+
+    instances;
+  };
 };
 
 let _buildSceneGeometryContainers = (device, state) => {
@@ -181,88 +144,16 @@ let _buildSceneGeometryContainers = (device, state) => {
                              "format": "uint32",
                              "count": Uint32Array.length(geometryIndices),
                            },
-                         }
-                         |> Log.print2,
+                         },
                        |],
                        (),
-                     )
-                     |> Log.print2;
+                     );
                    },
-                 )
-              |> Log.print2,
+                 ),
             );
        },
        ImmutableSparseMap.createEmpty(),
      );
-};
-
-// let _createInstanceIdMap =
-//     (
-//       state,
-//     ) => {
-//       let ( instanceIdMap, _ ) =
-//     GameObject.getAllGeometryGameObjects(state)
-//     |> ArrayUtils.reduceOneParam(
-//          (. ( instanceIdMap, instanceIndex ), gameObject) => {
-//            (
-//              instanceIdMap |> ImmutableSparseMap.set(
-//                gameObject, instanceIndex
-//              ),
-//              instanceIndex |> succ
-//            )
-//          },
-//          (
-//            ImmutableSparseMap.createEmpty()
-//            , 0),
-//        );
-
-// instanceIdMap
-// };
-
-let _createInstances = (geometryContainerMap, state) => {
-  let (instances, _) =
-    GameObject.getAllGeometryGameObjects(state)
-    |> ArrayUtils.reduceOneParam(
-         (. (instances, instanceIndex), gameObject) => {
-           let transform = GameObject.unsafeGetTransform(gameObject, state);
-
-           let geometryContainer =
-             geometryContainerMap
-             |> ImmutableSparseMap.unsafeGet(
-                  GameObject.unsafeGetGeometry(gameObject, state),
-                );
-
-           (
-             instances
-             |> ArrayUtils.push(
-                  AccelerationContainer.instance(
-                    ~usage=AccelerationInstanceUsage.triangle_cull_disable,
-                    ~mask=0xFF,
-                    ~instanceId=instanceIndex,
-                    ~transformMatrix=
-                      InstanceBuffer.convertInstanceTransformDataToContainerTransformMatrix((
-                        Transform.getTranslation(transform, state),
-                        Transform.getRotation(transform, state),
-                        Transform.getScale(transform, state),
-                      )),
-                    ~instanceOffset=
-                      InstanceBuffer.convertHitGroupIndexToInstanceOffset(
-                        Shader.unsafeGetHitGroupIndex(
-                          GameObject.unsafeGetShader(gameObject, state),
-                          state,
-                        ),
-                      ),
-                    ~geometryContainer,
-                    (),
-                  ),
-                ),
-             instanceIndex |> succ,
-           );
-         },
-         ([||], 0),
-       );
-
-  instances;
 };
 
 let _createInstanceContainer = (geometryContainerMap, device, state) => {
@@ -272,11 +163,10 @@ let _createInstanceContainer = (geometryContainerMap, device, state) => {
          AccelerationContainer.descriptor(
            ~usage=AccelerationContainerUsage.allow_update,
            ~level="top",
-           ~instances=_createInstances(geometryContainerMap, state),
+           ~instances=Instance.createInstances(geometryContainerMap, state),
            (),
          );
-       }
-       |> Log.print2,
+       },
      );
 };
 
@@ -284,10 +174,8 @@ let buildContainers = (device, queue, state) => {
   let geometryContainerMap:
     ImmutableSparseMap.t(GeometryType.geometry, AccelerationContainer.t) =
     _buildSceneGeometryContainers(device, state);
-  Js.logMany([|"n1" |> Obj.magic|]);
   let instanceContainer =
     _createInstanceContainer(geometryContainerMap, device, state);
-  Js.logMany([|"n2" |> Obj.magic|]);
 
   let commandEncoder =
     device |> Device.createCommandEncoder(CommandEncoder.descriptor());
@@ -301,8 +189,6 @@ let buildContainers = (device, queue, state) => {
      });
   queue |> Queue.submit([|commandEncoder |> CommandEncoder.finish|]);
 
-  Js.logMany([|"n3" |> Obj.magic|]);
-
   let commandEncoder =
     device |> Device.createCommandEncoder(CommandEncoder.descriptor());
   commandEncoder
@@ -311,29 +197,3 @@ let buildContainers = (device, queue, state) => {
 
   (geometryContainerMap, instanceContainer);
 };
-
-// let updateInstanceContainer = (device, queue, state) => {
-//   let (geometryContainerMap, instanceContainer) =
-//     OperateAccelerationContainer.unsafeGetData(state);
-
-//   _createInstances(geometryContainerMap, state)
-//   |> Js.Array.forEach(instance => {
-//        instanceContainer
-//        |> AccelerationContainer.updateInstance(
-//             AccelerationContainer.getInstanceId(instance),
-//             instance,
-//           )
-//      });
-
-//   let commandEncoder =
-//     device |> Device.createCommandEncoder(CommandEncoder.descriptor());
-//   commandEncoder
-//   |> CommandEncoder.updateRayTracingAccelerationContainer(instanceContainer);
-//   queue |> Queue.submit([|commandEncoder |> CommandEncoder.finish|]);
-
-//   state
-//   |> OperateAccelerationContainer.setData(
-//        geometryContainerMap,
-//        instanceContainer,
-//      );
-// };

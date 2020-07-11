@@ -229,9 +229,6 @@ module AccelerationInstanceUsage = {
 
 module AccelerationContainer = {
   type t;
-  // Js.t
-  //   // TODO return bigInt type
-  //   ({. [@bs.meth] "getHandle": unit => int});
 
   type geometryVertex = {
     .
