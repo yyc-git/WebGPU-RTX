@@ -237,9 +237,9 @@ let _handleDomEventStreamError = e => {
   //        ~params={j|message:$message\nstack:$stack|j},
   //      ),
   //    ); */
-  Js.logMany([|
+  Log.error(
     e |> Obj.magic,
-  |]);
+  );
 };
 
 let init = window => {

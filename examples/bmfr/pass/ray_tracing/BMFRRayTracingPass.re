@@ -61,7 +61,6 @@ let _createShaderBindingTable = (baseShaderPath, device) => {
 };
 
 let init = (device, queue, state) => {
-  Js.logMany([|"mmmm" |> Obj.magic|]);
   let gbufferBindGroupLayout =
     device
     |> Device.createBindGroupLayout({
@@ -98,7 +97,6 @@ let init = (device, queue, state) => {
            ),
          |],
        });
-  Js.logMany([|"aaa" |> Obj.magic|]);
 
   let rtBindGroupLayout =
     device
@@ -162,44 +160,6 @@ let init = (device, queue, state) => {
            ),
          |],
        });
-  Js.logMany([|"aaa" |> Obj.magic|]);
-
-  // let rtCHitBindGroupLayout =
-  //   device
-  //   |> Device.createBindGroupLayout({
-  //        "entries": [|
-  //          BindGroupLayout.layoutBinding(
-  //            ~binding=0,
-  //            ~visibility=ShaderStage.ray_closest_hit,
-  //            ~type_="storage-buffer",
-  //            (),
-  //          ),
-  //         //  BindGroupLayout.layoutBinding(
-  //         //    ~binding=1,
-  //         //    ~visibility=ShaderStage.ray_closest_hit,
-  //         //    ~type_="storage-buffer",
-  //         //    (),
-  //         //  ),
-  //         //  BindGroupLayout.layoutBinding(
-  //         //    ~binding=2,
-  //         //    ~visibility=ShaderStage.ray_closest_hit,
-  //         //    ~type_="storage-buffer",
-  //         //    (),
-  //         //  ),
-  //         //  BindGroupLayout.layoutBinding(
-  //         //    ~binding=3,
-  //         //    ~visibility=ShaderStage.ray_closest_hit,
-  //         //    ~type_="storage-buffer",
-  //         //    (),
-  //         //  ),
-  //         //  BindGroupLayout.layoutBinding(
-  //         //    ~binding=4,
-  //         //    ~visibility=ShaderStage.ray_closest_hit,
-  //         //    ~type_="storage-buffer",
-  //         //    (),
-  //         //  ),
-  //        |],
-  //      });
 
   let cameraBindGroupLayout =
     device
@@ -214,7 +174,6 @@ let init = (device, queue, state) => {
            ),
          |],
        });
-  Js.logMany([|"bbb" |> Obj.magic|]);
 
   let directionLightBindGroupLayout =
     device
@@ -284,10 +243,8 @@ let init = (device, queue, state) => {
          |],
        });
 
-  Js.logMany([|"b333" |> Obj.magic|]);
   let (geometryContainers, instanceContainer) =
     ManageAccelerationContainer.buildContainers(device, queue, state);
-  Js.logMany([|"b4" |> Obj.magic|]);
 
   let state =
     state
@@ -318,7 +275,6 @@ let init = (device, queue, state) => {
   let (pbrMaterialBufferSize, pbrMaterialBuffer) =
     BMFRBuffer.GetHitShadingData.PBRMaterialBuffer.unsafeGetBufferData(state);
 
-  Js.logMany([|"b5" |> Obj.magic|]);
   let rtBindGroup =
     device
     |> Device.createBindGroup({
@@ -395,50 +351,6 @@ let init = (device, queue, state) => {
            ),
          |],
        });
-  Js.logMany([|"b6" |> Obj.magic|]);
-
-  // let rtCHitBindGroup =
-  //   device
-  //   |> Device.createBindGroup({
-  //        "layout": rtCHitBindGroupLayout,
-  //        "entries": [|
-  //          BindGroup.binding(
-  //            ~binding=0,
-  //            ~buffer=sceneDescBuffer,
-  //            ~offset=0,
-  //            ~size=sceneDescBufferSize,
-  //            (),
-  //          ),
-  //         //  BindGroup.binding(
-  //         //    ~binding=1,
-  //         //    ~buffer=geometryOffsetDataBuffer,
-  //         //    ~offset=0,
-  //         //    ~size=geometryOffsetDataBufferSize,
-  //         //    (),
-  //         //  ),
-  //         //  BindGroup.binding(
-  //         //    ~binding=2,
-  //         //    ~buffer=vertexBuffer,
-  //         //    ~offset=0,
-  //         //    ~size=vertexBufferSize,
-  //         //    (),
-  //         //  ),
-  //         //  BindGroup.binding(
-  //         //    ~binding=3,
-  //         //    ~buffer=indexBuffer,
-  //         //    ~offset=0,
-  //         //    ~size=indexBufferSize,
-  //         //    (),
-  //         //  ),
-  //         //  BindGroup.binding(
-  //         //    ~binding=4,
-  //         //    ~buffer=pbrMaterialBuffer,
-  //         //    ~offset=0,
-  //         //    ~size=pbrMaterialBufferSize,
-  //         //    (),
-  //         //  ),
-  //        |],
-  //      });
 
   let (cameraBufferData, cameraBuffer) =
     BMFRBuffer.CameraBuffer.unsafeGetCameraBufferData(state);
@@ -476,16 +388,13 @@ let init = (device, queue, state) => {
          |],
        });
 
-  Js.logMany([|"b7" |> Obj.magic|]);
   let state =
     state
     |> Pass.RayTracingPass.addStaticBindGroupData(0, gbufferBindGroup)
     |> Pass.RayTracingPass.addStaticBindGroupData(1, rtBindGroup)
     |> Pass.RayTracingPass.addStaticBindGroupData(2, cameraBindGroup)
     |> Pass.RayTracingPass.addStaticBindGroupData(3, directionLightBindGroup);
-  // |> Pass.RayTracingPass.addStaticBindGroupData(4, rtCHitBindGroup);
 
-  Js.logMany([|"b8" |> Obj.magic|]);
   let pipeline =
     device
     |> Device.createRayTracingPipeline(
@@ -498,7 +407,6 @@ let init = (device, queue, state) => {
                     rtBindGroupLayout,
                     cameraBindGroupLayout,
                     directionLightBindGroupLayout,
-                    // rtCHitBindGroupLayout,
                   |],
                 }),
            ~rayTracingState={
@@ -519,20 +427,15 @@ let init = (device, queue, state) => {
                  * Float32Array._BYTES_PER_ELEMENT,
              );
            },
-         )
-         |> Log.print2,
+         ),
        );
-  Js.logMany([|"b9" |> Obj.magic|]);
 
   let state = state |> Pass.RayTracingPass.setPipeline(pipeline);
-
-  Js.logMany([|"aaa" |> Obj.magic|]);
 
   state;
 };
 
 let execute = (device, window, queue, state) => {
-  Js.logMany([|"bbb" |> Obj.magic|]);
   let commandEncoder =
     device |> Device.createCommandEncoder(CommandEncoder.descriptor());
   let rtPass =
@@ -562,7 +465,6 @@ let execute = (device, window, queue, state) => {
   rtPass |> PassEncoder.RayTracing.endPass;
 
   queue |> Queue.submit([|commandEncoder |> CommandEncoder.finish|]);
-  Js.logMany([|"bbb" |> Obj.magic|]);
 
   state;
 };

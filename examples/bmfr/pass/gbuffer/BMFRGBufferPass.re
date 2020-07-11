@@ -7,12 +7,12 @@ open StateType;
 let _mergeVertexData = ((vertices, normals)) => {
   let vertexCount = Geometry.computeVertexCount(vertices);
 
-  Log.print(("vertexCount:", vertexCount)) |> ignore;
+  // Log.print(("vertexCount:", vertexCount)) |> ignore;
 
   ArrayUtils.range(0, vertexCount)
   |> ArrayUtils.reduceOneParam(
        (. vertexBufferData, vertexIndex) => {
-         Log.print(("vertexIndex: ", vertexIndex)) |> ignore;
+        //  Log.print(("vertexIndex: ", vertexIndex)) |> ignore;
          let offset = vertexIndex * 6;
          let componentIndex = vertexIndex * 3;
 
@@ -155,7 +155,6 @@ let _createRenderTargetData = (device, window, format) => {
 };
 
 let init = (device, window, state) => {
-  Js.logMany([|"zxczxc" |> Obj.magic|]);
   let modelBindGroupLayout =
     device
     |> Device.createBindGroupLayout({
@@ -301,10 +300,10 @@ let init = (device, window, state) => {
          ),
        );
 
-  Log.printComplete(
-    "pbrMaterialBufferData:",
-    (pbrMaterialBufferData, offsetArrMap),
-  );
+  // Log.printComplete(
+  //   "pbrMaterialBufferData:",
+  //   (pbrMaterialBufferData, offsetArrMap),
+  // );
 
   let pbrMaterialBuffer =
     device
@@ -362,7 +361,7 @@ let init = (device, window, state) => {
          |],
        });
 
-  Log.printComplete("cameraBufferData:", cameraBufferData);
+  // Log.printComplete("cameraBufferData:", cameraBufferData);
 
   let state =
     state |> Pass.GBufferPass.addStaticBindGroupData(2, cameraBindGroup);
@@ -570,7 +569,6 @@ let init = (device, window, state) => {
        );
 
   let state = state |> Pass.GBufferPass.setDepthTextureView(depthTextureView);
-  Js.logMany([|"zxczxc" |> Obj.magic|]);
 
   state;
 };
@@ -590,7 +588,6 @@ let _buildColorAttachment = (textureViewName, state) => {
 };
 
 let execute = (device, queue, state) => {
-  Js.logMany([|"nnn" |> Obj.magic|]);
   let commandEncoder =
     device |> Device.createCommandEncoder(CommandEncoder.descriptor());
   let renderPass =
@@ -685,7 +682,6 @@ let execute = (device, queue, state) => {
   renderPass |> PassEncoder.Render.endPass;
 
   queue |> Queue.submit([|commandEncoder |> CommandEncoder.finish|]);
-  Js.logMany([|"nnn" |> Obj.magic|]);
 
   state;
 };

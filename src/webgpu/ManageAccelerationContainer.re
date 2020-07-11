@@ -118,7 +118,7 @@ let _buildSceneGeometryContainers = (device, state) => {
 
          Buffer.setSubUint32Data(0, geometryIndices, geometryIndexBuffer);
 
-         Log.printComplete("accle:", (geometryVertices, geometryIndices));
+        //  Log.printComplete("accle:", (geometryVertices, geometryIndices));
 
          geometryContainerMap
          |> ImmutableSparseMap.set(

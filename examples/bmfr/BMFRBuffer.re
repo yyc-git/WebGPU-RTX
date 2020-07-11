@@ -842,10 +842,10 @@ module GetHitShadingData = {
 
                let indices = Geometry.unsafeGetIndexData(geometry, state);
 
-               Log.printComplete(
-                 "indices:",
-                 (indices, Geometry.computeIndexCount(indices)),
-               );
+              //  Log.printComplete(
+              //    "indices:",
+              //    (indices, Geometry.computeIndexCount(indices)),
+              //  );
 
                let newIndexOffset =
                  indexOffset + Geometry.computeIndexCount(indices);
@@ -859,7 +859,7 @@ module GetHitShadingData = {
              (bufferData, (0, 0)),
            );
 
-      Log.printComplete("geometry offset bufferData:", bufferData);
+      // Log.printComplete("geometry offset bufferData:", bufferData);
 
       buffer |> Buffer.setSubUint32Data(0, bufferData);
 
@@ -1087,7 +1087,7 @@ module GetHitShadingData = {
              (bufferData, 0),
            );
 
-      Log.printComplete("material bufferData:", bufferData);
+      // Log.printComplete("material bufferData:", bufferData);
 
       buffer |> Buffer.setSubFloat32Data(0, bufferData);
 
@@ -1217,11 +1217,11 @@ module AccumulationCommonDataBuffer = {
            ),
          );
 
-    Log.print((
-      "  Pass.AccumulationPass.convertCanDenoiseToFloat(state): ",
-      Pass.AccumulationPass.convertCanDenoiseToFloat(state),
-    ))
-    |> ignore;
+    // Log.print((
+    //   "  Pass.AccumulationPass.convertCanDenoiseToFloat(state): ",
+    //   Pass.AccumulationPass.convertCanDenoiseToFloat(state),
+    // ))
+    // |> ignore;
 
     let bufferSize = bufferData |> Float32Array.byteLength;
     let buffer =

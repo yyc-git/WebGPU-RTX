@@ -584,7 +584,7 @@ module AccumulationPass = {
     switch (_getLastViewMatrix(state)) {
     | None => true
     | Some(lastViewMatrix) =>
-      Log.print((lastViewMatrix, currentViewMatrix)) |> ignore;
+      // Log.print((lastViewMatrix, currentViewMatrix)) |> ignore;
       lastViewMatrix != currentViewMatrix;
     };
   };

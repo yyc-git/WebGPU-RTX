@@ -436,9 +436,8 @@ let _buildScene2 = state => {
 };
 
 let buildScene = state => {
-  _buildScene2
     // _buildScene1(state);
-    (state);
+  _buildScene2 (state);
 };
 
 let getAllRenderGameObjects = state => {

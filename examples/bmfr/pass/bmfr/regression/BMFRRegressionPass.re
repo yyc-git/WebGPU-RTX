@@ -218,7 +218,7 @@ let init = (device, state) => {
 let execute = (device, queue, window, state) => {
   Pass.AccumulationPass.canDenoise(state)
     ? {
-      Js.log("denoise");
+      Log.log("denoise");
 
       let commandEncoder =
         device |> Device.createCommandEncoder(CommandEncoder.descriptor());
