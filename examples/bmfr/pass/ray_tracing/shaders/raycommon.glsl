@@ -6,13 +6,7 @@ struct hitPayload {
   uint evalDisneyType;
   vec3 V;
 
-  // TODO use struct:
-  // WebGPU Node not support struct field use struct!!!(although glsl support!)
-  // ShadingData shading;
-  vec3 materialDiffuse;
-  float materialMetalness;
-  float materialRoughness;
-  float materialSpecular;
+  ShadingData shading;
 
   vec3 worldNormal;
   vec3 worldPosition;

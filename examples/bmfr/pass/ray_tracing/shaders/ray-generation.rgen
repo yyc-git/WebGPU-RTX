@@ -119,11 +119,7 @@ void main() {
     prd.worldPosition = worldPosition.xyz;
     prd.worldNormal = worldNormal;
 
-    // prd.shading = shading;
-    prd.materialDiffuse = materialDiffuse;
-    prd.materialMetalness = materialMetalness;
-    prd.materialRoughness = materialRoughness;
-    prd.materialSpecular = materialSpecular;
+    prd.shading = shading;
 
     prd.V = V;
 
@@ -131,9 +127,7 @@ void main() {
       float roughnessBias = 0.0;
 
       for (uint bb = 0; bb < bounceCount; bb++) {
-        ShadingData shadingForEachBounce =
-            buildShadingData(prd.materialDiffuse, prd.materialMetalness,
-                             prd.materialRoughness, prd.materialSpecular);
+        ShadingData shadingForEachBounce = prd.shading;
 
         // Increase Roughness Per Bounce for reduce fireflies:
         // https://twitter.com/YuriyODonnell/status/1199253959086612480

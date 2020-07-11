@@ -53,12 +53,8 @@ void main() {
       data.worldNormal, data.V, shading, topLevelAS);
 
   prd.V = data.V;
-  prd.worldPosition = data.worldPosition;
+  prd.worldPosition = data.worldPosition; 
   prd.worldNormal = data.worldNormal;
 
-  // prd.shading = shading;
-  prd.materialDiffuse = data.materialDiffuse;
-  prd.materialMetalness = data.materialMetalness;
-  prd.materialRoughness = data.materialRoughness;
-  prd.materialSpecular = data.materialSpecular;
+  prd.shading = shading;
 }
