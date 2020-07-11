@@ -1,6 +1,6 @@
 
 struct InstanceData {
-  // TODO perf: remove compressedData by pack objId to normalMatrix
+  // TODO perf: remove compressedData by pack to normalMatrix
 
   /*
    because scalar not work(not support float objId; mat4 modelMatrix;),
@@ -15,12 +15,9 @@ struct InstanceData {
 };
 
 struct Vertex {
-  // TODO perf: pack texCoord to position,normal
-  // TODO should use vec3 pos, but it don't work now!!! so I use vec4
-  // instead(vec2 is allowed with std140/430 but not allowed with scalar!!!)
-  // vec3 pos;
   vec4 position;
   vec4 normal;
+  // TODO perf: pack texCoord to position,normal
   //   vec4 texCoord;
 };
 
@@ -44,14 +41,12 @@ hitAttributeEXT vec3 attribs;
 layout(std140, set = 1, binding = 4) buffer SceneDesc { InstanceData i[]; }
 sceneDesc;
 
-/* scalar work with only uint fields! */
 layout(scalar, set = 1, binding = 5) buffer SceneGeometryOffsetData {
   GeometryOffsetData o[];
 }
 sceneGeometryOffsetData;
 
 // TODO use array of blocks!how to upload data???
-/* static vertices */
 layout(scalar, set = 1, binding = 6) buffer Vertices { Vertex v[]; }
 vertices;
 layout(scalar, set = 1, binding = 7) buffer Indices { uint i[]; }

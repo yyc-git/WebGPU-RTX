@@ -90,25 +90,17 @@ let init = (device, swapChainFormat, state) => {
          |],
        });
 
-  // TODO refactor: move "create linearSampler" logic to utils(many places have use it!)
-  let linearSampler =
-    device
-    |> Device.createSampler(
-         Sampler.descriptor(
-           ~magFilter="linear",
-           ~minFilter="linear",
-           ~addressModeU="repeat",
-           ~addressModeV="repeat",
-           ~addressModeW="repeat",
-         ),
-       );
-
   let gbufferBindGroup =
     device
     |> Device.createBindGroup({
          "layout": gbufferBindGroupLayout,
          "entries": [|
-           BindGroup.binding(~binding=0, ~sampler=linearSampler, ~size=0, ()),
+           BindGroup.binding(
+             ~binding=0,
+             ~sampler=GBufferUtils.createLinearSampler(device),
+             ~size=0,
+             (),
+           ),
            BindGroup.binding(
              ~binding=1,
              ~textureView=
