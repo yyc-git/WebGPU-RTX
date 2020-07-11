@@ -21,7 +21,7 @@ let init = (device, state) => {
            BindGroupLayout.layoutBinding(
              ~binding=0,
              ~visibility=ShaderStage.compute,
-             ~type_="sampled-texture",
+             ~type_="sampler",
              (),
            ),
            BindGroupLayout.layoutBinding(
@@ -32,6 +32,12 @@ let init = (device, state) => {
            ),
            BindGroupLayout.layoutBinding(
              ~binding=2,
+             ~visibility=ShaderStage.compute,
+             ~type_="sampled-texture",
+             (),
+           ),
+           BindGroupLayout.layoutBinding(
+             ~binding=3,
              ~visibility=ShaderStage.compute,
              ~type_="sampled-texture",
              (),
@@ -76,13 +82,28 @@ let init = (device, state) => {
          |],
        });
 
+       
+  let linearSampler =
+    device
+    |> Device.createSampler(
+         Sampler.descriptor(
+           ~magFilter="linear",
+           ~minFilter="linear",
+           ~addressModeU="repeat",
+           ~addressModeV="repeat",
+           ~addressModeW="repeat",
+         ),
+       );
+
+
   let gbufferBindGroup =
     device
     |> Device.createBindGroup({
          "layout": gbufferBindGroupLayout,
          "entries": [|
+           BindGroup.binding(~binding=0, ~sampler=linearSampler, ~size=0, ()),
            BindGroup.binding(
-             ~binding=0,
+             ~binding=1,
              ~textureView=
                Pass.unsafeGetTextureView(
                  "positionRoughnessRenderTargetView",
@@ -92,7 +113,7 @@ let init = (device, state) => {
              (),
            ),
            BindGroup.binding(
-             ~binding=1,
+             ~binding=2,
              ~textureView=
                Pass.unsafeGetTextureView(
                  "normalMetalnessRenderTargetView",
@@ -102,7 +123,7 @@ let init = (device, state) => {
              (),
            ),
            BindGroup.binding(
-             ~binding=2,
+             ~binding=3,
              ~textureView=
                Pass.unsafeGetTextureView(
                  "diffusePositionWRenderTargetView",

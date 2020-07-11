@@ -15,13 +15,6 @@ vec3 computeDirectLight(uint seed,
 
   getLightData(lightIndexToSample, lightIntensity, lightDistance, lightDir);
 
-  // // Diffuse
-  // vec3 diffuse = computeDiffuse(materialDiffuse, lightDir, worldNormal);
-
-  // float attenuation = 1.0;
-
-  // vec3 specular = vec3(0.0);
-
   // Tracing shadow ray only if the light is visible from the surface
   if (isLightVisibleFromTheSurface(worldNormal, lightDir)) {
 
@@ -37,20 +30,11 @@ vec3 computeDirectLight(uint seed,
     if (isShadowed) {
       return vec3(0.0);
     }
-
-    // if (isShadowed) {
-    //   attenuation = 0.3;
-    // } else {
-    //   specular = computeSpecular(materialSpecularColor, shininess,
-    //                              getViewDir(vec3(worldPosition)), lightDir,
-    //                              worldNormal);
-    // }
   }
 
   float pdf = 1 / float(lightCount);
 
   const vec3 N = worldNormal;
-  // const vec3 V = -gl_WorldRayDirectionEXT;
   const vec3 L = lightDir;
   const vec3 H = normalize(V + L);
 

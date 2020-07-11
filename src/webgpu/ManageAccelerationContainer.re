@@ -312,28 +312,28 @@ let buildContainers = (device, queue, state) => {
   (geometryContainerMap, instanceContainer);
 };
 
-let updateInstanceContainer = (device, queue, state) => {
-  let (geometryContainerMap, instanceContainer) =
-    OperateAccelerationContainer.unsafeGetData(state);
+// let updateInstanceContainer = (device, queue, state) => {
+//   let (geometryContainerMap, instanceContainer) =
+//     OperateAccelerationContainer.unsafeGetData(state);
 
-  _createInstances(geometryContainerMap, state)
-  |> Js.Array.forEach(instance => {
-       instanceContainer
-       |> AccelerationContainer.updateInstance(
-            AccelerationContainer.getInstanceId(instance),
-            instance,
-          )
-     });
+//   _createInstances(geometryContainerMap, state)
+//   |> Js.Array.forEach(instance => {
+//        instanceContainer
+//        |> AccelerationContainer.updateInstance(
+//             AccelerationContainer.getInstanceId(instance),
+//             instance,
+//           )
+//      });
 
-  let commandEncoder =
-    device |> Device.createCommandEncoder(CommandEncoder.descriptor());
-  commandEncoder
-  |> CommandEncoder.updateRayTracingAccelerationContainer(instanceContainer);
-  queue |> Queue.submit([|commandEncoder |> CommandEncoder.finish|]);
+//   let commandEncoder =
+//     device |> Device.createCommandEncoder(CommandEncoder.descriptor());
+//   commandEncoder
+//   |> CommandEncoder.updateRayTracingAccelerationContainer(instanceContainer);
+//   queue |> Queue.submit([|commandEncoder |> CommandEncoder.finish|]);
 
-  state
-  |> OperateAccelerationContainer.setData(
-       geometryContainerMap,
-       instanceContainer,
-     );
-};
+//   state
+//   |> OperateAccelerationContainer.setData(
+//        geometryContainerMap,
+//        instanceContainer,
+//      );
+// };

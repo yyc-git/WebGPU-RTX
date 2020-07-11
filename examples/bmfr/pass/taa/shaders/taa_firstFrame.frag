@@ -10,7 +10,8 @@
 layout(location = 0) in vec2 uv;
 // layout(location = 0) out vec4 outColor;
 
-layout(binding = 0) uniform sampler2D gMotionVectorDepthSpecularTexture;
+layout(binding = 0) uniform sampler sampler0;
+layout(binding = 1) uniform texture2D gMotionVectorDepthSpecularTexture;
 
 layout(set = 1, binding = 2) uniform ScreenDimension { vec2 resolution; }
 screenDimension;

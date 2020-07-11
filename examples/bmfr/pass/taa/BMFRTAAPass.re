@@ -22,6 +22,12 @@ let _initFrameData =
            BindGroupLayout.layoutBinding(
              ~binding=0,
              ~visibility=ShaderStage.fragment,
+             ~type_="sampler",
+             (),
+           ),
+           BindGroupLayout.layoutBinding(
+             ~binding=1,
+             ~visibility=ShaderStage.fragment,
              ~type_="sampled-texture",
              (),
            ),
@@ -59,13 +65,26 @@ let _initFrameData =
          |],
        });
 
+  let linearSampler =
+    device
+    |> Device.createSampler(
+         Sampler.descriptor(
+           ~magFilter="linear",
+           ~minFilter="linear",
+           ~addressModeU="repeat",
+           ~addressModeV="repeat",
+           ~addressModeW="repeat",
+         ),
+       );
+
   let gbufferBindGroup =
     device
     |> Device.createBindGroup({
          "layout": gbufferBindGroupLayout,
          "entries": [|
+           BindGroup.binding(~binding=0, ~sampler=linearSampler, ~size=0, ()),
            BindGroup.binding(
-             ~binding=0,
+             ~binding=1,
              ~textureView=
                Pass.unsafeGetTextureView(
                  "motionVectorDepthSpecularRenderTargetView",

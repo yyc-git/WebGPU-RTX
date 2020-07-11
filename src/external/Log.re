@@ -38,12 +38,12 @@ let print = value => {
 
 
 let print2 = value => {
-  Js.log(
-    inspectFloat32Array(
-      value |> Obj.magic,
-      {"maxArrayLength": Js.Nullable.null},
-    ),
-  );
+  // Js.log(
+  //   inspectFloat32Array(
+  //     value |> Obj.magic,
+  //     {"maxArrayLength": Js.Nullable.null},
+  //   ),
+  // );
 
   value;
 };

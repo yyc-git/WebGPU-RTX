@@ -36,18 +36,18 @@ Director.load(window)
        //       BMFRPreprocessPass.init(device, swapChainFormat),
        //       BMFRPreprocessPass.execute(device, queue, swapChain),
        //     )
-       //  |> Director.addPassFuncs(
-       //       BMFRRegressionPass.init(device),
-       //       BMFRRegressionPass.execute(device, queue, window),
-       //     )
-       //  |> Director.addPassFuncs(
-       //       BMFRPostprocessPass.init(device, swapChainFormat),
-       //       BMFRPostprocessPass.execute(device, queue, swapChain),
-       //     )
-       //  |> Director.addPassFuncs(
-       //       BMFRTAAPass.init(device, window, swapChainFormat),
-       //       BMFRTAAPass.execute(device, queue, swapChain),
-       //     )
+        |> Director.addPassFuncs(
+             BMFRRegressionPass.init(device),
+             BMFRRegressionPass.execute(device, queue, window),
+           )
+        |> Director.addPassFuncs(
+             BMFRPostprocessPass.init(device, swapChainFormat),
+             BMFRPostprocessPass.execute(device, queue, swapChain),
+           )
+        |> Director.addPassFuncs(
+             BMFRTAAPass.init(device, window, swapChainFormat),
+             BMFRTAAPass.execute(device, queue, swapChain),
+           )
        |> Director.addPassFuncs(
             BMFRAccumulationPass.init(device, swapChainFormat),
             BMFRAccumulationPass.execute(device, queue, swapChain),

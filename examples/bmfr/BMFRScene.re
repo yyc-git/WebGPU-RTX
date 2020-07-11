@@ -436,7 +436,9 @@ let _buildScene2 = state => {
 };
 
 let buildScene = state => {
-  _buildScene1(state);
+  _buildScene2
+    // _buildScene1(state);
+    (state);
 };
 
 let getAllRenderGameObjects = state => {
@@ -724,9 +726,10 @@ let _updateAccumulationData = state => {
   Log.print(("accum:", accumFrameCount)) |> ignore;
 
   state
-  |> BMFRBuffer.AccumulationCommonDataBuffer.update(accumFrameCount, 
-  Pass.AccumulationPass.convertCanDenoiseToFloat(state)
-  )
+  |> BMFRBuffer.AccumulationCommonDataBuffer.update(
+       accumFrameCount,
+       Pass.AccumulationPass.convertCanDenoiseToFloat(state),
+     )
   |> Pass.AccumulationPass.setLastViewMatrix(viewMatrix);
 };
 
@@ -769,9 +772,9 @@ let _updateTransformData = (time, device, queue, state) => {
 
   let state = state |> _updateTransformAnim(time);
 
-  let state =
-    state
-    |> ManageAccelerationContainer.updateInstanceContainer(device, queue);
+  // let state =
+  //   state
+  //   |> ManageAccelerationContainer.updateInstanceContainer(device, queue);
 
   let state =
     state

@@ -27,7 +27,7 @@ let setFrameIndex = (frameIndex, state) => {
 let load = window => {
   fromPromise(
     GPU.requestAdapter(
-      GPU.adapterDescriptor(~window, ~preferredBackend="vulkan", ()),
+      GPU.adapterDescriptor(~window, ~preferredBackend="Vulkan", ()),
     ),
   )
   |> flatMap(adapter => {
