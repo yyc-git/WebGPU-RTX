@@ -48,34 +48,14 @@ let _createShaderBindingTable = (baseShaderPath, device) => {
          {"module": rayMissShadowShaderModule, "stage": ShaderStage.ray_miss},
        |],
        "groups": [|
-         {
-           "type": "general",
-           "generalIndex": 0,
-           "anyHitIndex": (-1),
-           "closestHitIndex": (-1),
-           "intersectionIndex": (-1),
-         },
-         {
-           "type": "triangles-hit-group",
-           "generalIndex": (-1),
-           "anyHitIndex": (-1),
-           "closestHitIndex": 1,
-           "intersectionIndex": (-1),
-         },
-         {
-           "type": "general",
-           "generalIndex": 2,
-           "anyHitIndex": (-1),
-           "closestHitIndex": (-1),
-           "intersectionIndex": (-1),
-         },
-         {
-           "type": "general",
-           "generalIndex": 3,
-           "anyHitIndex": (-1),
-           "closestHitIndex": (-1),
-           "intersectionIndex": (-1),
-         },
+         ShaderBindingTable.group(~type_="general", ~generalIndex=0, ()),
+         ShaderBindingTable.group(
+           ~type_="triangles-hit-group",
+           ~closestHitIndex=1,
+           (),
+         ),
+         ShaderBindingTable.group(~type_="general", ~generalIndex=2, ()),
+         ShaderBindingTable.group(~type_="general", ~generalIndex=3, ()),
        |],
      });
 };
@@ -542,7 +522,8 @@ let init = (device, queue, state) => {
                  + 1
                  * 2
                  * Uint32Array._BYTES_PER_ELEMENT
-                 + 1* Float32Array._BYTES_PER_ELEMENT,
+                 + 1
+                 * Float32Array._BYTES_PER_ELEMENT,
              );
            },
          )

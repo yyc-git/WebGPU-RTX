@@ -365,13 +365,18 @@ module ShaderBindingTable = {
     "stage": ShaderStage.t,
   };
 
+  [@bs.deriving abstract]
   type group = {
-    .
-    "type": string,
-    "generalIndex": int,
-    "anyHitIndex": int,
-    "closestHitIndex": int,
-    "intersectionIndex": int,
+    [@bs.as "type"]
+    type_: string,
+    [@bs.optional]
+    generalIndex: int,
+    [@bs.optional]
+    anyHitIndex: int,
+    [@bs.optional]
+    closestHitIndex: int,
+    [@bs.optional]
+    intersectionIndex: int,
   };
 
   type descriptor = {
