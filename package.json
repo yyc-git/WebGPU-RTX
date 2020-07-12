@@ -10,18 +10,15 @@
         "watch": "bsb -clean-world -make-world -w",
         "test:watch": "jest --watch --config jest.json",
         "build": "bsb -clean-world -make-world",
-        "runTest": "node lib/js/examples/bmfr/BMFRMain.js"
+        "runTest": "node lib/js/src/RTXMain.js"
     },
     "devDependencies": {
-        "http-server": "^0.12.0",
-        "jest": "^25.2.3",
-        "wonder-bs-jest": "0.2.25",
-        "wonder-bs-sinon": "^0.1.9"
+        "http-server": "^0.12.0"
     },
     "dependencies": {
+        "raytracing-framework": "^0.0.3",
         "bs-platform": "^7.2.2",
         "clang-format": "^1.4.0",
-        "webgpu": "0.1.16",
         "wonder-bs-most": "^0.0.3"
     }
 }

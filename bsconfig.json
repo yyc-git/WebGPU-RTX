@@ -2,24 +2,15 @@
     "name": "webgpu-rtx",
     "sources": [
         {
-            "dir": "examples",
-            "subdirs": true
-        },
-        {
             "dir": "src",
-            "subdirs": true
-        },
-        {
-            "dir": "test",
             "subdirs": true
         }
     ],
     "bs-dev-dependencies": [],
     "refmt": 3,
     "bs-dependencies": [
-        "wonder-bs-jest",
-        "wonder-bs-sinon",
-        "wonder-bs-most"
+        "wonder-bs-most",
+        "raytracing-framework"
     ],
     "package-specs": [
         "commonjs"

@@ -1,1 +1,0 @@
-type pbrMaterial = int;

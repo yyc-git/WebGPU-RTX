@@ -1,1 +1,0 @@
-type directionLight = int;
